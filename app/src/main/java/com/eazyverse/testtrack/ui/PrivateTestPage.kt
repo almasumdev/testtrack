@@ -198,7 +198,7 @@ private fun PrivateTestDetails(test: PrivateTest) {
             Lucide.Info,
             t.text4,
             AnnotatedString("Opening counts after ${CrewRules.VISIT_SECONDS} seconds in front, as in a crew. No picture is taken."),
-            tileStyle(12.5f, 17f, FontWeight.Normal),
+            TextStyles.DialogNote,
             t.text4,
             Modifier.padding(top = 12.dp),
         )

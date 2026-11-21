@@ -95,7 +95,7 @@ internal fun RowPill(
             PillKind.SOFT -> Tt.colors.tile to Tt.colors.accentInk
             PillKind.GHOST -> Tt.colors.bg to Tt.colors.accentInk
             PillKind.OK -> Status.posted to Tt.colors.inkOn(Status.posted)
-            PillKind.PRIMARY -> MaterialTheme.colorScheme.primary to MaterialTheme.colorScheme.onPrimary
+            PillKind.PRIMARY -> Tt.colors.primary to Tt.colors.onPrimary
         }
     val small = size == PillSize.SMALL
     // 34 to look at, 48 to touch, the way an icon button is built.
@@ -122,7 +122,7 @@ internal fun RowPill(
                 }
                 Text(
                     label,
-                    style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp),
+                    style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold,
                     color = ink,
                     maxLines = 1,

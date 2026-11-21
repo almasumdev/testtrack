@@ -48,7 +48,7 @@ private val BarHeight = TopAppBarDefaults.TopAppBarExpandedHeight
 /** The title over a subtitle, and the subtitle: single lines, tight, so both sit inside [BarHeight]. */
 private val TitleOver = tileStyle(20f, 24f, FontWeight.Bold)
 private val SubtitleQuiet = tileStyle(12.5f, 16f, FontWeight.Medium)
-private val SubtitleLoud = tileStyle(12.5f, 16f, FontWeight.SemiBold)
+private val SubtitleLoud = TextStyles.HintStyle
 
 /** How a bar's subtitle speaks: a plain fact, running short, settled, or gone wrong. */
 enum class BarTone { NORMAL, WARN, OK, BAD }

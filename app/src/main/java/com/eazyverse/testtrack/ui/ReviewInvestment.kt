@@ -49,7 +49,7 @@ import kotlin.math.roundToInt
 
 private const val TABULAR = "tnum"
 private val StepValue = tileStyle(18f, 22f, FontWeight.Bold).copy(fontFeatureSettings = TABULAR)
-private val PayValue = tileStyle(16f, 19f, FontWeight.Bold).copy(fontFeatureSettings = TABULAR)
+private val PayValue = TextStyles.HeadingStyle.copy(fontFeatureSettings = TABULAR)
 private val EndLabel = tileStyle(12f, 14f, FontWeight.Normal).copy(fontFeatureSettings = TABULAR)
 
 /** The counts most requests pick, one tap each. */

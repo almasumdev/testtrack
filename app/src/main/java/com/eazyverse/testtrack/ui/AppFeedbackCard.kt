@@ -196,7 +196,7 @@ private fun RequestFooter(
                 Spacer(Modifier.width(5.dp))
                 Text(
                     "${request.refunded} tix came back",
-                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.5.sp, lineHeight = 16.sp),
+                    style = TextStyles.RowLine,
                     color = t.text3,
                 )
             }

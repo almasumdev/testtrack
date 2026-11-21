@@ -38,6 +38,7 @@ import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.TriangleAlert
 import com.eazyverse.testtrack.findActivity
 import com.eazyverse.testtrack.net.ApiPost
+import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.viewmodel.dropStrayButton
 import com.eazyverse.testtrack.viewmodel.openUsageSettings
 import com.eazyverse.testtrack.viewmodel.requirePlayInstall
@@ -389,7 +390,7 @@ private fun SideloadNotice() {
         Text(
             "Install the Google Play version to continue.",
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurface,
+            color = Tt.colors.text,
         )
     }
 }

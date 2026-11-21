@@ -45,7 +45,7 @@ import com.eazyverse.testtrack.ui.theme.Tt
  */
 
 private val SeatNameStyle = AppTileName
-private val SeatLineStyle = tileStyle(12.5f, 14f, FontWeight.Medium)
+private val SeatLineStyle = TextStyles.DeveloperStyle
 private val SeatLineBold = tileStyle(12.5f, 14f, FontWeight.SemiBold)
 
 /**

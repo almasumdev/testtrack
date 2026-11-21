@@ -11,7 +11,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.eazyverse.testtrack.domain.pluralOf
@@ -61,7 +60,7 @@ fun CrewListRow(
                     else -> "${crew.owed} ${pluralOf(crew.owed, "app")} left tonight"
                 },
                 Modifier.weight(1f),
-                style = tileStyle(15f, 20f, FontWeight.Medium),
+                style = TextStyles.RowValue,
                 color = if (tone == Tone.ACCENT) Tt.colors.text else tone.ink(),
             )
             if (spot != null && !spot.ended) {
@@ -69,7 +68,7 @@ fun CrewListRow(
                 Text(
                     "${spot.tixEarned} tix earned",
                     Modifier.weight(1f),
-                    style = tileStyle(12f, 17f, FontWeight.Normal),
+                    style = TextStyles.SmallNote,
                     color = Tt.colors.text3,
                     textAlign = TextAlign.End,
                 )
@@ -79,7 +78,7 @@ fun CrewListRow(
                 Text(
                     "${crew.openedMineTonight} of ${crew.testers.size} opened yours",
                     Modifier.weight(1f),
-                    style = tileStyle(12f, 17f, FontWeight.Normal),
+                    style = TextStyles.SmallNote,
                     color = Tt.colors.text3,
                     textAlign = TextAlign.End,
                 )
@@ -89,7 +88,7 @@ fun CrewListRow(
             Spacer(Modifier.height(8.dp))
             Text(
                 "Missed yesterday. Finish tonight to keep your app in.",
-                style = tileStyle(12f, 17f, FontWeight.Normal),
+                style = TextStyles.SmallNote,
                 color = Tone.WARN.ink(),
             )
         }

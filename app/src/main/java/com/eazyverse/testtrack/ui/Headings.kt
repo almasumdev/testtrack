@@ -128,6 +128,24 @@ object TextStyles {
     /** The empty chat's title: 17 on 22, semibold. */
     val ChatEmptyTitle = TtTypography.bodyMedium.copy(fontSize = 17.sp, lineHeight = 22.sp, fontWeight = FontWeight.SemiBold)
 
+    /** A small note under a row or a block: 12 on 17. */
+    val SmallNote = tileStyle(12f, 17f, FontWeight.Normal)
+
+    /** A plain note line: 12.5 on 16. */
+    val NoteLine = tileStyle(12.5f, 16f, FontWeight.Normal)
+
+    /** A row's value or its main words at 15: 15 on 20, medium. */
+    val RowValue = tileStyle(15f, 20f, FontWeight.Medium)
+
+    /** A quiet line on Material's small body: 12.5 on 17. */
+    val QuietLine = TtTypography.bodySmall.copy(fontSize = 12.5.sp, lineHeight = 17.sp)
+
+    /** A small body line: 13 on 18, on Material's small body. */
+    val SmallBody = TtTypography.bodySmall.copy(fontSize = 13.sp, lineHeight = 18.sp)
+
+    /** A body line at 15: 15 on 20, on Material's medium body. */
+    val BodyLine = TtTypography.bodyMedium.copy(fontSize = 15.sp, lineHeight = 20.sp)
+
     /** A video's length on its thumbnail: 10 on 14. */
     val VideoLength = TtTypography.labelSmall.copy(fontSize = 10.sp, lineHeight = 14.sp)
 

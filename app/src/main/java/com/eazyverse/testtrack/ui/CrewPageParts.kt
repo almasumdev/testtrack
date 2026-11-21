@@ -54,7 +54,7 @@ internal fun Tone.ink(): Color =
         Tone.OK -> Status.posted
         Tone.WARN -> Status.short
         Tone.BAD -> Status.missed
-        Tone.QUIET -> MaterialTheme.colorScheme.onSurfaceVariant
+        Tone.QUIET -> Tt.colors.text2
         Tone.TILE -> Tt.colors.tileInk
         Tone.PLAIN -> Tt.colors.text2
     }

@@ -29,7 +29,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.Check
 import com.composables.icons.lucide.Copy
 import com.composables.icons.lucide.Lucide
@@ -127,7 +126,7 @@ internal fun SignInFields(
     Text(
         "A test account the crew can use, as Play Console's App access asks for. Fourteen testers " +
             "see it, so never your own.",
-        style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp, lineHeight = 18.sp),
+        style = TextStyles.SmallBody,
         color = Tt.colors.text2,
     )
     SeatSignInFields(username, onUsername, password, onPassword, also, onAlso)
@@ -188,7 +187,7 @@ internal fun SignInDetails(
     val signIn = readSignIn(notes)
     if (signIn == null) {
         SelectionContainer {
-            Text(notes, modifier, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface)
+            Text(notes, modifier, style = MaterialTheme.typography.bodySmall, color = Tt.colors.text)
         }
         return
     }
@@ -201,7 +200,7 @@ internal fun SignInDetails(
                     signIn.also,
                     Modifier.padding(top = 2.dp),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = Tt.colors.text,
                 )
             }
         }

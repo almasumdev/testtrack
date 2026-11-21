@@ -65,4 +65,4 @@ internal val ReviewBulletInset = 12.dp
 internal val ReviewSectionGap = 24.dp
 internal val ReviewLineGap = 8.dp
 
-private val ReviewHeadingStyle = tileStyle(16f, 19f, FontWeight.Bold)
+private val ReviewHeadingStyle = TextStyles.HeadingStyle

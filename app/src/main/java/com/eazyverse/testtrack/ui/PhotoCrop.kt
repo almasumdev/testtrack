@@ -168,7 +168,7 @@ internal fun PhotoCrop(
             Text(
                 if (failed) "That photo could not be opened. Choose another one." else "Your photo shows in a circle.",
                 Modifier.padding(top = 4.dp),
-                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, lineHeight = 20.sp),
+                style = MaterialTheme.typography.bodyMedium,
                 color = if (failed) t.bad else t.text3,
                 textAlign = TextAlign.Center,
             )

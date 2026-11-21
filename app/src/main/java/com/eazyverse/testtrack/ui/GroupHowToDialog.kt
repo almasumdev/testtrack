@@ -38,7 +38,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
@@ -70,7 +69,6 @@ internal val PlaySteps =
         PlayStep("Pick Google Groups, paste the address and save", R.drawable.play_step3),
         PlayStep("Roll out a release to that track", R.drawable.play_step4),
     )
-
 
 /**
  * The steps. With [verify] and [onVerify], as from the seat page, the check sits at the end;
@@ -109,7 +107,7 @@ internal fun GroupHowToDialog(
                 Text(
                     "Add the testers group",
                     Modifier.weight(1f),
-                    style = MaterialTheme.typography.titleLarge.copy(fontSize = 22.sp, lineHeight = 28.sp),
+                    style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = t.text,
                     maxLines = 1,

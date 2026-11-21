@@ -113,7 +113,7 @@ internal fun InfoDot(
 
 /** A status line's words: 13 on 18, medium; on the band, regular. */
 private val StatusWords = tileStyle(13f, 18f, FontWeight.Medium)
-private val StatusNote = tileStyle(12f, 17f, FontWeight.Normal)
+private val StatusNote = TextStyles.SmallNote
 
 /**
  * One status, said in a line: a 15dp [icon] and the [text] in the [tone], an optional (i) holding

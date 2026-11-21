@@ -41,7 +41,7 @@ internal const val UNREACHABLE_FAILURE = "Can't reach TestTrack right now. Try a
 internal fun Why(text: String) {
     Text(
         text,
-        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, lineHeight = 20.sp),
+        style = MaterialTheme.typography.bodyMedium,
         color = Tt.colors.text2,
     )
 }
@@ -109,7 +109,7 @@ internal fun AccountRow(
         Column(Modifier.weight(1f)) {
             Text(
                 name ?: email,
-                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 15.sp, lineHeight = 20.sp),
+                style = TextStyles.BodyLine,
                 fontWeight = FontWeight.SemiBold,
                 color = t.text,
                 maxLines = 1,
@@ -118,7 +118,7 @@ internal fun AccountRow(
             if (name != null) {
                 Text(
                     email,
-                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp, lineHeight = 18.sp),
+                    style = TextStyles.SmallBody,
                     color = t.text4,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -166,7 +166,7 @@ internal fun StarterCard() {
             Spacer(Modifier.width(10.dp))
             Text(
                 "Starter tix already used",
-                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 15.sp, lineHeight = 20.sp),
+                style = TextStyles.BodyLine,
                 fontWeight = FontWeight.SemiBold,
                 color = t.text,
             )
@@ -175,7 +175,7 @@ internal fun StarterCard() {
         Text(
             "Each phone gets ${FeedRules.STARTER_TIX} starter tix once, and this one already has. " +
                 "You start at 0 and earn tix by reviewing other apps.",
-            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, lineHeight = 20.sp),
+            style = MaterialTheme.typography.bodyMedium,
             color = t.text2,
             modifier = Modifier.fillMaxWidth(),
         )

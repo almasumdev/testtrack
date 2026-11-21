@@ -137,7 +137,7 @@ private fun AcceptHint(
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
         Icon(Lucide.Clock, null, Modifier.size(14.dp), tint = ink)
         Spacer(Modifier.width(6.dp))
-        Text("Accepts itself if you do nothing.", style = tileStyle(12.5f, 16f, FontWeight.SemiBold), color = ink, maxLines = 1)
+        Text("Accepts itself if you do nothing.", style = TextStyles.HintStyle, color = ink, maxLines = 1)
         Spacer(Modifier.width(4.dp))
         InfoDot("If you do nothing", ink) {
             CalloutLine(

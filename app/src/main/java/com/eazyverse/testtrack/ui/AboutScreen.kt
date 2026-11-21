@@ -215,13 +215,13 @@ private fun ColumnScope.MakerBank() {
         Column(Modifier.weight(1f)) {
             Text(
                 "Nurullah Al-Masum",
-                style = MaterialTheme.typography.bodyLarge.copy(fontSize = 16.sp, lineHeight = 20.sp),
+                style = TextStyles.RowTitle,
                 fontWeight = FontWeight.SemiBold,
                 color = t.text,
             )
             Text(
                 "Mobile app developer at EazyVerse Studio",
-                style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.5.sp, lineHeight = 16.sp),
+                style = TextStyles.RowLine,
                 color = t.text3,
             )
         }
@@ -316,7 +316,7 @@ private fun LegalLink(
 private fun BankLine(text: String) {
     Text(
         text,
-        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, lineHeight = 20.sp),
+        style = MaterialTheme.typography.bodyMedium,
         color = Tt.colors.text2,
     )
 }

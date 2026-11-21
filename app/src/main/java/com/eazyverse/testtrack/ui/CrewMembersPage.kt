@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,7 +23,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.composables.icons.lucide.Clock
 import com.composables.icons.lucide.HandHeart
@@ -116,7 +114,7 @@ fun CrewMembersBody(
                         Text(
                             summaryOf(testers, nights, crew, finished),
                             Modifier.padding(horizontal = Gutter),
-                            style = MaterialTheme.typography.titleSmall.copy(fontSize = 15.sp, lineHeight = 20.sp),
+                            style = TextStyles.ButtonWords,
                             fontWeight = FontWeight.SemiBold,
                             color = Tt.colors.text,
                             maxLines = 2,

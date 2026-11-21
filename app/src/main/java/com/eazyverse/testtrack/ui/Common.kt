@@ -230,7 +230,7 @@ fun Primary(
             androidx.compose.material3.CircularProgressIndicator(
                 Modifier.size(if (small) 15.dp else 16.dp),
                 strokeWidth = 2.dp,
-                color = if (destructive) Tt.colors.onBad else MaterialTheme.colorScheme.onPrimary,
+                color = if (destructive) Tt.colors.onBad else Tt.colors.onPrimary,
             )
             Spacer(Modifier.width(if (small) 8.dp else 10.dp))
         } else if (mark != null) {

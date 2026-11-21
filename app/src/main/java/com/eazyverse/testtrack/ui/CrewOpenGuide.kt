@@ -96,7 +96,7 @@ private fun CrewJourney() {
     steps.forEachIndexed { index, step -> JourneyRow(step, first = index == 0) }
 }
 
-private val JourneyTitle = tileStyle(16f, 19f, FontWeight.SemiBold)
+private val JourneyTitle = AppTileName
 private val JourneyNote = tileStyle(12.5f, 15f, FontWeight.Normal)
 
 @Composable

@@ -77,7 +77,7 @@ internal fun AppHero(
         Text(
             pkg,
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = Tt.colors.text2,
             textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(12.dp))
@@ -142,7 +142,7 @@ internal fun EditBadge(modifier: Modifier = Modifier) {
         modifier
             .size(30.dp)
             .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.surface)
+            .background(Tt.colors.glass)
             .border(1.dp, Tt.colors.glassBorder, CircleShape),
         contentAlignment = Alignment.Center,
     ) { Icon(Lucide.Pencil, null, Modifier.size(15.dp), tint = Tt.colors.accentInk) }

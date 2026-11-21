@@ -58,6 +58,7 @@ import com.eazyverse.testtrack.net.ApiPost
 import com.eazyverse.testtrack.ui.*
 import com.eazyverse.testtrack.ui.GroupSheet
 import com.eazyverse.testtrack.ui.theme.TestTrackTheme
+import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.ui.theme.exchangeBackground
 import com.eazyverse.testtrack.viewmodel.AppsViewModel
 import com.eazyverse.testtrack.viewmodel.CrewPicturesViewModel
@@ -164,7 +165,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             // The theme chosen on the You page, or the phone's own. See [ThemeChoice].
             TestTrackTheme(darkTheme = ThemeChoice.isDark(isSystemInDarkTheme())) {
-                Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                Surface(Modifier.fillMaxSize(), color = Tt.colors.bg) {
                     // Edge-to-edge is mandatory from Android 15. Every pushed screen takes the safe
                     // drawing inset through [Inset] (status bar, cutout, nav bar and keyboard); the
                     // tab shell takes only the top one, because its ground and its floating dock run
@@ -317,7 +318,7 @@ private fun NotConfigured() {
                 "keys and rebuild.",
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.error,
+            color = Tt.colors.bad,
         )
     }
 }

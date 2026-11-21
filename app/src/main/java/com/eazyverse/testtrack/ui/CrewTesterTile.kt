@@ -79,7 +79,7 @@ internal fun TesterTile(
                     Text(
                         tester.name,
                         Modifier.weight(1f),
-                        style = MaterialTheme.typography.bodyLarge.copy(fontSize = 15.sp, lineHeight = 19.sp),
+                        style = TextStyles.ListName,
                         fontWeight = FontWeight.SemiBold,
                         color = t.text,
                         maxLines = 1,
@@ -99,7 +99,7 @@ internal fun TesterTile(
                 Text(
                     tester.line,
                     Modifier.padding(top = 2.dp),
-                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.5.sp, lineHeight = 17.sp),
+                    style = TextStyles.QuietLine,
                     fontWeight = FontWeight.SemiBold,
                     color = if (tester.tone == Tone.QUIET) t.text3 else tester.tone.ink(),
                     maxLines = 1,
@@ -194,7 +194,7 @@ private fun NightsRing(tester: CrewTester) {
             tester.photo,
             initialOf(tester.name),
             size = 32.dp,
-            letterStyle = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp),
+            letterStyle = MaterialTheme.typography.labelLarge,
         )
     }
 }

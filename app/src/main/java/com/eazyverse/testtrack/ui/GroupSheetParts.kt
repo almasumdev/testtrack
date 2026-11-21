@@ -74,7 +74,7 @@ internal fun GroupAccountRow(
             Column(Modifier.weight(1f)) {
                 Text(
                     name,
-                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 15.sp, lineHeight = 20.sp),
+                    style = TextStyles.BodyLine,
                     fontWeight = FontWeight.SemiBold,
                     color = t.text,
                     maxLines = 1,
@@ -87,7 +87,7 @@ internal fun GroupAccountRow(
                     }
                     Text(
                         status,
-                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.5.sp, lineHeight = 16.sp),
+                        style = TextStyles.RowLine,
                         color = tone,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -111,7 +111,7 @@ internal fun GroupSteps(opened: Boolean) {
         Text(
             "After you join, Google may say you can't see posts. That's normal, you're in.",
             Modifier.padding(start = 34.dp).offset(y = (-5).dp),
-            style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.5.sp, lineHeight = 17.sp),
+            style = TextStyles.QuietLine,
             color = t.text3,
         )
         StepRow(3, "Come back here and we'll check again", now = false)

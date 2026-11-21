@@ -34,7 +34,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.ArrowDownToLine
 import com.composables.icons.lucide.CircleArrowDown
 import com.composables.icons.lucide.Lucide
@@ -246,7 +245,7 @@ private fun NewTag() {
             .clip(RoundedCornerShape(6.dp))
             .background(Tt.colors.gold.copy(alpha = 0.18f))
             .padding(horizontal = 7.dp, vertical = 2.dp),
-        style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
+        style = MaterialTheme.typography.labelSmall,
         fontWeight = FontWeight.Bold,
         color = Tt.colors.gold,
     )

@@ -11,7 +11,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Flag
@@ -152,7 +151,7 @@ private fun FeedbackLabel(
                     withStyle(SpanStyle(color = Tt.colors.text3)) { append("by night ${app.feedbackDueDay}") }
                 }
             },
-            style = tileStyle(12f, 17f, FontWeight.Normal),
+            style = TextStyles.SmallNote,
             color = ink,
         )
     }

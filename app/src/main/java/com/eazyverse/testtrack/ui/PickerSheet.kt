@@ -101,7 +101,7 @@ internal fun PickerSheet(
     skipHalf: Boolean = tall || full,
     fitMax: Float? = null,
     leading: (@Composable () -> Unit)? = null,
-    containerColor: Color = MaterialTheme.colorScheme.surface,
+    containerColor: Color = Tt.colors.glass,
     topLine: Color? = null,
     handleGap: Dp = 14.dp,
     headerGap: Dp = 14.dp,

@@ -132,7 +132,7 @@ internal fun WaitFoot(
             icon,
             Tt.colors.text3,
             AnnotatedString(text),
-            tileStyle(12.5f, 16f, FontWeight.SemiBold),
+            TextStyles.HintStyle,
             Tt.colors.text3,
             Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center,
@@ -185,7 +185,7 @@ private fun FailedRow(
                 fontWeight = FontWeight.SemiBold,
                 color = t.text,
             )
-            Text(detail, style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.5.sp), color = t.text3)
+            Text(detail, style = TextStyles.SmallLine, color = t.text3)
         }
     }
 }

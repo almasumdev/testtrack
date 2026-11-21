@@ -132,7 +132,7 @@ internal fun TrackingGrid(
                                 tester.photo,
                                 initialOf(tester.name),
                                 size = 24.dp,
-                                letterStyle = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
+                                letterStyle = MaterialTheme.typography.labelSmall,
                             )
                         }
                         // A volunteer's hand, on the face's lower corner.
@@ -378,7 +378,7 @@ internal fun SquaresKey(
                     "Each square is one tester on one night. The number under a night is how many it counted for. " +
                         "Google asks for ${CrewRules.FLOOR}."
                 },
-                style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.5.sp, lineHeight = 17.sp),
+                style = TextStyles.QuietLine,
                 color = t.text3,
             )
             Spacer(Modifier.height(10.dp))
@@ -425,7 +425,7 @@ internal fun SquaresKey(
                         Spacer(Modifier.width(5.dp))
                         Text(
                             text,
-                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.5.sp, lineHeight = 17.sp),
+                            style = TextStyles.QuietLine,
                             color = t.text3,
                         )
                     }

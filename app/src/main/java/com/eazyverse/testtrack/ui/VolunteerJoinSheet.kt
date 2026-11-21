@@ -34,7 +34,7 @@ import com.eazyverse.testtrack.viewmodel.VolunteerViewModel
  * before the button rather than discovered after a missed night.
  */
 
-private val LineStyle = tileStyle(13.5f, 19f, FontWeight.Normal)
+private val LineStyle = TextStyles.DialogBody
 
 /** The sheet for one crew. [onJoin] is handed a way to close the sheet once the spot is the reader's. */
 @Composable
@@ -78,7 +78,7 @@ internal fun VolunteerJoinSheet(
                         withStyle(SpanStyle(fontWeight = FontWeight.SemiBold, color = t.text)) { append("night ${spot.firstNight}") }
                         append(", from midnight your time. Install the apps before then.")
                     },
-                    tileStyle(13f, 18f, FontWeight.Normal),
+                    TextStyles.PageLine,
                     t.text2,
                     Modifier.padding(vertical = 2.dp),
                 )

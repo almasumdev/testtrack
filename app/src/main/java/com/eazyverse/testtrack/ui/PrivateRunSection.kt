@@ -84,7 +84,7 @@ internal fun LazyListScope.privateTesting(section: PrivateRunSection) {
             Lucide.Lock,
             Tt.colors.text4,
             AnnotatedString("No tix and no rules here. Only each app's owner sees when you open it."),
-            tileStyle(12.5f, 17f, FontWeight.Normal),
+            TextStyles.DialogNote,
             Tt.colors.text4,
             Modifier.padding(start = Gutter, end = Gutter, top = 10.dp),
         )

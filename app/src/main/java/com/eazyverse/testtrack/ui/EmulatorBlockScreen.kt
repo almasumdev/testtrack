@@ -48,7 +48,7 @@ fun EmulatorBlockScreen(signs: List<String>) {
             Text(
                 text = "Testers have to be real people on real phones, so TestTrack doesn't run on emulators.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = Tt.colors.text2,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(top = 10.dp),
             )

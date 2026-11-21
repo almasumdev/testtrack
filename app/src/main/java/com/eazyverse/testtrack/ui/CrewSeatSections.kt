@@ -140,7 +140,7 @@ private fun BoxRow(
         Text(
             label,
             Modifier.weight(1f, fill = false).clearAndSetSemantics {},
-            style = tileStyle(15f, 20f, FontWeight.Medium),
+            style = TextStyles.RowValue,
             color = t.text,
         )
         // The callout is anchored to this slot: its 20dp icon sits 10dp inside the 40dp square.
@@ -175,10 +175,10 @@ private fun inkParts(parts: Array<String>): AnnotatedString {
 }
 
 private val SmallLine
-    @Composable get() = MaterialTheme.typography.bodySmall.copy(fontSize = 12.5.sp, lineHeight = 17.sp)
+    @Composable get() = TextStyles.QuietLine
 
 private val BodyLine
-    @Composable get() = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp, lineHeight = 18.sp)
+    @Composable get() = TextStyles.SmallBody
 
 /** What the testers group section needs to draw and to ask. */
 internal class SeatGroupState(
@@ -245,7 +245,7 @@ internal fun CrewSeatGroup(
 }
 
 private val AddressStyle = tileStyle(15f, 18f, FontWeight.SemiBold)
-private val AddressLabelStyle = tileStyle(12.5f, 14f, FontWeight.Medium)
+private val AddressLabelStyle = TextStyles.DeveloperStyle
 
 /**
  * The group address on one line, shrinking to fit a narrow phone, over what it is, with copy at the
@@ -341,7 +341,7 @@ internal fun SeatBar(
         modifier
             .fillMaxWidth()
             .heightIn(min = 48.dp)
-            .tileFrame(onClick = if (enabled && !busy) onClick else null, fill = MaterialTheme.colorScheme.surface)
+            .tileFrame(onClick = if (enabled && !busy) onClick else null, fill = Tt.colors.glass)
             .padding(12.dp),
         contentAlignment = Alignment.Center,
     ) {

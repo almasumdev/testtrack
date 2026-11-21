@@ -84,7 +84,7 @@ internal fun PrivateAddSheet(
                         Lucide.Info,
                         t.text4,
                         AnnotatedString("Check the spelling, or ask them to sign in to TestTrack with it first."),
-                        tileStyle(12.5f, 17f, FontWeight.Normal),
+                        TextStyles.DialogNote,
                         t.text4,
                         Modifier.padding(top = 12.dp),
                     )

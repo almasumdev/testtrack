@@ -74,7 +74,7 @@ fun CardRule() {
         Modifier
             .fillMaxWidth()
             .height(1.dp)
-            .background(MaterialTheme.colorScheme.outlineVariant),
+            .background(Tt.colors.glassBorder),
     )
 }
 

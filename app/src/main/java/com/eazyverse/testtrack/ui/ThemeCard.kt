@@ -22,7 +22,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.GenericShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -76,7 +75,7 @@ internal fun AppearanceGroup() {
                 Spacer(Modifier.width(14.dp))
                 Text(
                     "Theme",
-                    style = MaterialTheme.typography.bodyLarge.copy(fontSize = 16.sp, lineHeight = 20.sp),
+                    style = TextStyles.RowTitle,
                     fontWeight = FontWeight.SemiBold,
                     color = t.text,
                 )

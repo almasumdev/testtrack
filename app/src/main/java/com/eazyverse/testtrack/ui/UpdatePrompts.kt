@@ -24,6 +24,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.ui.theme.exchangeBackground
 
 /**
@@ -71,7 +72,7 @@ fun ForceUpdateScreen(
                     "This version of TestTrack is out of date. Update to keep testing with your " +
                         "crews and collecting tix.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = Tt.colors.text2,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(top = 10.dp),
             )

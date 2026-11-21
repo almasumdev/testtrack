@@ -22,7 +22,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Check
@@ -62,7 +61,7 @@ internal fun LazyListScope.volunteerSpots(section: VolunteerSection) {
                 "No app needed. Open a running crew's apps every night and earn " +
                     "${CrewRules.VOLUNTEER_NIGHT_TIX} tix a night.",
                 Modifier.padding(horizontal = Gutter).padding(bottom = 2.dp),
-                style = tileStyle(12.5f, 17f, FontWeight.Normal),
+                style = TextStyles.DialogNote,
                 color = Tt.colors.text4,
             )
         }
@@ -121,7 +120,7 @@ internal fun VolunteerSpotRow(
                     SpotState.OUT, SpotState.LEFT -> "Can't join again"
                 },
                 Modifier.weight(1f),
-                style = tileStyle(12.5f, 16f, FontWeight.Normal),
+                style = TextStyles.NoteLine,
                 color = Tt.colors.text3,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,

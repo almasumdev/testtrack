@@ -357,7 +357,7 @@ private fun BoardRowView(
                 if (mine) {
                     Tt.colors.accentInk
                 } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
+                    Tt.colors.text2
                 },
         )
         Spacer(Modifier.width(11.dp))
@@ -375,7 +375,7 @@ private fun BoardRowView(
             Text(
                 if (row.place > 0) work(row) else "Not on the board yet",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = Tt.colors.text2,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )

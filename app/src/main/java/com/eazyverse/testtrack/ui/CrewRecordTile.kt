@@ -55,7 +55,7 @@ internal fun RecordTile(
         CrewTileHeading(record.crewName.ifBlank { crewNameOf(record.crewNumber) }, recordDates(record))
         Spacer(Modifier.height(10.dp))
         val (headline, tone) = recordHeadline(record)
-        Text(headline, style = tileStyle(15f, 20f, FontWeight.Medium), color = tone.ink())
+        Text(headline, style = TextStyles.RowValue, color = tone.ink())
         if (showApp) CrewTileApp(record.packageName, record.appName, record.appIcon, maxLines = 1)
 
         detailsClear(crew?.detailsUntil, record.pruned || crew?.pruned == true, now)?.let { (text, last) ->
@@ -202,7 +202,7 @@ internal fun RecordResult(chip: RecordResultChip) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(Lucide.Ticket, null, Modifier.size(13.dp), tint = Tt.colors.text3)
             Spacer(Modifier.width(5.dp))
-            Text(chip.paid, style = tileStyle(12.5f, 16f, FontWeight.SemiBold), color = Tt.colors.text3)
+            Text(chip.paid, style = TextStyles.HintStyle, color = Tt.colors.text3)
         }
     }
 }

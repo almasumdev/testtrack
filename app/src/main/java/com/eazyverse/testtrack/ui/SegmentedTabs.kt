@@ -73,7 +73,7 @@ fun SegmentedTabs(
 ) {
     if (labels.isEmpty()) return
     BoxWithConstraints(modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, top = 6.dp)) {
-        val base = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp)
+        val base = MaterialTheme.typography.labelLarge
         val countStyle =
             MaterialTheme.typography.labelSmall.copy(
                 fontSize = 11.sp,

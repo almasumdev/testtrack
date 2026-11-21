@@ -265,7 +265,7 @@ private fun NightsLegend(
                 val label = nightLabel(mark, record.outcome)
                 Text(
                     if (mark.stripOnly()) label else "${counts[mark]} $label",
-                    style = tileStyle(12.5f, 16f, FontWeight.Normal),
+                    style = TextStyles.NoteLine,
                     color = Tt.colors.text3,
                 )
             }

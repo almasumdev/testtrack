@@ -118,7 +118,7 @@ internal fun CrewRunSummary(
                 facts.forEach { (icon, label) ->
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
                         Icon(icon, null, Modifier.size(14.dp), tint = Tt.colors.text3)
-                        Text(label, style = tileStyle(12f, 17f, FontWeight.Normal), color = Tt.colors.text3)
+                        Text(label, style = TextStyles.SmallNote, color = Tt.colors.text3)
                     }
                 }
             }

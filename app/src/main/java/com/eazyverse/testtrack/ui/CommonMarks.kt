@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.SubcomposeAsyncImage
 import com.eazyverse.testtrack.data.InstalledApps
 import com.eazyverse.testtrack.data.Photo
+import com.eazyverse.testtrack.ui.theme.Tt
 import androidx.compose.foundation.Image as ComposeImage
 
 // ---- marks -------------------------------------------------------------------------------
@@ -84,7 +85,7 @@ fun AppIcon(
             modifier.appIconOutline(outline).clip(shape).background(Status.neutralSoft),
             contentAlignment = Alignment.Center,
         ) {
-            AppInitial(label, size, MaterialTheme.colorScheme.onSurfaceVariant)
+            AppInitial(label, size, Tt.colors.text2)
         }
     }
 }
@@ -117,14 +118,14 @@ fun Initial(
     letterStyle: TextStyle? = null,
 ) {
     Box(
-        Modifier.size(size).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
+        Modifier.size(size).clip(CircleShape).background(Tt.colors.tile),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             letter,
             style = letterStyle ?: MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onPrimaryContainer,
+            color = Tt.colors.tileInk,
         )
     }
 }

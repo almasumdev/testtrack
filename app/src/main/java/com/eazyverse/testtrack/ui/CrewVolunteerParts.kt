@@ -65,7 +65,7 @@ internal fun VolunteerStats(
                 if (i > 0) Spacer(Modifier.width(8.dp))
                 Column(Modifier.weight(1f)) {
                     Text(value, style = tileStyle(20f, 24f, FontWeight.Bold), color = Tt.colors.text)
-                    Text(label, style = tileStyle(12.5f, 16f, FontWeight.Normal), color = Tt.colors.text3)
+                    Text(label, style = TextStyles.NoteLine, color = Tt.colors.text3)
                 }
             }
         }
@@ -86,10 +86,10 @@ internal fun VolunteerCard(
             IconTile(Lucide.HandHeart, 36.dp)
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                Text("Volunteering", style = tileStyle(16f, 19f, FontWeight.SemiBold), color = Tt.colors.text)
+                Text("Volunteering", style = AppTileName, color = Tt.colors.text)
                 Text(
                     "${CrewRules.VOLUNTEER_NIGHT_TIX} tix for each night you finish",
-                    style = tileStyle(12.5f, 16f, FontWeight.Normal),
+                    style = TextStyles.NoteLine,
                     color = Tt.colors.text3,
                 )
             }
@@ -167,7 +167,7 @@ internal fun VolunteerEndedHero(
                     "You can't volunteer in ${crew.name} again."
                 },
             ),
-            tileStyle(12.5f, 17f, FontWeight.Normal),
+            TextStyles.DialogNote,
             Tt.colors.text4,
             Modifier.padding(top = 10.dp),
         )

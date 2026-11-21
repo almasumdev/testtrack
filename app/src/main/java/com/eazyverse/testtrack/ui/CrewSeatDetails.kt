@@ -151,13 +151,13 @@ internal fun CrewSeatDetails(
             Status.short,
             AnnotatedString("You asked to get $appName back into $crewName. You can take a new seat once the team answers."),
             MaterialTheme.typography.bodySmall,
-            MaterialTheme.colorScheme.onSurface,
+            Tt.colors.text,
             iconSize = 16.dp,
         )
     }
 }
 
-private val GroupDoneLine = tileStyle(12.5f, 14f, FontWeight.Medium)
+private val GroupDoneLine = TextStyles.DeveloperStyle
 
 /** The testers group once Play shows the app to it: one quiet tile row at the top of the details. */
 @Composable

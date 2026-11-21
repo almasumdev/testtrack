@@ -40,7 +40,7 @@ import com.eazyverse.testtrack.R
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /** The line under a price's total: what there is to pay it from. Shared with the seat page's price. */
-internal val PriceLine = tileStyle(12.5f, 14f, FontWeight.Medium)
+internal val PriceLine = TextStyles.DeveloperStyle
 internal val PriceLineBold = tileStyle(12.5f, 14f, FontWeight.SemiBold)
 
 @Composable

@@ -11,7 +11,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.eazyverse.testtrack.ui.theme.Tt
@@ -78,11 +77,11 @@ private fun LobbyStanding(crew: Crew) {
             else -> null
         }
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
-        Text(headline, Modifier.weight(1f), style = tileStyle(15f, 20f, FontWeight.Medium), color = tone?.ink() ?: Tt.colors.text)
+        Text(headline, Modifier.weight(1f), style = TextStyles.RowValue, color = tone?.ink() ?: Tt.colors.text)
         Spacer(Modifier.width(12.dp))
         Text(
             detail,
-            style = tileStyle(12f, 17f, FontWeight.Normal),
+            style = TextStyles.SmallNote,
             color = Tt.colors.text3,
             textAlign = TextAlign.End,
         )

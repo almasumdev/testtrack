@@ -6,7 +6,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -53,7 +52,7 @@ fun Skeleton(
     val base = ground
     // A touch of the accent over it, so a bar still stands off the glass tile it sits on.
     val tint = Tt.colors.accentInk.copy(alpha = 0.07f)
-    val highlight = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f)
+    val highlight = Tt.colors.glass.copy(alpha = 0.8f)
     val moving = ValueAnimator.areAnimatorsEnabled()
     val time = robotTime(moving)
     val span = LocalWindowInfo.current.containerSize.let { it.width + it.height * SLOPE }

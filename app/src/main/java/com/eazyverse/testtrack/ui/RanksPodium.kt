@@ -105,7 +105,7 @@ private fun RowScope.Step(
             row.work,
             Modifier.padding(horizontal = 2.dp),
             style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = Tt.colors.text2,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
@@ -125,7 +125,7 @@ private fun RowScope.Step(
                 .fillMaxWidth()
                 .height(seat)
                 .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
-                .background(MaterialTheme.colorScheme.surface)
+                .background(Tt.colors.glass)
                 .background(
                     Brush.verticalGradient(
                         listOf(medal.copy(alpha = 0.24f), Color.Transparent),
@@ -162,7 +162,7 @@ private fun Face(
         Modifier
             .size(size)
             .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.surface)
+            .background(Tt.colors.glass)
             .border(2.5.dp, medal, CircleShape),
         contentAlignment = Alignment.Center,
     ) {
@@ -209,7 +209,7 @@ fun Points(
             Modifier.alignByBaseline(),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = Tt.colors.text2,
         )
     }
 }
@@ -267,7 +267,7 @@ fun RanksLoading() {
                     style = MaterialTheme.typography.labelLarge.tabular(),
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.End,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = Tt.colors.text2,
                 )
                 Spacer(Modifier.width(11.dp))
                 Skeleton(width = face, height = face, corner = face / 2)
@@ -303,7 +303,7 @@ private fun RowScope.LoadingStep(
             Modifier
                 .size(face)
                 .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surface)
+                .background(Tt.colors.glass)
                 .border(2.5.dp, medal.copy(alpha = 0.5f), CircleShape),
             contentAlignment = Alignment.Center,
         ) {
@@ -321,7 +321,7 @@ private fun RowScope.LoadingStep(
                 .fillMaxWidth()
                 .height(seat)
                 .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
-                .background(MaterialTheme.colorScheme.surface)
+                .background(Tt.colors.glass)
                 .background(Brush.verticalGradient(listOf(medal.copy(alpha = 0.24f), Color.Transparent))),
             contentAlignment = Alignment.TopCenter,
         ) {

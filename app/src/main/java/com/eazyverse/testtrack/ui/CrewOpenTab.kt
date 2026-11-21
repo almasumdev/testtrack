@@ -155,7 +155,7 @@ private fun OpenCrewCard(
     }
 }
 
-private val EstimateStyle = tileStyle(12.5f, 14f, FontWeight.Medium)
+private val EstimateStyle = TextStyles.DeveloperStyle
 private val QuietStyle = tileStyle(12.5f, 14f, FontWeight.Normal)
 
 /** Icon tile, then the crew's name and seats on one line and when it likely starts under it: 19 + 2 + 14 = 35dp. */

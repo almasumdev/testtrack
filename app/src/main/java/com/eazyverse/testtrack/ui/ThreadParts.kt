@@ -149,7 +149,7 @@ internal fun ThreadNote(
             Text(
                 text,
                 Modifier.weight(1f, fill = false),
-                style = tileStyle(12.5f, 16f, FontWeight.SemiBold),
+                style = TextStyles.HintStyle,
                 color = ink,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,

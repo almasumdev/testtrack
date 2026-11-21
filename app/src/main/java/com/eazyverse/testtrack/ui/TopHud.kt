@@ -117,7 +117,7 @@ fun TopHud(
                         Text(
                             subtitle,
                             style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = Tt.colors.text2,
                         )
                     }
                 }
@@ -155,7 +155,7 @@ fun TopHud(
                 Text(text.first, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
                 if (text.second.isNotEmpty()) {
                     Spacer(Modifier.size(1.dp))
-                    Text(text.second, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(text.second, style = MaterialTheme.typography.labelSmall, color = Tt.colors.text2)
                 }
             }
         }

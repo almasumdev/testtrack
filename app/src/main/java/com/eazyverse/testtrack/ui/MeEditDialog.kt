@@ -171,6 +171,6 @@ private fun PhotoRow(
 
 private val PhotoSize = 48.dp
 private val PhotoLabel = tileStyle(14.5f, 19f, FontWeight.Bold)
-private val PhotoFrom = tileStyle(12.5f, 16f, FontWeight.Normal)
+private val PhotoFrom = TextStyles.NoteLine
 
 private const val NAME_MAX = 40
