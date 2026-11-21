@@ -63,9 +63,7 @@ internal fun MeSettings(
                 TileRow(
                     Lucide.Users,
                     "Testers group",
-                    subtitle = "So owners can add you to tests",
-                    status = if (group) "Joined" else "Not joined",
-                    statusTone = if (group) Tone.OK else Tone.WARN,
+                    subtitle = if (group) "Joined, so owners can add you to tests" else "Not joined yet. Join so owners can add you",
                     end = if (group) RowEnd.OUT else RowEnd.PAGE,
                     onClick = onGroup,
                 )
@@ -73,9 +71,7 @@ internal fun MeSettings(
                 TileRow(
                     Lucide.Bell,
                     "Notifications",
-                    subtitle = "Crew news and nightly reminders",
-                    status = if (notifications) "On" else "Off",
-                    statusTone = if (notifications) Tone.OK else Tone.WARN,
+                    subtitle = if (notifications) "On for crew news and nightly reminders" else "Off. Turn on for crew news and reminders",
                     end = RowEnd.OUT,
                     onClick = { openNotificationSettings(context) },
                 )
@@ -174,7 +170,7 @@ internal fun SupportGroup(onAbout: () -> Unit) {
 
 /** The space over and under each heading on the You page. */
 internal val MeHeadingTop = 22.dp
-internal val MeHeadingBottom = 6.dp
+internal val MeHeadingBottom = 8.dp
 
 // No privacy row: the About page carries the policy, in its footer.
 private enum class SupportRow { VIDEOS, ABOUT, UPDATE, RATE, FEEDBACK }
