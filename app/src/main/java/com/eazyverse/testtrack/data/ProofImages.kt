@@ -89,12 +89,18 @@ object ProofImages {
         return rotated
     }
 
-    fun jpeg(bitmap: Bitmap): ByteArray {
+    /** What the server keeps of a chat or crew feedback picture: its upload_crew_max_bytes, 1 MiB. */
+    const val CREW_MAX_BYTES = 1024 * 1024
+
+    fun jpeg(
+        bitmap: Bitmap,
+        maxBytes: Int = 2 * 1024 * 1024,
+    ): ByteArray {
         val output = ByteArrayOutputStream()
         for (quality in listOf(90, 80, 65, 45)) {
             output.reset()
             check(bitmap.compress(Bitmap.CompressFormat.JPEG, quality, output))
-            if (output.size() <= 2 * 1024 * 1024) return output.toByteArray()
+            if (output.size() <= maxBytes) return output.toByteArray()
         }
         error("Choose a smaller image.")
     }
@@ -102,10 +108,11 @@ object ProofImages {
     fun bytes(
         context: Context,
         uri: Uri,
+        maxBytes: Int = 2 * 1024 * 1024,
     ): ByteArray {
         val bitmap = decode(context, uri)
         return try {
-            jpeg(bitmap)
+            jpeg(bitmap, maxBytes)
         } finally {
             bitmap.recycle()
         }

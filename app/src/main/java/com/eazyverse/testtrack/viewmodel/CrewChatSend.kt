@@ -93,7 +93,12 @@ private fun keepPicture(
 private fun pictureBytes(
     context: Context,
     uri: Uri,
-): ByteArray = if (uri.scheme == "file") File(requireNotNull(uri.path)).readBytes() else ProofImages.bytes(context, uri)
+): ByteArray =
+    if (uri.scheme == "file") {
+        File(requireNotNull(uri.path)).readBytes()
+    } else {
+        ProofImages.bytes(context, uri, ProofImages.CREW_MAX_BYTES)
+    }
 
 /** A failed line, tried again under its own id. */
 fun CrewChatViewModel.retry(

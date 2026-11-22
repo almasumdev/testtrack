@@ -67,14 +67,14 @@ object ServerUpload {
         try {
             return Api.upload(id, kind, data, mime, seatId, crewId).id.ifBlank { id }
         } catch (e: ApiError) {
-            if (e.status != TAKEN) throw e.readable()
+            if (!taken(e)) throw e.readable()
         }
         val fresh = newId().also(remint)
         try {
             return Api.upload(fresh, kind, data, mime, seatId, crewId).id.ifBlank { fresh }
         } catch (e: ApiError) {
             // Taken twice cannot be the id's fault. Never read as a final no: it is tried again.
-            throw if (e.status == TAKEN) ApiError(0, e.code, LATER) else e.readable()
+            throw if (taken(e)) ApiError(0, e.code, LATER) else e.readable()
         }
     }
 
@@ -95,5 +95,12 @@ object ServerUpload {
 
     private fun ApiError.readable() = ApiError(status, code, line(this), details)
 
+    /**
+     * The id is taken: the only 409 that a new id helps. Any other 409 (a crew that was pruned, a
+     * chat that closed) is final and is thrown with its status, so the queue drops it and moves on.
+     */
+    internal fun taken(e: ApiError) = e.status == TAKEN && e.code == TAKEN_CODE
+
     private const val TAKEN = 409
+    private const val TAKEN_CODE = "upload_taken"
 }

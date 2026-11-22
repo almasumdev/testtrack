@@ -10,6 +10,7 @@ import com.eazyverse.testtrack.net.visitPicture
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -82,9 +83,14 @@ object VisitPictures {
         item: Waiting,
     ) {
         load(context)
-        val (kept, replaced) = PictureQueue.adding(queue.value, item)
+        var replaced = emptyList<Waiting>()
+        save(context) { current ->
+            PictureQueue.adding(current, item).let { (kept, gone) ->
+                replaced = gone
+                kept
+            }
+        }
         replaced.filter { it.path != item.path }.forEach { File(it.path).delete() }
-        save(context, kept)
         // Sent from here as soon as there is a connection, with TestTrack open or not.
         VisitPicturesWork.enqueue(context)
     }
@@ -134,15 +140,23 @@ object VisitPictures {
             }
             // An id kept from before pictures came to TestTrack is not one of ours: a new one is made.
             var item = if (ServerUpload.isId(waiting.fileId)) waiting else withId(context, waiting, ServerUpload.newId())
+            // A JPEG left by build 79 can be over the server's 1 MB cap for a visit picture, and a 413
+            // is final: it is drawn again as the WebP a new picture is. If that fails the file goes as it is.
+            val redrawn =
+                if (mime(file) == "image/jpeg") {
+                    withContext(Dispatchers.IO) { runCatching { ProofImages.visit(context, Uri.fromFile(file)) }.getOrNull() }
+                } else {
+                    null
+                }
             try {
                 val id =
                     ServerUpload.send(
                         id = item.fileId.orEmpty(),
                         kind = ServerUpload.VISIT,
-                        mime = mime(file),
+                        mime = if (redrawn != null) "image/webp" else mime(file),
                         seatId = item.seatId,
                         remint = { fresh -> item = withId(context, item, fresh) },
-                    ) { file.readBytes() }
+                    ) { redrawn ?: file.readBytes() }
                 val night = item.day.takeIf { it > 0 }
                 Api.visitPicture(item.seatId, PictureIn(id, item.byHand, day = night))
                 drop(context, item)
@@ -166,21 +180,26 @@ object VisitPictures {
         context: Context,
         item: Waiting,
         id: String,
-    ): Waiting = item.copy(fileId = id).also { save(context, queue.value.map { old -> if (old.path == item.path) it else old }) }
+    ): Waiting =
+        item.copy(fileId = id).also { updated ->
+            save(context) { current -> current.map { old -> if (old.path == item.path) updated else old } }
+        }
 
     private fun drop(
         context: Context,
         item: Waiting,
     ) {
         File(item.path).delete()
-        save(context, queue.value.filter { it !== item && it.path != item.path })
+        save(context) { current -> current.filter { it !== item && it.path != item.path } }
     }
 
+    /** Change the queue and write it down as one step, so two callers never overwrite each other's change. */
+    @Synchronized
     private fun save(
         context: Context,
-        items: List<Waiting>,
+        change: (List<Waiting>) -> List<Waiting>,
     ) {
-        queue.value = items
+        val items = queue.updateAndGet(change)
         prefs(context).edit { putString(KEY, json.encodeToString(items)) }
     }
 

@@ -205,7 +205,7 @@ class CrewExtrasViewModel : ViewModel() {
         uri: Uri,
     ) {
         val job = feedbackFor ?: return
-        send(job) { ProofImages.bytes(activity, uri) }
+        send(job) { ProofImages.bytes(activity, uri, ProofImages.CREW_MAX_BYTES) }
     }
 
     private fun send(
