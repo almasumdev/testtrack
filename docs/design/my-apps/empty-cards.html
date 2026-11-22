@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>App page: empty crew and feedback</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  @font-face { font-family: "BarlowApp"; font-weight: 400; src: url("../../../app/src/main/res/font/barlow_regular.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 500; src: url("../../../app/src/main/res/font/barlow_medium.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 600; src: url("../../../app/src/main/res/font/barlow_semibold.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 700; src: url("../../../app/src/main/res/font/barlow_bold.ttf"); }
+  .light {
+    --bg:#F7FCFF; --text:#142F43; --text2:#203A4E; --text3:#223D50; --text4:#59758A;
+    --glass:#F2F9FD; --glass2:#DFEDF6; --glassBorder:#B7D1E2;
+    --accent:#3A5B73; --onAccent:#FFFFFF; --accentInk:#22394B; --tile:#DCE6EE; --tileInk:#3A5B73;
+    --cardLine:#E1ECF3; --primary:var(--accent); --onPrimary:var(--onAccent); --gold:#9A7B1F;
+  }
+  .dark {
+    --bg:#0F1011; --text:#ECEEF0; --text2:#BCC1C6; --text3:#9DA3A9; --text4:#757C82;
+    --glass:#1C1E20; --glass2:#292C2F; --glassBorder:#383C41;
+    --accent:#4A7290; --onAccent:#FFFFFF; --accentInk:#93B3CA; --tile:#2A2D31; --tileInk:#A2BED2;
+    --cardLine:#2D3034; --primary:var(--accentInk); --onPrimary:var(--bg); --gold:#E3A93C;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #D9E0E5; font-family: "BarlowApp", "Barlow", system-ui, sans-serif; color: #1B2B36; }
+  .doc { padding: 24px 28px 80px; }
+  h1 { margin: 0 0 6px 4px; font-size: 22px; }
+  .alt { margin-top: 30px; padding-top: 22px; border-top: 1px solid #C3CDD4; }
+  .alt h2 { margin: 0 0 14px 4px; font-size: 20px; display: flex; align-items: center; gap: 10px; }
+  .rec { padding: 3px 10px; border-radius: 10px; background: #246B59; color: #fff; font-size: 12px; font-weight: 700; }
+  .row { display: flex; flex-wrap: wrap; gap: 26px; align-items: flex-start; }
+  .state { display: flex; flex-direction: column; gap: 8px; }
+  .lbl { font-size: 14px; font-weight: 700; margin-left: 4px; }
+
+  .mini { background: var(--bg); color: var(--text); border-radius: 22px; padding: 2px 16px 18px; border: 1px solid #B9C5CE; }
+  .dark.mini { border-color: #3A4046; }
+  svg.ic { display: block; flex: none; }
+  .inl { display: inline-block; vertical-align: -2px; margin-right: 6px; }
+  .inl svg { display: inline-block; }
+  .head { font-size: 16px; line-height: 19px; font-weight: 700; padding: 20px 0 10px; }
+  .card { background: var(--bg); border: 1px solid var(--cardLine); border-radius: 14px; }
+  .itile { width: 36px; height: 36px; border-radius: 11px; background: var(--tile); color: var(--tileInk); display: grid; place-items: center; flex: none; }
+  .pill { flex: none; max-width: 44%; min-height: 32px; padding: 7px 14px; border-radius: 16px; font-size: 13.5px; line-height: 16px; font-weight: 700; text-align: center; white-space: normal; overflow-wrap: anywhere; }
+  .pill.fill { background: var(--primary); color: var(--onPrimary); }
+  .pill.ton { background: var(--tile); color: var(--accentInk); }
+
+  /* A: compact row, TileRow anatomy */
+  .ra { display: flex; align-items: center; gap: 12px; padding: 12px 12px 12px 12px; min-height: 60px; }
+  .ra .col { flex: 1; min-width: 0; }
+  .ra .t { font-size: 16px; line-height: 20px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ra .s { font-size: 12.5px; line-height: 16px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* B: inviting card */
+  .rb { padding: 16px; }
+  .rb .top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+  .art { position: relative; width: 52px; height: 52px; border-radius: 16px; background: var(--tile); color: var(--tileInk); display: grid; place-items: center; flex: none; }
+  .art .b { position: absolute; right: -5px; bottom: -5px; width: 22px; height: 22px; border-radius: 50%; background: var(--bg); display: grid; place-items: center; color: var(--accentInk); }
+  .art .b i { width: 18px; height: 18px; border-radius: 50%; background: var(--tile); display: grid; place-items: center; }
+  .price { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 99px; background: var(--tile); color: var(--accentInk); font-size: 12.5px; line-height: 16px; font-weight: 700; white-space: nowrap; }
+  .rb .t { margin-top: 12px; font-size: 17px; line-height: 22px; font-weight: 600; }
+  .rb .s { margin-top: 2px; font-size: 13px; line-height: 18px; color: var(--text2); }
+  .wide { margin-top: 14px; min-height: 44px; border-radius: 22px; display: flex; align-items: center; justify-content: center; padding: 8px 16px; text-align: center; font-size: 14.5px; line-height: 18px; font-weight: 700; }
+  .wide.fill { background: var(--primary); color: var(--onPrimary); }
+  .wide.ton { background: var(--tile); color: var(--accentInk); }
+
+  /* C: the whole tile is the button */
+  .rc { display: flex; align-items: center; gap: 10px; min-height: 60px; padding: 11px 12px 11px 16px; border-radius: 14px; background: var(--glass2); }
+  .rc.main { background: var(--primary); color: var(--onPrimary); }
+  .rc .col { flex: 1; min-width: 0; }
+  .rc .t { font-size: 16px; line-height: 20px; font-weight: 700; color: var(--accentInk); }
+  .rc.main .t, .rc.main .s, .rc.main .chev { color: var(--onPrimary); }
+  .rc .s { margin-top: 1px; font-size: 12.5px; line-height: 16px; color: var(--text3); }
+  .rc.main .s { opacity: .85; }
+  .rc .chev { color: var(--accentInk); }
+
+  /* D: one merged card, two choices side by side */
+  .rd { padding: 12px; }
+  .rd .ln { font-size: 13px; line-height: 18px; color: var(--text2); padding: 2px 2px 12px; }
+  .two { display: flex; gap: 8px; }
+  .ch { flex: 1; min-width: 0; border-radius: 12px; background: var(--glass2); padding: 12px; display: flex; flex-direction: column; }
+  .ch .itile { width: 32px; height: 32px; border-radius: 10px; background: var(--bg); }
+  .ch .t { margin-top: 10px; font-size: 15px; line-height: 19px; font-weight: 700; }
+  .ch .s { margin-top: 2px; font-size: 12px; line-height: 16px; color: var(--text3); flex: 1; }
+  .ch .go { margin-top: 10px; font-size: 13.5px; line-height: 17px; font-weight: 700; color: var(--accentInk); display: flex; align-items: center; gap: 4px; }
+</style>
+</head>
+<body>
+<div class="doc" id="doc"></div>
+<script>
+const L = {
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  msq: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  star: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+  ticket: '<path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/>',
+  moon: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
+  chevR: '<path d="m9 18 6-6-6-6"/>',
+};
+const ic = (n, s = 16, w = 2) => `<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${L[n]}</svg>`;
+const inl = (n, s = 15) => `<span class="inl">${ic(n, s, 2.2)}</span>`;
+const N = '{runDays}';
+
+/* A: compact row */
+const A = () => `<div class="head">Crew test</div>
+  <div class="card ra"><span class="itile">${ic('users', 19)}</span><div class="col"><div class="t">Find a crew</div><div class="s">100 tix, ${N} nights</div></div><span class="pill fill">Put in</span></div>
+  <div class="head">Feedback</div>
+  <div class="card ra"><span class="itile">${ic('msq', 19)}</span><div class="col"><div class="t">Get reviews</div><div class="s">From testers on Circle</div></div><span class="pill ton">Ask</span></div>`;
+
+/* B: inviting card */
+const B = () => `<div class="head">Crew test</div>
+  <div class="card rb"><div class="top"><span class="art">${ic('users', 26)}<span class="b"><i>${ic('moon', 11, 2.4)}</i></span></span><span class="price">${ic('ticket', 13, 2.4)}100 tix</span></div>
+    <div class="t">Find a crew for it</div><div class="s">Testers open it every night for ${N} nights.</div><div class="wide fill">Put it in a crew</div></div>
+  <div class="head">Feedback</div>
+  <div class="card rb"><div class="top"><span class="art">${ic('msq', 26)}<span class="b"><i>${ic('star', 11, 2.4)}</i></span></span></div>
+    <div class="t">Ask Circle for reviews</div><div class="s">Testers try it and tell you what they found.</div><div class="wide ton">Ask for feedback</div></div>`;
+
+/* C: whole tile is the button */
+const C = () => `<div class="head">Crew test</div>
+  <div class="rc main"><div class="col"><div class="t">${inl('users')}Put it in a crew</div><div class="s">100 tix for ${N} nights</div></div><span class="chev">${ic('chevR', 18)}</span></div>
+  <div class="head">Feedback</div>
+  <div class="rc"><div class="col"><div class="t">${inl('msq')}Ask for feedback</div><div class="s">Reviews from testers on Circle</div></div><span class="chev">${ic('chevR', 18)}</span></div>`;
+
+/* D: one merged card */
+const D = () => `<div class="head">Get testers</div>
+  <div class="card rd"><div class="ln">Pick one or both.</div><div class="two">
+    <div class="ch"><span class="itile">${ic('users', 17)}</span><div class="t">Crew</div><div class="s">Testers every night for ${N} nights</div><div class="go">${ic('ticket', 14, 2.4)}100 tix</div></div>
+    <div class="ch"><span class="itile">${ic('msq', 17)}</span><div class="t">Feedback</div><div class="s">Reviews from testers on Circle</div><div class="go">Ask${ic('chevR', 14, 2.6)}</div></div>
+  </div></div>`;
+
+const ALTS = [
+  ['A', 'Compact row: icon tile, title, one-line hint, small button', A, true],
+  ['B', 'Inviting card: picture icon, price chip, wide button', B],
+  ['C', 'The whole tile is the button', C],
+  ['D', 'One "Get testers" card, both choices side by side', D],
+];
+const mini = (th, w, html) => `<div class="mini ${th}" style="width:${w}px">${html}</div>`;
+document.getElementById('doc').innerHTML = '<h1>App page: empty crew and feedback</h1>' + ALTS.map(([k, name, fn, rec]) => `<div class="alt"><h2>${k}. ${name}${rec ? '<span class="rec">Recommended</span>' : ''}</h2><div class="row">
+  ${[['light', 360], ['dark', 360], ['light', 320], ['dark', 320]].map(([th, w]) => `<div class="state"><div class="lbl">${th === 'light' ? 'Light' : 'Dark'}, ${w} wide</div>${mini(th, w, fn())}</div>`).join('')}
+</div></div>`).join('');
+</script>
+</body>
+</html>

@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>TestTrack changes, Nov 21</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,500,0,0">
+<style>
+  :root { --accent:#1D5C82; --ink:#1b2026; --muted:#6b7480; --line:#e3e7ec; --bg:#f5f7f9; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font-family:Barlow, system-ui, sans-serif; }
+  header { padding:28px 40px 8px; display:flex; align-items:baseline; gap:16px; flex-wrap:wrap; }
+  header h1 { margin:0; font-size:28px; font-weight:700; }
+  header .date { color:var(--muted); font-size:18px; }
+  .legend { display:flex; gap:18px; align-items:center; padding:0 40px 18px; color:var(--muted); font-size:15px; }
+  .legend span { display:inline-flex; align-items:center; gap:6px; }
+  main { padding:0 40px 40px; display:flex; flex-direction:column; gap:22px; }
+  section { background:#fff; border:1px solid var(--line); border-radius:20px; padding:18px 22px 22px; }
+  section h2 { margin:0 0 14px; font-size:20px; font-weight:700; display:flex; align-items:center; gap:10px; }
+  section h2 .letter { width:30px; height:30px; border-radius:9px; background:var(--accent); color:#fff;
+    display:inline-flex; align-items:center; justify-content:center; font-size:16px; }
+  .row { display:flex; gap:26px; flex-wrap:wrap; align-items:flex-start; }
+  .shot { width:300px; display:flex; flex-direction:column; gap:10px; }
+  .tag { align-self:flex-start; font-size:13px; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
+    padding:3px 10px; border-radius:999px; }
+  .tag.before { background:#eceff2; color:#69717b; }
+  .tag.after { background:#dbe8f1; color:var(--accent); }
+  .phone { position:relative; width:300px; border-radius:30px; padding:6px; background:#0d0f12;
+    box-shadow:0 6px 22px rgba(20,30,40,.18); }
+  .phone.crop { border-radius:22px; width:220px; }
+  .phone .screen { position:relative; border-radius:25px; overflow:hidden; }
+  .phone.crop .screen { border-radius:17px; }
+  .phone img { display:block; width:100%; }
+  .box { position:absolute; border:2.5px solid var(--accent); border-radius:8px; background:rgba(29,92,130,.10); }
+  .before-shot .box { border-color:#c0574f; background:rgba(192,87,79,.10); border-style:dashed; }
+  .mk { position:absolute; transform:translate(-50%,-50%); width:26px; height:26px; border-radius:50%;
+    background:var(--accent); color:#fff; font-weight:700; font-size:14px; display:flex; align-items:center;
+    justify-content:center; border:2px solid #fff; box-shadow:0 2px 6px rgba(0,0,0,.35); z-index:2; }
+  .before-shot .mk { background:#c0574f; }
+  ul.notes { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:7px; }
+  ul.notes li { display:flex; gap:9px; align-items:flex-start; font-size:15.5px; line-height:1.3; }
+  ul.notes .n { flex:none; width:22px; height:22px; border-radius:50%; background:var(--accent); color:#fff;
+    font-weight:700; font-size:12.5px; display:inline-flex; align-items:center; justify-content:center; margin-top:1px; }
+  .before-shot ul.notes .n { background:#c0574f; }
+  ul.notes .ic { font-family:'Material Symbols Rounded'; font-size:18px; color:var(--accent); vertical-align:-4px; }
+  .arrowgap { align-self:center; font-family:'Material Symbols Rounded'; font-size:34px; color:#b6bec7; margin:0 -8px; }
+  .same { align-self:center; display:flex; flex-direction:column; align-items:center; gap:4px; color:#2e7d4f; font-weight:600; font-size:14px; }
+  .same .material { font-family:'Material Symbols Rounded'; font-size:36px; }
+  .also { display:flex; flex-wrap:wrap; gap:10px; }
+  .chip { display:inline-flex; align-items:center; gap:9px; padding:9px 14px; border:1px solid var(--line);
+    border-radius:999px; background:#fafbfc; font-size:15.5px; }
+  .chip .ic { font-family:'Material Symbols Rounded'; font-size:22px; color:var(--accent); }
+  .chip small { color:var(--muted); font-size:13.5px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>TestTrack: what changed today</h1>
+  <span class="date">Nov 21</span>
+</header>
+<div class="legend">
+  <span><span class="mk" style="position:static;transform:none;width:20px;height:20px;font-size:11px;background:#c0574f">3</span> Before</span>
+  <span><span class="mk" style="position:static;transform:none;width:20px;height:20px;font-size:11px">3</span> Now</span>
+</div>
+<main id="main"></main>
+
+<script>
+// x, y = marker centre in % of the image. box = [left, top, width, height] in %.
+const sections = [
+  { letter:'A', icon:'rate_review', title:'Check review page', shots:[
+    { kind:'before', img:'before/14-budgetbuddy.png', marks:[
+        {n:3, x:58, y:43, box:[13.4,30.8,41.6,25.2]} ],
+      notes:[{n:3, t:'Thick frame around the screenshot'}] },
+    { kind:'before', crop:true, img:'before/crop-badge.png', marks:[
+        {n:7, x:84, y:60, box:[52,56,25,21]} ],
+      notes:[{n:7, t:'Play badge cut off at the bottom'}] },
+    { arrow:true },
+    { kind:'after', img:'after/01-check-review.png', marks:[
+        {n:1, x:70, y:7.6, box:[13.5,5,52,5.3]},
+        {n:2, x:41, y:29.3, box:[15.5,28,20.5,2.8]},
+        {n:3, x:56.5, y:42, box:[13.4,30.4,39.6,24.2]},
+        {n:4, x:29, y:70.6, box:[13,69.4,11.5,2.4]},
+        {n:5, x:47, y:67.4, box:[16,66.1,26,2.6]},
+        {n:6, x:80, y:25.2, box:[23.4,23.6,53.3,3.1]},
+        {n:6, x:81, y:83.6, box:[21,82.1,56.5,3]},
+        {n:7, x:22.5, y:19.6, box:[13.8,15.8,5.2,2.8]},
+        {n:8, x:5, y:94.9, box:[3.8,85.8,92.4,10.3]} ],
+      notes:[
+        {n:1, t:'Name, time left and pay in the top bar. Same bar height'},
+        {n:2, t:'Reviewer block gone. Name sits above the first bubble'},
+        {n:3, t:'Screenshot fills its bubble, no frame'},
+        {n:4, t:'Picture and text are one group, one time under it'},
+        {n:5, t:'Character count inside the bubble'},
+        {n:6, t:'Notes on one centred line'},
+        {n:7, t:'Play and test badge shows in full'},
+        {n:8, t:'Buttons pinned: Accept, then Ask for a new one or Refuse'} ] },
+    { kind:'after', img:'after/02-check-review-1of3.png', marks:[
+        {n:9, x:79, y:7.3, box:[85,6.2,10.2,2.4]} ],
+      notes:[{n:9, t:'"1 of 3" in the bar'}] }
+  ]},
+  { letter:'B', icon:'forum', title:'Waiting pages', shots:[
+    { kind:'after', img:'after/03-waiting-sent.png', marks:[
+        {n:10, x:68.5, y:74.3, box:[73.5,73.2,22,2.3]},
+        {n:10, x:19, y:58, box:[22.4,44.3,73.6,28.6]} ],
+      notes:[{n:10, t:'Chat thread. My bubbles on the right, "Sent 7:15 PM" with two ticks'}] },
+    { kind:'before', img:'before/20-wait-halfpay.png', marks:[
+        {n:12, x:76, y:69.4, box:[28.8,67.8,42.5,3.2]},
+        {n:13, x:57.5, y:34, box:[62.4,24,33.6,21]} ],
+      notes:[{n:12, t:'Two (i) icons'},{n:13, t:'Thick blue border on my picture'}] },
+    { arrow:true },
+    { kind:'after', img:'after/04-waiting-halfpay.png', marks:[
+        {n:12, x:75, y:68.5, box:[28.8,66.9,42.5,3.2]},
+        {n:13, x:59.5, y:34, box:[64.5,24,31.5,20]} ],
+      notes:[{n:12, t:'Half pay note with a coins icon, one (i) only'},{n:13, t:'My picture: no thick blue border'}] }
+  ]},
+  { letter:'B', icon:'forum', title:'Waiting pages, refused and not paid', shots:[
+    { kind:'before', img:'before/21-wait-deciding.png', marks:[
+        {n:13, x:57.5, y:34, box:[62.4,24,33.6,21]} ],
+      notes:[{n:13, t:'Thick blue border on my picture'}] },
+    { arrow:true },
+    { kind:'after', img:'after/05-waiting-refused.png', marks:[
+        {n:13, x:59.5, y:34, box:[64.5,24,31.5,20]},
+        {n:11, x:35.5, y:52.3, box:[16,51.2,15.5,2.4]},
+        {n:11, x:7.8, y:73.8, box:[4,76.3,7.6,3.5]},
+        {n:15, x:16, y:88.5, box:[22,87.6,73,2.2]} ],
+      notes:[
+        {n:11, t:'"Developer" and the app icon, never a name'},
+        {n:13, t:'My picture: no thick blue border'},
+        {n:15, t:'Soft fade above the buttons'} ] },
+    { kind:'before', img:'before/22-petwalker.png', marks:[
+        {n:14, x:57.5, y:34, box:[62.4,24,33.6,21]} ],
+      notes:[{n:14, t:'Empty grey box for a picture that is gone'}] },
+    { arrow:true },
+    { kind:'after', img:'after/06-not-paid-removed-picture.png', marks:[
+        {n:14, x:59.5, y:30, box:[64.5,24,31.5,11.7]},
+        {n:14, x:49.5, y:54.3, box:[13.5,48.6,31.5,11.7]},
+        {n:11, x:35.5, y:40.4, box:[16,39.3,15.5,2.4]} ],
+      notes:[
+        {n:14, t:'"Picture removed" instead of an empty box'},
+        {n:11, t:'"Developer", never a name'} ] }
+  ]},
+  { letter:'C', icon:'zoom_in', title:'Picture viewer', shots:[
+    { kind:'after', img:'after/07-picture-viewer.png', marks:[
+        {n:16, x:46, y:7.2, box:[3.6,4.8,37.5,4.6]},
+        {n:16, x:50, y:62, box:null} ],
+      notes:[
+        {n:16, t:'One viewer everywhere'},
+        {ic:'pinch', t:'Pinch to zoom'},
+        {ic:'swipe_down', t:'Pull down to close'},
+        {ic:'badge', t:'Name and time on top'} ] }
+  ]},
+  { letter:'D', icon:'assignment', title:'Your request page', shots:[
+    { kind:'after', img:'after/09-your-request.png', marks:[
+        {n:17, x:33, y:26.3, box:[4,28.4,92,20]} ],
+      notes:[{n:17, t:'New Check look. It was the old glass cards'}] }
+  ]},
+  { letter:'E', icon:'apps', title:'App page', shots:[
+    { kind:'before', img:'before/05-app-page-top.png', marks:[
+        {n:18, x:50, y:38.9, box:[4,41.2,92,17.4]} ],
+      notes:[{n:18, t:'Request card before'}] },
+    { same:true },
+    { kind:'after', img:'after/10-app-page-request-card.png', marks:[
+        {n:18, x:50, y:38.9, box:[4,41.2,92,17.4]} ],
+      notes:[{n:18, t:'Request card unchanged, pixel for pixel'}] }
+  ]},
+  { letter:'F', icon:'person', title:'Me tab', shots:[
+    { kind:'before', img:'before/12-me.png', marks:[
+        {n:19, x:50, y:28.5, box:[4,31,92,25.4]} ],
+      notes:[{n:19, t:'Spacing before'}] },
+    { same:true },
+    { kind:'after', img:'after/11-me-tab.png', marks:[
+        {n:19, x:50, y:28.5, box:[4,31,92,25.4]} ],
+      notes:[{n:19, t:'Spacing kept the same'}] }
+  ]},
+  { letter:'G', icon:'add_box', title:'Add app', shots:[
+    { kind:'after', img:'after/12-add-app-field.png', marks:[
+        {n:20, x:91, y:64.2, box:[4,61.2,92,6]} ],
+      notes:[{n:20, t:'Play link box is the 48dp notched field'}] }
+  ]},
+  { letter:'H', icon:'list', title:'App picker', shots:[
+    { kind:'after', img:'after/13-app-picker-add-new.png', marks:[
+        {n:21, x:91, y:92.7, box:[4,89.6,92,6.2]} ],
+      notes:[{n:21, t:'"Add a new app" is the standard outlined button'}] }
+  ]}
+];
+
+const also = [
+  {ic:'edit', t:'One picture editor for review screenshots', s:'the chat one'},
+  {ic:'visibility_off', t:'Hide boxes burned into the picture'},
+  {ic:'lock', t:'Send waits until the hidden version is saved'},
+  {ic:'delete_sweep', t:'About 700 lines of copied UI removed', s:'pills, headings, (i), tiles, fields, robot pages'},
+  {ic:'calendar_today', t:'Dates read "Nov 9" everywhere'},
+  {ic:'schedule', t:'Times follow the 24-hour setting'},
+  {ic:'dataset', t:'Dev data for every review state'},
+  {ic:'verified', t:'Approved screens checked pixel for pixel', s:'crew, chat, app page, Ask, review pages'}
+];
+
+const main = document.getElementById('main');
+for (const sec of sections) {
+  const el = document.createElement('section');
+  el.innerHTML = `<h2><span class="letter">${sec.letter}</span>${sec.title}</h2>`;
+  const row = document.createElement('div'); row.className = 'row';
+  for (const s of sec.shots) {
+    if (s.arrow) { row.insertAdjacentHTML('beforeend', '<span class="arrowgap">arrow_forward</span>'); continue; }
+    if (s.same) { row.insertAdjacentHTML('beforeend', '<div class="same"><span class="material">equal</span>Same</div>'); continue; }
+    const shot = document.createElement('div');
+    shot.className = 'shot ' + (s.kind === 'before' ? 'before-shot' : 'after-shot');
+    const marks = s.marks.map(m =>
+      (m.box ? `<div class="box" style="left:${m.box[0]}%;top:${m.box[1]}%;width:${m.box[2]}%;height:${m.box[3]}%"></div>` : '') +
+      `<div class="mk" style="left:${m.x}%;top:${m.y}%">${m.n}</div>`).join('');
+    const notes = s.notes.map(n => n.n
+      ? `<li><span class="n">${n.n}</span><span>${n.t}</span></li>`
+      : `<li><span class="ic" style="width:22px;text-align:center">${n.ic}</span><span>${n.t}</span></li>`).join('');
+    shot.innerHTML = `<span class="tag ${s.kind}">${s.kind === 'before' ? 'Before' : 'Now'}</span>
+      <div class="phone${s.crop ? ' crop' : ''}"><div class="screen"><img src="${s.img}" alt="">${marks}</div></div>
+      <ul class="notes">${notes}</ul>`;
+    row.appendChild(shot);
+  }
+  el.appendChild(row);
+  main.appendChild(el);
+}
+const a = document.createElement('section');
+a.innerHTML = `<h2><span class="letter"><span style="font-family:'Material Symbols Rounded';font-size:18px">done_all</span></span>Also done (no screenshot)</h2>
+  <div class="also">${also.map(c => `<span class="chip"><span class="ic">${c.ic}</span><span>${c.t}${c.s ? ` <small>${c.s}</small>` : ''}</span></span>`).join('')}</div>`;
+main.appendChild(a);
+</script>
+</body>
+</html>

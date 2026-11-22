@@ -1,0 +1,686 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>TestTrack: old-style leftovers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  @font-face { font-family: "BarlowApp"; font-weight: 400; src: url("../../../app/src/main/res/font/barlow_regular.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 500; src: url("../../../app/src/main/res/font/barlow_medium.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 600; src: url("../../../app/src/main/res/font/barlow_semibold.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 700; src: url("../../../app/src/main/res/font/barlow_bold.ttf"); }
+  @font-face { font-family: "PlexApp"; font-weight: 500; src: url("../../../app/src/main/res/font/plexmono_medium.ttf"); }
+  @font-face { font-family: "PlexApp"; font-weight: 600; src: url("../../../app/src/main/res/font/plexmono_semibold.ttf"); }
+  @font-face { font-family: "PlexApp"; font-weight: 700; src: url("../../../app/src/main/res/font/plexmono_bold.ttf"); }
+  :root {
+    --bg:#F7FCFF; --text:#142F43; --text2:#203A4E; --text3:#223D50; --text4:#59758A;
+    --glass:#F2F9FD; --glass2:#DFEDF6; --glassBorder:#B7D1E2; --glassBorderStrong:#789AAF;
+    --accent:#3A5B73; --accentInk:#22394B; --tile:#DCE6EE; --tileInk:#3A5B73; --tabSel:#2E4E66;
+    --leafSoft:rgba(74,114,144,.16); --ok:#246B59; --okBg:rgba(36,107,89,.12); --warn:#8A611C; --warnBg:rgba(154,110,36,.12);
+    --bad:#9E3B2E; --badBg:rgba(158,59,46,.12); --sheet:#FFFFFF; --sheetOutline:#B7D1E2; --track:#E4EEF4;
+    --cardLine:#E1ECF3; --inverse:#172F42; --onInverse:#EFF7FC; --inverseAccent:#A9C3D6; --snackOk:#83D8C4;
+    --ring:rgba(20,47,67,.14); --scrim:rgba(20,34,48,.46); --band:#ECF2F6; --field:#F7FCFF;
+    --mark:#C2185B; --markBg:#FCE4EE; --sameInk:#2E6B4F; --sameBg:#DDF0E6;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #D9E0E5; font-family: "BarlowApp","Barlow",system-ui,sans-serif; color: var(--text); }
+  header { padding: 22px 32px 6px; display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+  header h1 { margin: 0; font-size: 26px; }
+  .legend { display: flex; gap: 14px; align-items: center; font-size: 14px; color: #4b5d6b; }
+  main { padding: 10px 32px 40px; display: flex; flex-direction: column; gap: 18px; }
+  section { background: #fff; border-radius: 18px; padding: 16px 20px 20px; }
+  section > h2 { margin: 0 0 14px; font-size: 19px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .num { width: 30px; height: 30px; border-radius: 9px; background: var(--accent); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 16px; flex: none; }
+  .verdict { font-size: 13px; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
+  .verdict.diff { background: var(--markBg); color: var(--mark); }
+  .verdict.same { background: var(--sameBg); color: var(--sameInk); }
+  .row { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; }
+  .fr { display: flex; flex-direction: column; gap: 6px; }
+  .cap { font-size: 12.5px; color: #44535f; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; max-width: 360px; }
+  .cap code { font-family: "PlexApp","IBM Plex Mono",monospace; font-size: 11.5px; color: #1f2d38; }
+  .tag { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; }
+  .tag.now { background: var(--markBg); color: var(--mark); }
+  .tag.today { background: #E3EDF4; color: #3A5B73; }
+  .v { font-size: 12px; font-weight: 700; padding: 1px 8px; border-radius: 999px; }
+  .v.d { background: var(--markBg); color: var(--mark); }
+  .v.s { background: var(--sameBg); color: var(--sameInk); }
+  .scr { width: 360px; background: var(--bg); border: 1px solid #C5D2DB; border-radius: 14px; padding: 16px; position: relative; }
+  .scr.sheet { background: var(--sheet); }
+  .scr.photo { background: #000; border-color: #000; }
+  .scr.auto { width: auto; }
+  .fr.today .scr { width: 300px; border-style: dashed; opacity: .9; }
+  .fr.today .scr.auto { width: auto; }
+  .grp { border-left: 3px solid #E7EDF1; padding-left: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .grp > h3 { margin: 0; font-size: 14px; color: #4b5d6b; letter-spacing: .03em; text-transform: uppercase; }
+  /* marks */
+  .sz { display: inline-block; font: 700 10px/13px "PlexApp","IBM Plex Mono",monospace; font-style: normal; padding: 0 4px; border-radius: 4px; background: var(--markBg); color: var(--mark); vertical-align: baseline; margin-left: 6px; letter-spacing: 0; text-transform: none; white-space: nowrap; }
+  .lg { font-size: 11px; line-height: 20px; color: #44535f; }
+  .lg .sz { margin-left: 4px; margin-right: 8px; }
+  .sz.ok { background: #E6EEF3; color: #557086; }
+  .rad { position: absolute; top: -9px; left: -7px; font: 700 10px/14px "PlexApp","IBM Plex Mono",monospace; font-style: normal; padding: 0 4px; border-radius: 4px; background: var(--mark); color: #fff; z-index: 3; }
+  .rad.ok { background: #557086; }
+  .rel { position: relative; }
+  .dot { display: inline-block; width: 15px; text-align: center; border-radius: 50%; background: var(--mark); color: #fff !important; font-weight: 700; line-height: 15px; margin: 0 2px; }
+  /* app bits */
+  svg.ic { display: block; flex: none; }
+  .rc { display: flex; align-items: center; }
+  .card { background: var(--bg); border: 1px solid var(--cardLine); border-radius: 14px; }
+  .am { display: inline-flex; align-items: center; justify-content: center; font-weight: 600; flex: none; }
+  .act { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 700; color: var(--accentInk); padding: 4px 8px; min-height: 32px; border-radius: 999px; flex: none; }
+  .band { background: var(--band); border-radius: 10px; padding: 4px 4px 4px 10px; min-height: 36px; display: flex; align-items: center; }
+  .grow { flex: 1; min-width: 0; }
+  .pill { display: flex; align-items: center; justify-content: center; border-radius: 999px; }
+  .sk { display: block; border-radius: 6px; background: linear-gradient(100deg, #DFEDF6 30%, #F2F8FC 50%, #DFEDF6 70%); background-size: 300% 100%; animation: sh 1.6s linear infinite; }
+  @keyframes sh { from { background-position: 100% 0; } to { background-position: 0 0; } }
+  .spin { border-radius: 50%; border-style: solid; border-color: currentColor; border-right-color: transparent; animation: spin 1s linear infinite; flex: none; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .bar { height: 3px; border-radius: 2px; background: var(--track); overflow: hidden; position: relative; }
+  .bar i { position: absolute; top: 0; bottom: 0; background: var(--accent); border-radius: 2px; }
+  .bar.ind i { width: 35%; animation: ind 1.4s ease-in-out infinite; }
+  @keyframes ind { from { left: -35%; } to { left: 100%; } }
+  .bar.det i { left: 0; width: 62%; }
+  .note8 { font-size: 15px; color: #33444f; display: flex; gap: 18px; flex-wrap: wrap; }
+  .note8 b { font-family: "PlexApp","IBM Plex Mono",monospace; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute"><defs><linearGradient id="rg1" gradientUnits="userSpaceOnUse" x1="230" y1="436" x2="1000" y2="985"><stop offset="0" stop-color="#245F84" stop-opacity="1.0"/><stop offset="1" stop-color="#174866" stop-opacity="1.0"/></linearGradient><linearGradient id="rg2" gradientUnits="userSpaceOnUse" x1="230" y1="436" x2="1000" y2="985"><stop offset="0" stop-color="#245F84" stop-opacity="1.0"/><stop offset="1" stop-color="#174866" stop-opacity="1.0"/></linearGradient><linearGradient id="rg3" gradientUnits="userSpaceOnUse" x1="230" y1="436" x2="1000" y2="985"><stop offset="0" stop-color="#245F84" stop-opacity="1.0"/><stop offset="1" stop-color="#174866" stop-opacity="1.0"/></linearGradient><linearGradient id="rg4" gradientUnits="userSpaceOnUse" x1="350" y1="277" x2="910" y2="744"><stop offset="0" stop-color="#32729B" stop-opacity="1.0"/><stop offset="1" stop-color="#1D5C82" stop-opacity="1.0"/></linearGradient><linearGradient id="rg5" gradientUnits="userSpaceOnUse" x1="310" y1="765" x2="568" y2="1056"><stop offset="0" stop-color="#F99B80" stop-opacity="1.0"/><stop offset="1" stop-color="#EF806B" stop-opacity="1.0"/></linearGradient><linearGradient id="rg6" gradientUnits="userSpaceOnUse" x1="230" y1="436" x2="1000" y2="985"><stop offset="0" stop-color="#245F84" stop-opacity="1.0"/><stop offset="1" stop-color="#174866" stop-opacity="1.0"/></linearGradient><linearGradient id="rg7" gradientUnits="userSpaceOnUse" x1="270" y1="846" x2="960" y2="966"><stop offset="0" stop-color="#80BCDE" stop-opacity="1.0"/><stop offset="1" stop-color="#5E9DC5" stop-opacity="1.0"/></linearGradient><linearGradient id="rg8" gradientUnits="userSpaceOnUse" x1="230" y1="436" x2="1000" y2="985"><stop offset="0" stop-color="#245F84" stop-opacity="1.0"/><stop offset="1" stop-color="#174866" stop-opacity="1.0"/></linearGradient><linearGradient id="rg9" gradientUnits="userSpaceOnUse" x1="270" y1="846" x2="960" y2="966"><stop offset="0" stop-color="#80BCDE" stop-opacity="1.0"/><stop offset="1" stop-color="#5E9DC5" stop-opacity="1.0"/></linearGradient><linearGradient id="rg10" gradientUnits="userSpaceOnUse" x1="486" y1="860" x2="584" y2="952"><stop offset="0" stop-color="#FFFFFF" stop-opacity="1.0"/><stop offset="1" stop-color="#E3ECF3" stop-opacity="1.0"/></linearGradient><linearGradient id="rg11" gradientUnits="userSpaceOnUse" x1="584" y1="876" x2="636" y2="892"><stop offset="0" stop-color="#E6EDF3" stop-opacity="1.0"/><stop offset="1" stop-color="#AFC0CE" stop-opacity="1.0"/></linearGradient><linearGradient id="rg12" gradientUnits="userSpaceOnUse" x1="584" y1="920" x2="636" y2="936"><stop offset="0" stop-color="#E6EDF3" stop-opacity="1.0"/><stop offset="1" stop-color="#AFC0CE" stop-opacity="1.0"/></linearGradient><linearGradient id="rg13" gradientUnits="userSpaceOnUse" x1="668" y1="852" x2="766" y2="960"><stop offset="0" stop-color="#F99B80" stop-opacity="1.0"/><stop offset="1" stop-color="#EF806B" stop-opacity="1.0"/></linearGradient></defs></svg>
+<header>
+  <h1>TestTrack: old-style leftovers</h1>
+  <div class="legend"><span class="tag now">now</span> drawn from the code today <span class="tag today">today's style</span> the shared piece <span class="sz">18</span> one-off size <span class="sz ok">16</span> shared size</div>
+</header>
+<main>
+
+<!-- ============================== 1 ============================== -->
+<section>
+  <h2><span class="num">1</span> Sign-in sheet <span class="verdict diff">looks different</span></h2>
+  <div class="row">
+    <div class="fr">
+      <div class="cap"><span class="tag now">now</span><code>SignInParts.kt:74</code> GooglePill, raw Material Button</div>
+      <div class="scr sheet">
+        <div class="pill" style="height:52px;border:1px solid var(--sheetOutline);background:var(--sheet);gap:12px;padding:0 24px">
+          <svg width="20" height="20" viewBox="0 0 48 48" style="flex:none;display:block"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span style="font-size:15px;font-weight:600;color:var(--text)">Continue with Google</span>
+        </div>
+      </div>
+    </div>
+    <div class="fr today">
+      <div class="cap"><span class="tag today">today's style</span> Primary(mark) / Outlined</div>
+      <div class="scr">
+        <div class="pill" style="height:52px;background:var(--accent);color:#fff;gap:10px;padding:0 24px"><svg width="18" height="18" viewBox="0 0 48 48" style="flex:none;display:block"><path fill="#fff" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#fff" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#fff" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#fff" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span style="font-size:15px;font-weight:700">Continue with Google</span></div>
+        <div style="height:10px"></div>
+        <div class="pill" style="height:52px;border:1.5px solid var(--accentInk);color:var(--accentInk);gap:10px;padding:0 24px"><svg width="18" height="18" viewBox="0 0 48 48" style="flex:none;display:block"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span style="font-size:15px;font-weight:700">Continue with Google</span></div>
+      </div>
+    </div>
+  </div>
+  <div style="height:16px"></div>
+  <div class="row">
+    <div class="fr">
+      <div class="cap"><span class="tag now">now</span><code>SignInParts.kt:123</code> account row, 16 corners, sheet outline</div>
+      <div class="scr sheet">
+        <div class="rel rc" style="height:64px;border:1px solid var(--sheetOutline);border-radius:16px;padding:0 14px;gap:12px">
+          <i class="rad">16</i>
+          <span class="am" style="width:36px;height:36px;border-radius:50%;background:hsl(205,45%,89%);color:hsl(205,50%,32%);font-size:16px;box-shadow:0 0 0 1px var(--ring)">S</span>
+          <div class="grow"><div style="font-size:15px;line-height:20px;font-weight:600">Sara Ahmed</div><div style="font-size:13px;line-height:18px;color:var(--text4)">sara.ahmed@gmail.com</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="fr today">
+      <div class="cap"><span class="tag today">today's style</span> GroupAccountRow: TileRadius 14, card line</div>
+      <div class="scr">
+        <div class="rel rc" style="height:64px;border:1px solid var(--cardLine);border-radius:14px;padding:0 14px;gap:12px">
+          <i class="rad ok">14</i>
+          <span class="am" style="width:36px;height:36px;border-radius:50%;background:hsl(205,45%,89%);color:hsl(205,50%,32%);font-size:16px;box-shadow:0 0 0 1px var(--ring)">S</span>
+          <div class="grow"><div style="font-size:15px;line-height:20px;font-weight:600">sara.ahmed@gmail.com</div><div style="font-size:12.5px;line-height:16px;color:var(--text3)">In the testers group</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== 2 ============================== -->
+<section>
+  <h2><span class="num">2</span> Crew run: lines joined with " · " <span class="verdict diff">looks different</span></h2>
+  <div class="row">
+    <div class="fr">
+      <div class="cap"><span class="tag now">now</span><code>CrewRunAppState.kt:49-51</code> band on the app tile</div>
+      <div class="scr">
+        <div class="card" style="padding:14px">
+          <div class="rc" style="gap:10px"><span class="am" data-app="Habit Hen" data-h="30" data-z="44"></span><div class="grow"><div style="font-size:16px;line-height:19px;font-weight:600">Habit Hen</div><div style="font-size:12px;line-height:14px;color:var(--text3)">com.hen.habit</div></div></div>
+          <div style="height:10px"></div>
+          <div class="band"><span data-i="flag" data-s="15" style="color:var(--warn)"></span><span style="width:6px"></span><span class="grow" style="font-size:13px;line-height:18px;color:var(--warn)">Reported <b class="dot">·</b> Play copy needed <span data-i="info" data-s="13" style="display:inline-block;color:var(--text3);vertical-align:-2px;margin-left:4px"></span></span><span class="act">Install</span></div>
+          <div style="height:8px"></div>
+          <div class="band"><span data-i="flag" data-s="15" style="color:var(--warn)"></span><span style="width:6px"></span><span class="grow" style="font-size:13px;line-height:18px;color:var(--warn)">Reported <b class="dot">·</b> not installed</span><span class="act">Install</span></div>
+          <div style="height:8px"></div>
+          <div class="band"><span data-i="flag" data-s="15" style="color:var(--warn)"></span><span style="width:6px"></span><span class="grow" style="font-size:13px;line-height:18px;color:var(--warn)">Reported <b class="dot">·</b> update needed</span><span class="act">Update</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="fr">
+      <div class="cap"><span class="tag now">now</span><code>CrewRunAppTile.kt:181</code> private feedback line</div>
+      <div class="scr">
+        <div class="card" style="padding:14px">
+          <div class="rc" style="gap:10px"><span class="am" data-app="Budget Buddy" data-h="140" data-z="44"></span><div class="grow"><div style="font-size:16px;line-height:19px;font-weight:600">Budget Buddy</div><div style="font-size:12px;line-height:14px;color:var(--text3)">com.budget.buddy</div></div><span class="act"><span data-i="flag" data-s="16"></span>Report</span></div>
+          <div style="height:10px"></div>
+          <div class="band"><span data-i="circleCheck" data-s="15" style="color:var(--ok)"></span><span style="width:6px"></span><span class="grow" style="font-size:13px;line-height:18px;color:var(--ok)">Opened tonight</span></div>
+          <div class="rc" style="gap:8px;margin-top:4px"><span class="rc grow"><span data-i="msg" data-s="14" style="color:var(--text2)"></span><span style="width:7px"></span><span style="font-size:12px;line-height:17px;color:var(--text2)">Private feedback<span style="color:var(--text3)"> <b class="dot">·</b> By night 3</span></span></span><span class="act">Write</span></div>
+          <div class="rc" style="gap:8px"><span class="rc grow"><span data-i="msg" data-s="14" style="color:var(--warn)"></span><span style="width:7px"></span><span style="font-size:12px;line-height:17px;color:var(--warn)">Private feedback <b class="dot">·</b> Overdue</span></span><span class="act">Write</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="fr">
+      <div class="cap"><span class="tag now">now</span><code>CrewRunPictureUpdates.kt:32, 46</code> update cards</div>
+      <div class="scr">
+        <div class="card" style="padding:12px 14px">
+          <div class="rc" style="min-height:32px"><div class="grow"><div class="rc"><span data-i="image" data-s="15" style="color:var(--warn)"></span><span style="width:6px"></span><span style="font-size:13px;line-height:18px;font-weight:500;color:var(--warn)">Screenshot missing</span><span data-i="info" data-s="13" style="color:var(--text3);margin-left:5px"></span></div><div style="font-size:12px;line-height:17px;color:var(--text3)">Budget Buddy <b class="dot">·</b> Test time saved</div></div><span class="act">Add</span></div>
+        </div>
+        <div style="height:10px"></div>
+        <div class="card" style="padding:12px 14px">
+          <div class="rc" style="min-height:32px"><div class="grow"><div class="rc"><span data-i="clock" data-s="15" style="color:var(--bad)"></span><span style="width:6px"></span><span style="font-size:13px;line-height:18px;font-weight:500;color:var(--bad)">Upload waiting <b class="dot">·</b> 3h+</span><span data-i="info" data-s="13" style="color:var(--text3);margin-left:5px"></span></div><div style="font-size:12px;line-height:17px;color:var(--text3)">2 screenshots saved on this phone</div></div><span class="act">Retry</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="fr">
+      <div class="cap"><span class="tag now">now</span><code>CrewRunUpdates.kt:87, 91, 92</code> missed night, one crew and two</div>
+      <div class="scr">
+        <div class="card" style="padding:12px 14px">
+          <div class="rc" style="min-height:32px"><div class="grow"><div class="rc"><span data-i="alert" data-s="15" style="color:var(--warn)"></span><span style="width:6px"></span><span style="font-size:13px;line-height:18px;font-weight:500;color:var(--warn)">Missed yesterday</span><span data-i="info" data-s="13" style="color:var(--text3);margin-left:5px"></span></div><div style="font-size:12px;line-height:17px;color:var(--text3)">Night Owls <b class="dot">·</b> 2 apps left <b class="dot">·</b> <span style="font-weight:500;color:var(--text)">Before midnight</span></div></div><span class="act">View crew</span></div>
+        </div>
+        <div style="height:10px"></div>
+        <div class="card" style="padding:12px 14px">
+          <div class="rc" style="min-height:32px"><div class="grow"><div class="rc"><span data-i="alert" data-s="15" style="color:var(--warn)"></span><span style="width:6px"></span><span style="font-size:13px;line-height:18px;font-weight:500;color:var(--warn)">Night Owls <b class="dot">·</b> Missed yesterday</span></div><div style="font-size:12px;line-height:17px;color:var(--text3)">2 apps left <b class="dot">·</b> <span style="font-weight:500;color:var(--text)">Before midnight</span></div></div><span class="act">View crew</span></div>
+          <div style="height:12px"></div>
+          <div class="rc" style="min-height:32px"><div class="grow"><div class="rc"><span data-i="alert" data-s="15" style="color:var(--warn)"></span><span style="width:6px"></span><span style="font-size:13px;line-height:18px;font-weight:500;color:var(--warn)">Early Birds <b class="dot">·</b> Missed yesterday</span></div><div style="font-size:12px;line-height:17px;color:var(--text3)">1 app left <b class="dot">·</b> <span style="font-weight:500;color:var(--text)">Before midnight</span></div></div><span class="act">View crew</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== 3 ============================== -->
+<section>
+  <h2><span class="num">3</span> Chat corners <span class="verdict same">looks the same (code only)</span></h2>
+  <div class="row">
+    <div class="fr">
+      <div class="cap"><span class="tag now">now</span><code>CrewChatComposer.kt:109</code> reply panel, 16 <span class="v d">2dp rounder</span></div>
+      <div class="scr" style="padding:14px 10px 12px">
+        <div class="rel rc" style="border-radius:16px;background:var(--glass2);padding:10px 2px 10px 12px">
+          <i class="rad">16</i>
+          <div class="grow" style="border-left:3px solid var(--accent);padding-left:8px"><div style="font-size:13px;font-weight:600;color:var(--accentInk)">Replying to Sara</div><div style="font-size:13px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Opened yours, the timer looks right now</div></div>
+          <span style="width:44px;height:36px;display:flex;align-items:center;justify-content:center;color:var(--text2)" data-i="x" data-s="17"></span>
+        </div>
+        <div style="height:8px"></div>
+        <div class="rel rc" style="min-height:48px;border-radius:24px;background:var(--field);border:1.2px solid var(--glassBorderStrong)">
+          <i class="rad">24</i>
+          <span style="width:44px;height:48px;display:flex;align-items:center;justify-content:center;color:var(--text3)" data-i="image" data-s="20"></span>
+          <span class="grow" style="font-size:15px;color:var(--text4)">Message Night Owls</span>
+          <span style="width:44px;height:48px;display:flex;align-items:center;justify-content:center;color:var(--text3)" data-i="at" data-s="20"></span>
+        </div>
+      </div>
+      <div class="cap"><code>:232</code> field 24 on 48 high <span class="v s">a pill either way</span></div>
+    </div>
+    <div class="fr">
+      <div class="cap"><span class="tag now">now</span><code>CrewChatComposer.kt:410</code> closed bar, 24 on 48 <span class="v s">a pill</span></div>
+      <div class="scr" style="padding:14px 10px 12px">
+        <div class="rel rc" style="min-height:48px;border-radius:24px;background:var(--glass2);padding:10px 18px;gap:10px">
+          <i class="rad">24</i>
+          <span data-i="lock" data-s="18" style="color:var(--text2)"></span><span style="font-size:13.5px;line-height:18px;color:var(--text2)">This crew has ended. You can still read it.</span>
+        </div>
+      </div>
+      <div class="cap"><span class="tag now">now</span><code>CrewChatEntry.kt:127</code> chat button, 26 on 52 <span class="v s">a pill</span></div>
+      <div class="scr" style="height:96px">
+        <div class="rel rc" style="position:absolute;right:16px;bottom:22px;height:52px;border-radius:26px;background:var(--accent);color:#fff;padding:0 12px 0 18px;box-shadow:0 6px 14px rgba(16,47,70,.28)">
+          <i class="rad">26</i>
+          <span data-i="msg" data-s="20"></span><span style="width:8px"></span><span style="font-size:15.5px;font-weight:700">Chat</span><span style="width:8px"></span><span style="min-width:24px;height:24px;border-radius:12px;background:#fff;color:var(--accent);font:700 12.5px/24px 'PlexApp',monospace;text-align:center;padding:0 6px">3</span>
+        </div>
+      </div>
+    </div>
+    <div class="fr">
+      <div class="cap"><span class="tag now">now</span><code>CrewChatMentions.kt:52</code> mention list, 16 <span class="v d">2dp rounder</span></div>
+      <div class="scr" style="padding:16px 16px 20px">
+        <div class="rel" style="border-radius:16px;background:var(--glass2);border:1px solid var(--glassBorder);box-shadow:0 3px 8px rgba(16,47,70,.18);overflow:visible">
+          <i class="rad">16</i>
+          <div class="rc" style="height:48px;padding:0 12px;gap:12px"><span class="am" style="width:30px;height:30px;border-radius:50%;background:hsl(205,45%,89%);color:hsl(205,50%,32%);font-size:14px">S</span><span style="font-size:15px;font-weight:500">Sara</span><span style="font-size:12.5px;color:var(--text3)">Habit Hen</span></div>
+          <div class="rc" style="height:48px;padding:0 12px;gap:12px"><span class="am" data-app="Budget Buddy" data-h="140" data-z="30"></span><span style="font-size:15px;font-weight:500">Budget Buddy</span><span style="font-size:12.5px;color:var(--text3)">Rafi</span></div>
+          <div class="rc" style="height:48px;padding:0 12px;gap:12px"><span class="am" style="width:30px;height:30px;border-radius:50%;background:hsl(320,45%,89%);color:hsl(320,50%,32%);font-size:14px">M</span><span style="font-size:15px;font-weight:500">Mina</span><span style="font-size:12.5px;color:var(--text3)">Petal</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="fr today">
+      <div class="cap"><span class="tag today">today's style</span> TileRadius 14 / CardRadius 18 / pill</div>
+      <div class="scr auto rc" style="gap:14px">
+        <div class="rel" style="width:70px;height:48px;border-radius:14px;border:1px solid var(--cardLine);background:var(--bg)"><i class="rad ok">14</i></div>
+        <div class="rel" style="width:70px;height:48px;border-radius:18px;border:1px solid var(--cardLine);background:var(--bg)"><i class="rad ok">18</i></div>
+        <div class="rel" style="width:90px;height:48px;border-radius:999px;background:var(--glass2)"><i class="rad ok">pill</i></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== 4 ============================== -->
+<section>
+  <h2><span class="num">4</span> Photo tools and snackbar corners <span class="verdict same">looks the same (code only)</span></h2>
+  <div class="row">
+    <div class="fr">
+      <div class="cap"><span class="tag now">now</span><code>ChatImageTools.kt:258</code> crop chips, 18 on 36 <span class="v s">a pill</span></div>
+      <div class="scr photo rc" style="gap:6px;padding:12px">
+        <span style="width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,.5);color:#fff;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.25)" data-i="rotate" data-s="20"></span><span style="width:4px"></span>
+        <span class="rel pill" style="height:36px;padding:0 14px;background:#fff;color:#000;font-size:14px;font-weight:600"><i class="rad">18</i>Free</span>
+        <span class="pill" style="height:36px;padding:0 14px;background:rgba(0,0,0,.5);color:#fff;font-size:14px;font-weight:600">1:1</span>
+        <span class="pill" style="height:36px;padding:0 14px;background:rgba(0,0,0,.5);color:#fff;font-size:14px;font-weight:600">4:3</span>
+        <span class="pill" style="height:36px;padding:0 14px;background:rgba(0,0,0,.5);color:#fff;font-size:14px;font-weight:600">3:4</span>
+      </div>
+    </div>
+    <div class="fr">
+      <div class="cap"><span class="tag now">now</span><code>ChatImageTools.kt:388, 390</code> caption, 24 on 48 <span class="v s">a pill</span></div>
+      <div class="scr photo rc" style="gap:8px;padding:12px">
+        <div class="rel grow" style="min-height:48px;border-radius:24px;background:rgba(255,255,255,.14);padding:13px 16px;font-size:15px;line-height:20px;color:rgba(255,255,255,.6)"><i class="rad">24</i>Add a caption...</div>
+        <span style="width:48px;height:48px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center" data-i="send" data-s="20"></span>
+      </div>
+    </div>
+    <div class="fr">
+      <div class="cap"><span class="tag now">now</span><code>PictureEditorParts.kt:131</code> own button, 48 high, 24 <span class="v d">not Primary: 48 high, semibold 14</span></div>
+      <div class="scr photo" style="padding:10px 20px 12px">
+        <div style="font-size:16px;font-weight:600;color:#fff">Send this screenshot?</div>
+        <div style="font-size:12px;line-height:16px;color:rgba(255,255,255,.75);margin-top:4px">It counts tonight's test for Habit Hen.</div>
+        <div style="height:12px"></div>
+        <div class="rel pill" style="height:48px;background:var(--accent);color:#fff;font-size:14px;font-weight:600"><i class="rad">24</i>Send</div>
+      </div>
+    </div>
+    <div class="fr today">
+      <div class="cap"><span class="tag today">today's style</span> Primary, 52 high, bold 15</div>
+      <div class="scr"><div class="pill" style="height:52px;background:var(--accent);color:#fff;font-size:15px;font-weight:700">Send</div></div>
+    </div>
+  </div>
+  <div style="height:16px"></div>
+  <div class="row">
+    <div class="fr">
+      <div class="cap"><span class="tag now">now</span><code>ReviewInvestment.kt:146</code> count chips, 18 on 36 <span class="v s">a pill</span></div>
+      <div class="scr">
+        <div class="rc"><span class="grow" style="font-size:16px;font-weight:700">Reviews</span><span style="width:36px;height:36px;border-radius:50%;background:var(--tile);color:var(--accentInk);display:flex;align-items:center;justify-content:center" data-i="minus" data-s="18"></span><span style="min-width:34px;text-align:center;font:700 18px 'PlexApp',monospace">10</span><span style="width:36px;height:36px;border-radius:50%;background:var(--tile);color:var(--accentInk);display:flex;align-items:center;justify-content:center" data-i="plus" data-s="18"></span></div>
+        <div style="height:10px"></div>
+        <div class="rc" style="gap:8px">
+          <span class="rel pill grow" style="height:36px;border:1px solid var(--cardLine);font:600 14px 'BarlowApp';color:var(--text2)"><i class="rad">18</i>3</span>
+          <span class="pill grow" style="height:36px;border:1px solid var(--cardLine);font:600 14px 'BarlowApp';color:var(--text2)">5</span>
+          <span class="pill grow" style="height:36px;background:var(--leafSoft);font:700 14px 'BarlowApp';color:var(--tabSel)">10</span>
+          <span class="pill grow" style="height:36px;border:1px solid var(--cardLine);font:600 14px 'BarlowApp';color:var(--text2)">20</span>
+          <span class="pill grow" style="height:36px;border:1px solid var(--cardLine);font:600 14px 'BarlowApp';color:var(--text2)">50</span>
+        </div>
+      </div>
+    </div>
+    <div class="fr">
+      <div class="cap"><span class="tag now">now</span><code>SnackHost.kt:286</code> action press shape, 20 on 40 <span class="v s">only seen on press</span></div>
+      <div class="scr" style="padding:16px">
+        <div class="rc" style="min-height:48px;border-radius:14px;background:var(--inverse);padding:0 4px 0 14px;box-shadow:0 6px 16px rgba(16,47,70,.3)">
+          <span data-i="circleCheck" data-s="18" style="color:var(--snackOk)"></span><span style="width:10px"></span>
+          <span class="grow" style="font-size:14px;line-height:19px;font-weight:500;color:var(--onInverse);padding:14px 0">Screenshot removed</span>
+          <span class="rel pill" style="height:40px;padding:0 12px;background:rgba(169,195,214,.16);font-size:14.5px;font-weight:700;color:var(--inverseAccent)"><i class="rad">20</i>Undo</span>
+        </div>
+      </div>
+    </div>
+    <div class="fr">
+      <div class="cap"><span class="tag now">now</span><code>ThemeCard.kt:117</code> option press shape, 16 <span class="v s">only seen on press</span></div>
+      <div class="scr rc" style="gap:0;padding:10px">
+        <div class="rel grow" style="border-radius:16px;background:rgba(34,57,75,.08);padding:6px 6px 8px;text-align:center"><i class="rad">16</i>
+          <div style="border:2px solid var(--accentInk);border-radius:14px;padding:3px"><div style="height:60px;border-radius:10px;border:1px solid var(--glassBorder);background:linear-gradient(135deg,#F7FCFF 50%,#0F1011 50%)"></div></div>
+          <div style="font-size:13px;font-weight:600;margin-top:6px">System</div></div>
+        <div class="grow" style="padding:6px 6px 8px;text-align:center"><div style="border:2px solid transparent;border-radius:14px;padding:3px"><div style="height:60px;border-radius:10px;border:1px solid var(--glassBorder);background:#F7FCFF"></div></div><div style="font-size:13px;font-weight:600;margin-top:6px">Light</div></div>
+        <div class="grow" style="padding:6px 6px 8px;text-align:center"><div style="border:2px solid transparent;border-radius:14px;padding:3px"><div style="height:60px;border-radius:10px;border:1px solid var(--glassBorder);background:#0F1011"></div></div><div style="font-size:13px;font-weight:600;margin-top:6px">Dark</div></div>
+      </div>
+    </div>
+    <div class="fr">
+      <div class="cap"><span class="tag now">now</span><code>AppHead.kt:97</code> head press shape, 16 <span class="v s">only seen on press</span></div>
+      <div class="scr">
+        <div class="rel rc" style="border-radius:16px;background:rgba(34,57,75,.08);gap:12px;padding-bottom:4px"><i class="rad">16</i>
+          <span class="am" data-app="Budget Buddy" data-h="140" data-z="52"></span>
+          <div class="grow"><div style="font-size:16px;line-height:19px;font-weight:600">Budget Buddy</div><div style="font-size:12.5px;line-height:15px;font-weight:500;color:var(--text3);margin-top:2px">com.budget.buddy</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== 5 ============================== -->
+<section>
+  <h2><span class="num">5</span> Own text sizes <span class="verdict same">mostly the same; dock and eyebrow text look smaller</span></h2>
+  <div class="row">
+    <div class="fr">
+      <div class="cap"><span class="tag now">now</span><code>AboutScreen.kt:160</code></div>
+      <div class="scr" style="text-align:center">
+        <div style="font-size:24px;line-height:28px;font-weight:700">TestTrack<i class="sz ok">24</i></div>
+        <div style="font-size:12px;font-weight:500;color:var(--text3);margin-top:4px">v2.3.0</div>
+        <div style="font-size:14.5px;line-height:21px;color:var(--text2);margin-top:14px;padding:0 4px">Open each other's apps for fourteen days to get through Play's closed testing, and trade real feedback for tix.<i class="sz">14.5/21</i></div>
+      </div>
+    </div>
+    <div class="fr">
+      <div class="cap"><span class="tag now">now</span><code>AppFeedbackCard.kt:144</code></div>
+      <div class="scr">
+        <div class="card" style="padding:16px">
+          <div class="rc"><span class="grow" style="font-size:18px;line-height:23px;font-weight:600">3 of 5 reviews in<i class="sz">18/23</i></span><span style="font-size:12px;line-height:17px;font-weight:500;color:var(--text3)">Open<i class="sz">12</i></span></div>
+          <div class="rc" style="gap:6px;margin-top:12px"><span style="width:26px;height:26px;border-radius:50%;background:var(--okBg)"></span><span style="width:26px;height:26px;border-radius:50%;background:var(--okBg)"></span><span style="width:26px;height:26px;border-radius:50%;background:var(--okBg)"></span><span style="width:26px;height:26px;border-radius:50%;background:var(--glass2)"></span><span style="width:26px;height:26px;border-radius:50%;background:var(--glass2)"></span></div>
+          <div class="lg" style="margin-top:6px">compact card<i class="sz">16/20</i></div>
+        </div>
+      </div>
+    </div>
+    <div class="fr">
+      <div class="cap"><span class="tag now">now</span><code>CrewOpenGuide.kt:69</code> eyebrow</div>
+      <div class="scr">
+        <div class="card" style="padding:16px">
+          <div class="rc" style="gap:6px;color:var(--text4)"><span data-i="users" data-s="14"></span><span style="font-size:11px;font-weight:700;letter-spacing:.8px">WHAT A CREW IS<i class="sz">11</i></span></div>
+          <div style="font-size:14px;line-height:20px;color:var(--text2);margin-top:10px"><b style="font-weight:600;color:var(--accentInk)">14 developers</b> put their apps in and open each other's <b style="font-weight:600;color:var(--accentInk)">every day for 14 days</b>. Everyone gets real testers on real phones.<i class="sz">14/20</i></div>
+        </div>
+      </div>
+    </div>
+    <div class="fr">
+      <div class="cap"><span class="tag now">now</span><code>ReviewDone.kt:184</code></div>
+      <div class="scr">
+        <div class="rc" style="gap:12px"><span style="width:28px;height:28px;border-radius:50%;background:var(--bad);color:var(--bg);display:flex;align-items:center;justify-content:center" data-i="x" data-s="14"></span><div class="grow"><div style="font-size:15px;font-weight:600">Tix not paid<i class="sz">15</i></div><div style="font-size:12.5px;color:var(--text3)">The server did not answer. Try again.<i class="sz">12.5</i></div></div></div>
+      </div>
+      <div class="cap"><span class="tag now">now</span><code>PrivateAddSheet.kt:144</code></div>
+      <div class="scr">
+        <div class="card rc" style="padding:10px 12px;gap:12px"><span class="am" style="width:40px;height:40px;border-radius:50%;background:hsl(260,45%,89%);color:hsl(260,50%,32%);font-size:16px">R</span><span class="grow" style="font-size:15px;line-height:19px;font-weight:600">rafi.dev@gmail.com<i class="sz">15/19</i></span><span style="font-size:11.5px;font-weight:600;color:var(--ok);background:var(--okBg);padding:4px 10px;border-radius:999px">Found</span></div>
+      </div>
+    </div>
+    <div class="fr">
+      <div class="cap"><span class="tag now">now</span><code>MeScreen.kt</code> 4 sizes</div>
+      <div class="scr">
+        <div class="rc" style="gap:16px"><span class="rel" style="width:64px;height:64px;border-radius:50%;background:var(--glass);border:1px solid var(--glassBorder);padding:3px;flex:none"><span class="am" style="width:100%;height:100%;border-radius:50%;background:hsl(205,45%,89%);color:hsl(205,50%,32%);font-size:23px;font-weight:700">S</span><span style="position:absolute;right:-2px;bottom:-2px;width:24px;height:24px;border-radius:50%;background:var(--glass);padding:2px"><span style="display:flex;width:100%;height:100%;border-radius:50%;background:var(--accent);color:#fff;align-items:center;justify-content:center" data-i="pencil" data-s="11"></span></span></span>
+          <div class="grow"><div style="font-size:18px;font-weight:700">Sara Ahmed<i class="sz">18</i></div><div style="font-size:13px;color:var(--text3);margin-top:2px">sara.ahmed@gmail.com<i class="sz ok">13</i></div></div></div>
+        <div class="lg" style="margin-top:4px">letter<i class="sz">23</i></div>
+        <div style="text-align:center;font-size:12.5px;font-weight:500;color:var(--text4);margin-top:12px">v2.3.0<i class="sz ok">12.5</i></div>
+      </div>
+    </div>
+  </div>
+  <div style="height:16px"></div>
+  <div class="row">
+    <div class="fr">
+      <div class="cap"><span class="tag now">now</span><code>VisitDockContent.kt</code> 13 raw sizes, folded and open</div>
+      <div class="scr auto rc" style="gap:18px;align-items:flex-start;background:#C9D6DF">
+        <div class="rc" style="border-radius:24px;background:var(--glass);border:1px solid var(--glassBorder);box-shadow:0 6px 14px rgba(16,47,70,.25);padding-left:6px;gap:8px">
+          <span class="ring" data-sec="7"></span>
+          <div><div style="font-size:12.5px;font-weight:700">Habit Hen<i class="sz">12.5</i></div><div style="font-size:10.5px;color:var(--text4)">3 of 9<i class="sz">10.5</i></div></div>
+          <span data-i="key" data-s="15" style="color:var(--accentInk)"></span>
+          <span style="width:48px;height:48px;display:flex;align-items:center;justify-content:center"><span style="width:34px;height:34px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center" data-i="pause" data-s="15"></span></span>
+        </div>
+        <div style="width:276px;border-radius:22px;background:var(--glass);border:1px solid var(--glassBorder);box-shadow:0 6px 14px rgba(16,47,70,.25);padding:10px;display:flex;flex-direction:column;gap:8px">
+          <div class="rc" style="gap:8px"><span class="ring" data-sec="7"></span><div class="grow"><div style="font-size:13px;font-weight:700">Habit Hen<i class="sz ok">13</i></div><div style="font-size:11px;color:var(--text4)">7s to go, app 3 of 9<i class="sz">11</i></div></div></div>
+          <div class="rc" style="gap:3px"><i style="flex:1;height:4px;border-radius:2px;background:var(--ok)"></i><i style="flex:1;height:4px;border-radius:2px;background:var(--ok)"></i><i style="flex:1;height:4px;border-radius:2px;background:var(--accent)"></i><i style="flex:1;height:4px;border-radius:2px;background:var(--glass2)"></i><i style="flex:1;height:4px;border-radius:2px;background:var(--glass2)"></i><i style="flex:1;height:4px;border-radius:2px;background:var(--glass2)"></i><i style="flex:1;height:4px;border-radius:2px;background:var(--glass2)"></i><i style="flex:1;height:4px;border-radius:2px;background:var(--glass2)"></i><i style="flex:1;height:4px;border-radius:2px;background:var(--glass2)"></i></div>
+          <div class="rc" style="border-radius:12px;background:var(--glass2);padding:7px 9px;min-height:48px"><span style="width:60px;font-size:10.5px;color:var(--text4)">Email</span><span class="grow" style="font-size:12px;font-weight:600">test@habithen.app</span><span data-i="copy" data-s="13" style="color:var(--accent)"></span></div>
+          <div class="rc" style="justify-content:center"><span class="rc" style="border-radius:999px;background:var(--accent);color:#fff;padding:9px 18px;gap:6px"><span data-i="pause" data-s="14"></span><span style="font-size:13px;font-weight:700">Pause</span></span></div>
+        </div>
+        <div class="lg" style="max-width:120px">ring figure<i class="sz">12</i><br>sign-in label<i class="sz">10.5</i><br>sign-in value<i class="sz">12</i><br>upright label<i class="sz">10</i><br>button<i class="sz ok">13</i></div>
+      </div>
+    </div>
+    <div class="fr">
+      <div class="cap"><span class="tag now">now</span><code>CrewPageParts.kt</code> 8 sizes</div>
+      <div class="scr">
+        <div class="card" style="padding:16px">
+          <span style="display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:700;color:var(--accentInk);background:var(--tile);padding:4px 10px;border-radius:999px"><span data-i="moon" data-s="13"></span>Night 6 of 14</span><i class="sz">12.5</i>
+          <div style="font-size:23px;line-height:27px;font-weight:700;margin-top:10px">4 apps left tonight<i class="sz">23/27</i></div>
+          <div style="font-size:14px;color:var(--text2);margin-top:4px">Open each for 20 seconds before midnight.</div>
+          <div class="rc" style="gap:4px;margin-top:14px"><i style="flex:1;height:8px;border-radius:3px;background:var(--accent)"></i><i style="flex:1;height:8px;border-radius:3px;background:var(--accent)"></i><i style="flex:1;height:8px;border-radius:3px;background:var(--accent)"></i><i style="flex:1;height:8px;border-radius:3px;background:var(--track)"></i><i style="flex:1;height:8px;border-radius:3px;background:var(--track)"></i></div>
+          <div class="rc" style="margin-top:6px"><span class="grow" style="font-size:12.5px;color:var(--text4)">Their day 6<i class="sz">12.5</i></span><span style="font-size:12.5px;color:var(--text4)">12 keep it counting</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="fr">
+      <div class="cap"><span class="tag now">now</span><code>CrewOpenRules.kt</code> 5 own styles</div>
+      <div class="scr">
+        <div class="card" style="padding:16px">
+          <div class="rc" style="gap:6px;color:var(--text4)"><span data-i="scale" data-s="14"></span><span style="font-size:11px;font-weight:700;letter-spacing:.8px">THE RULES</span></div>
+          <div class="rc" style="gap:8px;margin-top:10px;align-items:stretch">
+            <div class="grow" style="border:1px solid var(--cardLine);border-radius:12px;padding:9px 10px 10px"><div class="rc" style="align-items:flex-end"><span style="font-size:21px;line-height:24px;font-weight:700;color:var(--tabSel)">14</span><span style="font-size:12px;font-weight:600;color:var(--text3);margin:0 0 2px 3px">apps</span></div><div style="font-size:11.5px;line-height:14px;color:var(--text3);margin-top:3px">in a crew</div></div>
+            <div class="grow" style="border:1px solid var(--cardLine);border-radius:12px;padding:9px 10px 10px"><div class="rc" style="align-items:flex-end"><span style="font-size:21px;line-height:24px;font-weight:700;color:var(--tabSel)">14</span><span style="font-size:12px;font-weight:600;color:var(--text3);margin:0 0 2px 3px">nights</span></div><div style="font-size:11.5px;line-height:14px;color:var(--text3);margin-top:3px">from your midnight</div></div>
+            <div class="grow" style="border:1px solid var(--cardLine);border-radius:12px;padding:9px 10px 10px"><div class="rc" style="align-items:flex-end"><span style="font-size:21px;line-height:24px;font-weight:700;color:var(--bad)">2</span><span style="font-size:12px;font-weight:600;color:var(--text3);margin:0 0 2px 3px">misses</span></div><div style="font-size:11.5px;line-height:14px;color:var(--text3);margin-top:3px">in a row and you're out</div></div>
+          </div>
+          <div class="lg" style="margin-top:6px">figure<i class="sz">21/24</i>unit<i class="sz">12</i>label<i class="sz">11.5</i>line<i class="sz ok">13/17</i>heading<i class="sz">15/18</i></div>
+        </div>
+      </div>
+    </div>
+    <div class="fr">
+      <div class="cap"><span class="tag now">now</span><code>HowToVideos.kt</code> 5 sizes</div>
+      <div class="scr">
+        <div class="card" style="padding:16px 16px 9px">
+          <div class="rc" style="gap:12px"><span style="width:112px;height:63px;border-radius:10px;background:linear-gradient(135deg,#3f6680,#17405e);position:relative;flex:none;display:flex;align-items:center;justify-content:center"><span style="width:30px;height:30px;border-radius:50%;background:var(--scrim);color:#fff;display:flex;align-items:center;justify-content:center" data-i="play" data-s="14"></span><span style="position:absolute;right:4px;bottom:4px;background:var(--scrim);color:#fff;border-radius:4px;padding:0 4px;font-size:10px;line-height:14px;font-weight:600">2:14</span></span>
+            <div class="grow"><div style="font-size:16px;line-height:20px;font-weight:600">How a crew works</div><div style="font-size:12.5px;line-height:16px;color:var(--text3);margin-top:2px">Join, open the apps each night, get through</div></div></div>
+          <div class="rc" style="gap:8px;margin-top:5px"><span class="pill grow" style="height:34px;margin:7px 0;border-radius:10px;background:var(--tile);color:var(--accentInk);font-size:14px;font-weight:700;gap:6px"><span data-i="play" data-s="13"></span>Watch</span><span class="pill grow" style="height:34px;margin:7px 0;border-radius:10px;border:1.5px solid var(--glassBorderStrong);color:var(--accentInk);font-size:14px;font-weight:700;gap:6px"><span data-i="play" data-s="13"></span>বাংলায়</span></div>
+          <div class="lg">title<i class="sz ok">16/20</i>line<i class="sz ok">12.5/16</i>length<i class="sz">10</i></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== 6 ============================== -->
+<section>
+  <h2><span class="num">6</span> Own copies of small shared pieces <span class="verdict diff">some look different</span></h2>
+  <div class="row" style="align-items:stretch">
+    <div class="grp">
+      <h3>Chips</h3>
+      <div class="row">
+        <div class="fr"><div class="cap"><code>ChatImageTools.kt:249</code> ShapeChip <span class="v d">different: tappable, on photo</span></div>
+          <div class="scr photo auto rc" style="gap:6px;padding:10px"><span class="pill" style="height:36px;padding:0 14px;background:#fff;color:#000;font-size:14px;font-weight:600">Free</span><span class="pill" style="height:36px;padding:0 14px;background:rgba(0,0,0,.5);color:#fff;font-size:14px;font-weight:600">1:1</span></div></div>
+        <div class="fr"><div class="cap"><code>ProofBox.kt:205</code> OverChip <span class="v d">different: dark, over picture</span></div>
+          <div class="scr auto rc" style="gap:8px;padding:10px;background:linear-gradient(135deg,#8fb3cb,#3c5a70)"><span class="rc" style="height:30px;border-radius:15px;background:rgba(0,0,0,.5);color:#fff;padding:0 12px;gap:6px"><span data-i="eyeOff" data-s="14"></span><span style="font-size:12.5px;font-weight:700">Hide details</span></span><span class="rc" style="height:30px;border-radius:15px;background:rgba(0,0,0,.5);color:#fff;padding:0 12px;gap:6px"><span data-i="camera" data-s="14"></span><span style="font-size:12.5px;font-weight:700">Retake</span></span></div></div>
+        <div class="fr"><div class="cap"><code>ReviewInvestment.kt:135</code> CountChip <span class="v s">same: choiceTile, own size</span></div>
+          <div class="scr auto rc" style="gap:8px;padding:10px"><span class="pill" style="width:52px;height:36px;border:1px solid var(--cardLine);font-size:14px;font-weight:600;color:var(--text2)">5</span><span class="pill" style="width:52px;height:36px;background:var(--leafSoft);font-size:14px;font-weight:700;color:var(--tabSel)">10</span></div></div>
+        <div class="fr"><div class="cap"><code>TopHud.kt:194</code> SignInChip <span class="v d">different: thin pale edge, dark words</span></div>
+          <div class="scr auto rc" style="padding:10px"><span class="rc" style="border:1px solid var(--glassBorder);border-radius:999px;padding:7px 14px 7px 10px;gap:8px"><svg width="16" height="16" viewBox="0 0 48 48" style="flex:none;display:block"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span style="font-size:14px;line-height:20px;font-weight:600;color:var(--text)">Sign in</span></span></div></div>
+        <div class="fr"><div class="cap"><code>CrewChatComposerPicture.kt:79</code> PictureBadge <span class="v d">different: smaller, ringed</span></div>
+          <div class="scr auto" style="padding:14px 18px"><span class="rel" style="display:inline-block;width:44px;height:48px;color:var(--text3)"><span style="position:absolute;left:12px;top:14px" data-i="image" data-s="20"></span><span style="position:absolute;right:3px;top:6px;min-width:18px;height:18px;border-radius:9px;background:var(--accent);border:1.5px solid var(--field);color:#fff;font:700 10.5px/15px 'PlexApp',monospace;text-align:center;padding:0 4px">2</span></span></div></div>
+        <div class="fr"><div class="cap"><code>CrewPageRows.kt:142</code> SmallPillContent <span class="v s">same: it is RowPill's inside</span></div>
+          <div class="scr auto rc" style="padding:10px"><span class="pill" style="min-height:32px;background:var(--tile);color:var(--accentInk);padding:7px 14px;gap:6px"><span data-i="plus" data-s="15"></span><span style="font-size:13.5px;font-weight:700">Add app</span></span></div></div>
+        <div class="fr today"><div class="cap"><span class="tag today">today's style</span> StatusChip / RowPill / CountBadge</div>
+          <div class="scr auto rc" style="gap:8px;padding:10px;flex-wrap:wrap"><span style="display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:700;color:var(--ok);background:var(--okBg);padding:4px 10px;border-radius:999px"><span data-i="check" data-s="13"></span>Opened</span><span class="pill" style="min-height:34px;padding:7px 14px;border:1.5px solid var(--glassBorderStrong);color:var(--accentInk);font-size:14px;font-weight:700">Sign in</span><span style="min-width:22px;height:22px;border-radius:11px;background:var(--accent);color:#fff;font:700 12px/22px 'PlexApp',monospace;text-align:center;padding:0 7px">2</span></div></div>
+      </div>
+    </div>
+  </div>
+  <div style="height:14px"></div>
+  <div class="row">
+    <div class="grp">
+      <h3>Empty states</h3>
+      <div class="row">
+        <div class="fr"><div class="cap"><code>ProofBox.kt:77</code> EmptyProofBox <span class="v d">different: a drop box</span></div>
+          <div class="scr" style="width:330px"><div style="height:160px;border:1.5px dashed var(--glassBorderStrong);border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center">
+            <span data-i="camera" data-s="26" style="color:var(--text4)"></span>
+            <div class="rc" style="gap:8px;margin-top:12px;width:270px"><span class="pill grow" style="height:36px;background:#CDD9E2;border:1px solid #A1B5C4;color:var(--accentInk);gap:6px"><span data-i="camera" data-s="15"></span><span style="font-size:13.5px;font-weight:700">Capture on Play</span></span><span class="pill grow" style="height:36px;background:var(--bg);border:1px solid var(--glassBorder);color:var(--text2);gap:6px"><span data-i="image" data-s="15"></span><span style="font-size:13.5px;font-weight:700">Gallery</span></span></div>
+          </div></div></div>
+        <div class="fr"><div class="cap"><code>CrewSeats.kt:176</code> EmptySeat <span class="v d">different: a seat slot</span></div>
+          <div class="scr auto rc" style="gap:6px"><span class="am" data-app="Habit Hen" data-h="30" data-z="40"></span><span class="am" data-app="Petal" data-h="320" data-z="40"></span><span style="width:40px;height:40px;border:1.5px dashed rgba(34,57,75,.55);border-radius:9px;display:flex;align-items:center;justify-content:center;color:rgba(34,57,75,.7)" data-i="plus" data-s="14"></span><span style="width:40px;height:40px;border:1.5px dashed rgba(34,57,75,.28);border-radius:9px"></span><span style="width:40px;height:40px;border:1.5px dashed rgba(34,57,75,.28);border-radius:9px"></span></div></div>
+        <div class="fr"><div class="cap"><code>CrewChatPage.kt:274</code> ChatEmpty <span class="v s">same: already RobotState</span></div>
+          <div class="scr" style="width:260px;text-align:center"><span class="robot" data-s="90"></span><div style="font-size:17px;line-height:22px;font-weight:600;margin-top:14px">No messages yet</div><div style="font-size:14px;line-height:20px;color:var(--text3);margin-top:4px">Say hi to your crew.</div></div></div>
+        <div class="fr"><div class="cap"><code>CrewVolunteerRows.kt:157</code> NoSpotsCard <span class="v d">different: icon card, no robot</span></div>
+          <div class="scr" style="width:320px"><div class="card" style="padding:16px;text-align:center"><span style="display:inline-flex;width:40px;height:40px;border-radius:12px;background:var(--tile);color:var(--tileInk);align-items:center;justify-content:center" data-i="users" data-s="20"></span><div style="font-size:15px;line-height:19px;font-weight:600;margin-top:10px">No running crew has a free spot</div><div style="font-size:12.5px;line-height:16px;color:var(--text3);margin-top:6px">Spots open when members leave. Check back tomorrow.</div></div></div></div>
+        <div class="fr today"><div class="cap"><span class="tag today">today's style</span> RobotState</div>
+          <div class="scr" style="width:260px;text-align:center"><span class="robot" data-s="80"></span><div style="font-size:20px;line-height:25px;font-weight:700;margin-top:14px">No apps yet</div><div style="font-size:14px;line-height:20px;color:var(--text2);margin-top:6px">Add your app to start a closed test.</div><div class="pill" style="height:52px;background:var(--accent);color:#fff;font-size:15px;font-weight:700;margin:18px auto 0;max-width:240px">Add app</div></div></div>
+      </div>
+    </div>
+  </div>
+  <div style="height:14px"></div>
+  <div class="row">
+    <div class="grp">
+      <h3>Notes</h3>
+      <div class="row">
+        <div class="fr"><div class="cap"><code>CrewPrivateTesters.kt:243</code> PrivateNote <span class="v d">different: lock icon, left, 12.5</span></div>
+          <div class="scr"><div style="font-size:12.5px;line-height:17px;color:var(--text4)"><span data-i="lock" data-s="14" style="display:inline-block;vertical-align:-2px;margin-right:6px"></span>Only you see this. Testing ends with Night Owls, in 6 days.</div></div></div>
+        <div class="fr"><div class="cap"><code>CrewTrackingGrid.kt:225</code> GridNote <span class="v d">different: info icon, 11.5</span></div>
+          <div class="scr"><div class="rc" style="padding-left:4px;gap:4px;color:var(--text4)"><span data-i="info" data-s="12"></span><span style="font-size:11.5px;font-weight:500">Blank nights were before they joined.</span></div></div></div>
+        <div class="fr today"><div class="cap"><span class="tag today">today's style</span> QuietNote: 12, centred, no icon</div>
+          <div class="scr"><div style="font-size:12px;line-height:16px;color:var(--text4);text-align:center">Only you see this. Testing ends with Night Owls, in 6 days.</div></div></div>
+      </div>
+    </div>
+  </div>
+  <div style="height:14px"></div>
+  <div class="row">
+    <div class="grp">
+      <h3>Headings</h3>
+      <div class="row">
+        <div class="fr"><div class="cap"><code>CrewRunAppTile.kt:118</code> AppHeading <span class="v s">same look as AppHead</span></div>
+          <div class="scr"><div class="rc" style="gap:10px"><span class="am" data-app="Habit Hen" data-h="30" data-z="44"></span><div class="grow"><div style="font-size:16px;line-height:19px;font-weight:600">Habit Hen</div><div style="font-size:12px;line-height:14px;color:var(--text3)">com.hen.habit</div></div></div></div></div>
+        <div class="fr"><div class="cap"><code>GroupHowToDialog.kt:177</code> StepHeading <span class="v d">different: numbered step</span></div>
+          <div class="scr"><div class="rc" style="min-height:32px;gap:12px"><span style="width:24px;height:24px;border-radius:50%;background:var(--tile);color:var(--tileInk);font-size:12.5px;font-weight:700;display:flex;align-items:center;justify-content:center">1</span><span style="font-size:15px;line-height:20px;font-weight:600">Open Closed testing in Play Console</span></div></div></div>
+        <div class="fr today"><div class="cap"><span class="tag today">today's style</span> SectionHeading / AppHead</div>
+          <div class="scr"><div style="font-size:16px;line-height:19px;font-weight:700;margin-bottom:10px">Your apps <span style="display:inline-block;min-width:22px;height:22px;border-radius:11px;background:var(--accent);color:#fff;font:700 12px/22px 'PlexApp',monospace;text-align:center;padding:0 7px;vertical-align:middle">3</span></div>
+            <div class="rc" style="gap:12px"><span class="am" data-app="Habit Hen" data-h="30" data-z="52"></span><div class="grow"><div style="font-size:16px;line-height:19px;font-weight:600">Habit Hen</div><div style="font-size:12.5px;line-height:15px;font-weight:500;color:var(--text3);margin-top:2px">com.hen.habit</div></div></div></div></div>
+      </div>
+    </div>
+  </div>
+  <div style="height:14px"></div>
+  <div class="row">
+    <div class="grp">
+      <h3>Tiles</h3>
+      <div class="row">
+        <div class="fr"><div class="cap"><code>AppAddPick.kt:98</code> PhoneAppTile <span class="v s">same: built on choiceTile</span></div>
+          <div class="scr"><div class="rc" style="min-height:68px;border-radius:14px;background:var(--leafSoft);padding:10px 12px;gap:12px"><span class="am" data-app="Habit Hen" data-h="30" data-z="44"></span><div class="grow"><div style="font-size:16px;font-weight:700;color:var(--tabSel)">Habit Hen</div><div style="font-size:12.5px;font-weight:500;color:var(--text3)">com.hen.habit</div></div><span data-i="check" data-s="18" style="color:var(--tabSel)"></span></div>
+            <div style="height:8px"></div><div class="rc" style="min-height:68px;border-radius:14px;border:1px solid var(--cardLine);padding:10px 12px;gap:12px"><span class="am" data-app="Petal" data-h="320" data-z="44"></span><div class="grow"><div style="font-size:16px;font-weight:600">Petal</div><div style="font-size:12.5px;font-weight:500;color:var(--text3)">com.petal.app</div></div><span style="width:20px"></span></div></div></div>
+        <div class="fr"><div class="cap"><code>AskFeedback.kt:92</code> LevelTile, <code>CaseCheck.kt:182/199</code> VoteTile <span class="v s">same: two copies of one tile</span></div>
+          <div class="scr">
+            <div class="rc" style="gap:8px;align-items:stretch">
+              <div class="grow rel" style="border:1px solid var(--cardLine);border-radius:14px;padding:12px 13px 11px"><span data-i="star" data-s="18" style="color:var(--tileInk)"></span><div style="font-size:15px;line-height:18px;font-weight:600;margin-top:6px">Stars</div><div style="font-size:12px;line-height:15px;color:var(--text3);margin-top:2px">From 5 tix</div></div>
+              <div class="grow rel" style="background:var(--leafSoft);border-radius:14px;padding:12px 13px 11px"><span data-i="text" data-s="18" style="color:var(--tileInk)"></span><span data-i="check" data-s="15" style="color:var(--tabSel);position:absolute;top:11px;right:11px"></span><div style="font-size:15px;line-height:18px;font-weight:700;color:var(--tabSel);margin-top:6px">Written</div><div style="font-size:12px;line-height:15px;color:var(--text3);margin-top:2px">From 10 tix</div></div>
+              <div class="grow rel" style="border:1px solid var(--cardLine);border-radius:14px;padding:12px 13px 11px"><span data-i="fileText" data-s="18" style="color:var(--tileInk)"></span><div style="font-size:15px;line-height:18px;font-weight:600;margin-top:6px">Detailed</div><div style="font-size:12px;line-height:15px;color:var(--text3);margin-top:2px">From 20 tix</div></div>
+            </div>
+            <div style="height:10px"></div>
+            <div class="rc" style="gap:8px;align-items:stretch">
+              <div class="grow rel" style="background:var(--leafSoft);border-radius:14px;padding:11px 12px 10px"><span data-i="check" data-s="18" style="color:var(--tileInk)"></span><span data-i="check" data-s="15" style="color:var(--tabSel);position:absolute;top:11px;right:12px"></span><div style="font-size:15px;line-height:18px;font-weight:700;color:var(--tabSel);margin-top:6px">The review stands</div><div style="font-size:12px;line-height:15px;color:var(--text3);margin-top:2px">The reviewer is paid</div></div>
+              <div class="grow rel" style="border:1px solid var(--cardLine);border-radius:14px;padding:11px 12px 10px;opacity:.45"><span data-i="x" data-s="18" style="color:var(--tileInk)"></span><div style="font-size:15px;line-height:18px;font-weight:600;margin-top:6px">The developer is right</div><div style="font-size:12px;line-height:15px;color:var(--text3);margin-top:2px">Nothing is paid</div></div>
+            </div>
+          </div></div>
+        <div class="fr"><div class="cap"><code>ThemeCard.kt:255</code> MiniCard <span class="v d">different: a miniature, keep</span></div>
+          <div class="scr auto"><div style="width:96px;height:80px;border-radius:10px;border:1px solid var(--glassBorder);background:var(--bg);padding:8px 6px;display:flex;flex-direction:column;gap:4px">
+            <div style="border-radius:4px;background:var(--glass);border:.6px solid var(--glassBorder);padding:3px"><i style="display:block;width:30px;height:4px;border-radius:2px;background:var(--text4)"></i><i style="display:block;width:50px;height:3px;border-radius:2px;background:var(--glass2);margin-top:3px"></i></div>
+            <div style="border-radius:4px;background:var(--glass);border:.6px solid var(--glassBorder);padding:3px"><i style="display:block;width:40px;height:4px;border-radius:2px;background:var(--text4)"></i><i style="display:block;width:28px;height:3px;border-radius:2px;background:var(--glass2);margin-top:3px"></i></div>
+          </div></div></div>
+        <div class="fr"><div class="cap"><code>CrewPhases.kt:351</code> TestersCard <span class="v s">same: built from shared parts</span></div>
+          <div class="scr"><div class="card" style="padding:14px 16px">
+            <div class="rc" style="gap:12px"><span class="am" data-app="Budget Buddy" data-h="140" data-z="52"></span><div class="grow"><div style="font-size:16px;line-height:19px;font-weight:600">Budget Buddy</div><div style="font-size:12px;color:var(--text3);margin-top:2px">Opened by 9 of 13 testers so far tonight.</div></div><span style="font-size:12.5px;font-weight:700;color:var(--accentInk);background:var(--tile);padding:4px 10px;border-radius:999px;white-space:nowrap">9 of 13</span></div>
+            <div class="rc" style="gap:4px;margin-top:14px"><i style="flex:1;height:8px;border-radius:3px;background:var(--accent)"></i><i style="flex:1;height:8px;border-radius:3px;background:var(--accent)"></i><i style="flex:1;height:8px;border-radius:3px;background:var(--accent)"></i><i style="flex:1;height:8px;border-radius:3px;background:var(--accent)"></i><i style="flex:1;height:8px;border-radius:3px;background:var(--accent)"></i><i style="flex:1;height:8px;border-radius:3px;background:var(--accent)"></i><i style="flex:1;height:8px;border-radius:3px;background:var(--accent)"></i><i style="flex:1;height:8px;border-radius:3px;background:var(--accent)"></i><i style="flex:1;height:8px;border-radius:3px;background:var(--accent)"></i><i style="flex:1;height:8px;border-radius:3px;background:var(--track)"></i><i style="flex:1;height:8px;border-radius:3px;background:var(--track)"></i><i style="flex:1;height:8px;border-radius:3px;background:var(--track)"></i><i style="flex:1;height:8px;border-radius:3px;background:var(--track)"></i></div>
+            <div class="rc" style="margin-top:6px"><span class="grow" style="font-size:12.5px;color:var(--text4)">Their day 6</span><span style="font-size:12.5px;color:var(--text4)">12 keep it counting</span></div>
+            <div class="pill" style="height:52px;background:var(--glass2);font-size:14.5px;font-weight:700;margin-top:12px">See who tested it</div>
+          </div></div></div>
+        <div class="fr today"><div class="cap"><span class="tag today">today's style</span> IconTile + tileFrame</div>
+          <div class="scr"><div class="rc" style="border:1px solid var(--cardLine);border-radius:14px;padding:12px;gap:12px"><span style="width:36px;height:36px;border-radius:11px;background:var(--tile);color:var(--tileInk);display:flex;align-items:center;justify-content:center" data-i="ticket" data-s="19"></span><div class="grow"><div style="font-size:15px;font-weight:600">Starter tix already used</div><div style="font-size:12.5px;color:var(--text3)">You start at 0 and earn tix by reviewing.</div></div></div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== 7 ============================== -->
+<section>
+  <h2><span class="num">7</span> Spinners and bars <span class="verdict diff">2 spinners look different; 3 bars are meant to be bars</span></h2>
+  <div class="row">
+    <div class="fr"><div class="cap"><span class="tag now">now</span><code>AppHero.kt:78</code> spinner over the icon <span class="v d">action wait, not a page loader</span></div>
+      <div class="scr" style="text-align:center">
+        <span class="rel" style="display:inline-block;width:96px;height:96px">
+          <span class="am" data-app="Budget Buddy" data-h="140" data-z="88" style="position:absolute;left:0;top:0;font-size:40px"></span>
+          <span style="position:absolute;left:0;top:0;width:88px;height:88px;border-radius:26px;background:rgba(242,249,253,.72);display:flex;align-items:center;justify-content:center;color:var(--accentInk)"><span class="spin" style="width:26px;height:26px;border-width:2.5px"></span></span>
+          <span style="position:absolute;right:0;bottom:0;width:28px;height:28px;border-radius:50%;background:var(--accent);border:2px solid var(--bg);color:#fff;display:flex;align-items:center;justify-content:center" data-i="pencil" data-s="13"></span>
+        </span>
+        <div style="font-size:22px;font-weight:700;margin-top:12px">Budget Buddy</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:4px">com.budget.buddy</div>
+      </div></div>
+    <div class="fr"><div class="cap"><span class="tag now">now</span><code>UpdatePrompts.kt:91</code> spinner + words for a button <span class="v d">action wait</span></div>
+      <div class="scr" style="text-align:center;padding:24px 16px">
+        <span class="robot" data-s="80"></span>
+        <div style="font-size:24px;font-weight:700;margin-top:16px">Update to carry on</div>
+        <div style="font-size:14px;line-height:20px;color:var(--text2);margin-top:10px">This version of TestTrack is out of date. Update to keep testing with your crews and collecting tix.</div>
+        <div class="rc" style="justify-content:center;margin-top:24px;color:var(--accentInk)"><span class="spin" style="width:18px;height:18px;border-width:2px"></span><span style="font-size:14px;color:var(--text2);margin-left:10px">Starting the download</span></div>
+      </div></div>
+    <div class="fr today"><div class="cap"><span class="tag today">today's style</span> Primary busy / Skeleton shimmer</div>
+      <div class="scr">
+        <div class="pill" style="height:52px;background:var(--accent);color:#fff;gap:10px;font-size:15px;font-weight:700"><span class="spin" style="width:16px;height:16px;border-width:2px"></span>Starting the download</div>
+        <div style="height:14px"></div>
+        <div class="rc" style="gap:12px"><span class="sk" style="width:88px;height:88px;border-radius:26px"></span><div class="grow"><span class="sk" style="width:70%;height:14px"></span><span class="sk" style="width:45%;height:11px;margin-top:8px"></span></div></div>
+      </div></div>
+  </div>
+  <div style="height:16px"></div>
+  <div class="row">
+    <div class="fr"><div class="cap"><span class="tag now">now</span><code>SignInParts.kt:194</code> thin bar under the account <span class="v s">meant to be a bar</span></div>
+      <div class="scr sheet">
+        <div class="rc" style="height:64px;border:1px solid var(--sheetOutline);border-radius:16px;padding:0 14px;gap:12px"><span class="am" style="width:36px;height:36px;border-radius:50%;background:hsl(205,45%,89%);color:hsl(205,50%,32%);font-size:16px">S</span><div class="grow"><div style="font-size:15px;font-weight:600">Sara Ahmed</div><div style="font-size:13px;color:var(--text4)">sara.ahmed@gmail.com</div></div></div>
+        <div class="bar ind" style="margin-top:14px"><i></i></div>
+      </div></div>
+    <div class="fr"><div class="cap"><span class="tag now">now</span><code>GroupSheetParts.kt:101</code> bar at the row's foot while checking <span class="v s">meant to be a bar</span></div>
+      <div class="scr sheet">
+        <div style="height:64px;border:1px solid var(--cardLine);border-radius:14px;position:relative;overflow:hidden"><div class="rc" style="height:100%;padding:0 14px;gap:12px"><span class="am" style="width:36px;height:36px;border-radius:50%;background:hsl(205,45%,89%);color:hsl(205,50%,32%);font-size:16px">S</span><div class="grow"><div style="font-size:15px;font-weight:600">sara.ahmed@gmail.com</div><div style="font-size:12.5px;color:var(--text3)">Checking now</div></div></div><div class="bar ind" style="position:absolute;left:0;right:0;bottom:0;border-radius:0"><i style="border-radius:0"></i></div></div>
+      </div></div>
+    <div class="fr"><div class="cap"><span class="tag now">now</span><code>GroupSheet.kt:322</code> bar that fills while "joined" shows <span class="v s">meant to be a bar (a timer)</span></div>
+      <div class="scr sheet">
+        <div style="height:64px;border:1px solid var(--cardLine);border-radius:14px" class="rc"><div class="rc grow" style="padding:0 14px;gap:12px"><span class="am" style="width:36px;height:36px;border-radius:50%;background:hsl(205,45%,89%);color:hsl(205,50%,32%);font-size:16px">S</span><div class="grow"><div style="font-size:15px;font-weight:600">sara.ahmed@gmail.com</div><div class="rc" style="gap:5px;font-size:12.5px;color:var(--ok)"><span data-i="check" data-s="13"></span>In the testers group</div></div></div></div>
+        <div class="bar det" style="margin-top:14px"><i></i></div>
+      </div></div>
+  </div>
+</section>
+
+<!-- ============================== 8 ============================== -->
+<section>
+  <h2><span class="num">8</span> Code only, nothing to see</h2>
+  <div class="note8"><span><b>39</b> direct MaterialTheme colour uses in <b>18</b> files (RanksPodium, CrewSeats, TopHud, AppHero, CommonMarks...)</span><span><b>138</b> fixed text sizes in <b>47</b> files</span></div>
+</section>
+
+</main>
+<script>
+const R = {"level_robot_body": "<g transform=\"translate(-185.0 -110.0) rotate(0.0) scale(1 1) translate(-0.0 -0.0)\"><path d=\"M384 784 C426 730 471 713 520 710 L728 710 C778 715 824 736 866 784 L888 946 C824 1005 735 1031 627 1031 C518 1031 428 1005 363 946 Z\" fill=\"url(#rg1)\"/></g>", "level_robot_head": "<g transform=\"translate(-185.0 -110.0) rotate(0.0) scale(1 1) translate(-0.0 -0.0)\"><g transform=\"translate(627.0 530.0) rotate(0.0) scale(1 1) translate(-627.0 -530.0)\"><g transform=\"translate(0.0 0.0) rotate(0.0) scale(1 1) translate(-0.0 -0.0)\"><path d=\"M309 436 C250 430 215 483 215 546 C215 609 249 659 309 654 L330 624 V465 Z\" fill=\"url(#rg2)\"/><path d=\"M944 436 C1003 430 1039 483 1039 546 C1039 609 1004 659 944 654 L923 624 V465 Z\" fill=\"url(#rg3)\"/><path d=\"M267 546 A25 59 0 1 1 217 546 A25 59 0 1 1 267 546 Z\" fill=\"#6CA9CF\"/><path d=\"M1037 546 A25 59 0 1 1 987 546 A25 59 0 1 1 1037 546 Z\" fill=\"#6CA9CF\"/></g><path d=\"M627 277 C428 277 332 328 302 452 C286 514 283 608 307 656 C332 718 409 743 627 743 C845 743 922 718 947 656 C971 608 968 514 952 452 C922 328 826 277 627 277 Z\" fill=\"url(#rg4)\"/><path d=\"M627 372 C481 372 399 387 366 455 C346 492 341 550 350 590 C363 656 397 677 627 677 C857 677 891 656 904 590 C913 550 908 492 888 455 C855 387 773 372 627 372 Z\" fill=\"#FFFCF1\"/><path d=\"M576 594 C602 620 651 620 677 594\" fill-opacity=\"0.000\" fill=\"#000000\" stroke=\"#17253B\" stroke-width=\"31\" stroke-linecap=\"round\"/></g></g>", "level_robot_eyes": "<g transform=\"translate(-185.0 -110.0) rotate(0.0) scale(1 1) translate(-0.0 -0.0)\"><g transform=\"translate(627.0 529.0) rotate(0.0) scale(1 1) translate(-627.0 -529.0)\"><g transform=\"translate(627.0 529.0) rotate(0.0) scale(1 1) translate(-627.0 -529.0)\"><path d=\"M542 529 A61 61 0 1 1 420 529 A61 61 0 1 1 542 529 Z\" fill=\"#17253B\"/><path d=\"M833 529 A61 61 0 1 1 711 529 A61 61 0 1 1 833 529 Z\" fill=\"#17253B\"/><path d=\"M515 504 A19 19 0 1 1 477 504 A19 19 0 1 1 515 504 Z\" fill=\"#FFFFFF\"/><path d=\"M805 504 A19 19 0 1 1 767 504 A19 19 0 1 1 805 504 Z\" fill=\"#FFFFFF\"/></g></g></g>", "level_robot_antenna": "<g transform=\"translate(-185.0 -110.0) rotate(0.0) scale(1 1) translate(-0.0 -0.0)\"><g transform=\"translate(627.0 278.0) rotate(0.0) scale(1 1) translate(-627.0 -278.0)\"><path d=\"M603 227 H650 V295 H603 Z\" fill=\"#1D5C82\"/><path d=\"M687 187 A60 60 0 1 1 567 187 A60 60 0 1 1 687 187 Z\" fill=\"url(#rg5)\"/><path d=\"M618 164 A14 14 0 1 1 590 164 A14 14 0 1 1 618 164 Z\" fill=\"#FFFFFF\"/></g></g>", "level_robot_hands": "<g transform=\"translate(-185.0 -110.0) rotate(0.0) scale(1 1) translate(-0.0 -0.0)\"><path d=\"M302 829 C263 834 230 870 229 912 C226 957 252 992 294 996 C335 1000 366 969 371 925 C375 878 345 835 302 829 Z\" fill=\"url(#rg6)\"/><path d=\"M307 847 C276 841 253 873 254 910 C254 943 275 966 307 966 C340 966 368 947 371 923 C374 894 348 852 307 847 Z\" fill=\"url(#rg7)\"/><path d=\"M951 829 C990 834 1023 870 1024 912 C1027 957 1001 992 959 996 C918 1000 887 969 882 925 C878 878 908 835 951 829 Z\" fill=\"url(#rg8)\"/><path d=\"M946 847 C977 841 1000 873 999 910 C999 943 978 966 946 966 C913 966 885 947 882 923 C879 894 905 852 946 847 Z\" fill=\"url(#rg9)\"/></g>"};
+const L = {
+  flag:'<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/>',
+  image:'<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>',
+  clock:'<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  alert:'<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+  msg:'<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>',
+  info:'<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+  circleCheck:'<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
+  x:'<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  check:'<path d="M20 6 9 17l-5-5"/>',
+  at:'<circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8"/>',
+  lock:'<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  rotate:'<path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/>',
+  send:'<path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/>',
+  minus:'<path d="M5 12h14"/>',
+  plus:'<path d="M5 12h14"/><path d="M12 5v14"/>',
+  users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  pencil:'<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/>',
+  key:'<path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/>',
+  pause:'<rect x="14" y="4" width="4" height="16" rx="1"/><rect x="6" y="4" width="4" height="16" rx="1"/>',
+  play:'<polygon points="6 3 20 12 6 21 6 3"/>',
+  copy:'<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+  moon:'<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
+  scale:'<path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/>',
+  eyeOff:'<path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/>',
+  camera:'<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>',
+  star:'<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+  text:'<path d="M17 6.1H3"/><path d="M21 12.1H3"/><path d="M15.1 18H3"/>',
+  fileText:'<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>',
+  ticket:'<path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/>',
+  mail:'<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
+};
+const ic = (n, s) => `<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${L[n]}</svg>`;
+document.querySelectorAll('[data-i]').forEach(e => { e.innerHTML = ic(e.dataset.i, +e.dataset.s || 16); if (!e.style.display) e.style.display = 'inline-flex'; });
+/* the app's letter tile: hue from the name, light theme's fixed saturation and lightness */
+document.querySelectorAll('[data-app]').forEach(e => {
+  const z = +e.dataset.z, h = +e.dataset.h;
+  e.style.cssText += `;width:${z}px;height:${z}px;border-radius:${Math.round(z * .3)}px;background:hsl(${h},45%,89%);color:hsl(${h},50%,32%);font-size:${Math.round(z * .45)}px`;
+  e.textContent = e.dataset.app[0];
+});
+/* the dock's 34dp ring */
+document.querySelectorAll('.ring').forEach(e => {
+  const left = +e.dataset.sec, f = (20 - left) / 20, r = 15, c = 2 * Math.PI * r;
+  e.outerHTML = `<span style="position:relative;width:34px;height:34px;flex:none;display:inline-flex;align-items:center;justify-content:center"><svg width="34" height="34" style="position:absolute;inset:0;transform:rotate(-90deg)"><circle cx="17" cy="17" r="${r}" fill="none" stroke="#DFEDF6" stroke-width="4"/><circle cx="17" cy="17" r="${r}" fill="none" stroke="#3A5B73" stroke-width="4" stroke-linecap="round" stroke-dasharray="${c * f} ${c}"/></svg><span style="font-size:12px;font-weight:800;position:relative">${left}</span></span>`;
+});
+/* a size tag stays on the line of the last word it measures */
+document.querySelectorAll('i.sz').forEach(tag => {
+  const p = tag.previousSibling;
+  if (!p || p.nodeType !== 3) return;
+  const m = p.textContent.match(/^([\s\S]*?)(\S+)$/);
+  if (!m) return;
+  p.textContent = m[1];
+  const w = document.createElement('span'); w.style.whiteSpace = 'nowrap';
+  tag.parentNode.insertBefore(w, tag); w.append(m[2], tag);
+});
+/* the robot, from the app's level_robot_* drawables */
+document.querySelectorAll('.robot').forEach(e => {
+  const s = +e.dataset.s;
+  e.outerHTML = `<svg width="${s}" height="${s * 980 / 880}" viewBox="0 0 880 980" style="display:block;margin:0 auto">${R.level_robot_body}${R.level_robot_head}${R.level_robot_eyes}${R.level_robot_antenna}${R.level_robot_hands}</svg>`;
+});
+</script>
+</body>
+</html>

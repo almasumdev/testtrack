@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Add an app: now and new</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  @font-face { font-family: "BarlowApp"; font-weight: 400; src: url("../../../app/src/main/res/font/barlow_regular.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 500; src: url("../../../app/src/main/res/font/barlow_medium.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 600; src: url("../../../app/src/main/res/font/barlow_semibold.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 700; src: url("../../../app/src/main/res/font/barlow_bold.ttf"); }
+
+  /* OceanLight / OceanDark, ui/theme/Tokens.kt */
+  .light {
+    --bg:#F7FCFF; --text:#142F43; --text2:#203A4E; --text3:#223D50; --text4:#59758A;
+    --tabSelected:#2E4E66;
+    --glass:#F2F9FD; --glass2:#DFEDF6; --glassBorder:#B7D1E2; --glassBorderStrong:#789AAF;
+    --accent:#3A5B73; --onAccent:#FFFFFF; --accentInk:#22394B;
+    --tile:#DCE6EE; --tileInk:#3A5B73; --leafAccentSoft:rgba(74,114,144,.16);
+    --ok:#246B59; --okBg:rgba(36,107,89,.12); --warn:#8A611C; --warnBg:rgba(154,110,36,.12);
+    --bad:#9E3B2E; --badBg:rgba(158,59,46,.12);
+    --cardLine:#E1ECF3; --sheet:#FFFFFF; --ring:rgba(20,47,67,.14); --sk:#E3EDF4;
+    --flaskLiquid:#9279D6; --flaskGlass:#4A3B86;
+    --primary:var(--accent); --onPrimary:var(--onAccent); --scrim:rgba(20,34,48,.46);
+  }
+  .dark {
+    --bg:#0F1011; --text:#ECEEF0; --text2:#BCC1C6; --text3:#9DA3A9; --text4:#757C82;
+    --tabSelected:#B6CCDC;
+    --glass:#1C1E20; --glass2:#292C2F; --glassBorder:#383C41; --glassBorderStrong:#666D74;
+    --accent:#4A7290; --onAccent:#FFFFFF; --accentInk:#93B3CA;
+    --tile:#2A2D31; --tileInk:#A2BED2; --leafAccentSoft:#2A2D31;
+    --ok:#83D8C4; --okBg:rgba(131,216,196,.12); --warn:#D8B774; --warnBg:rgba(216,183,116,.14);
+    --bad:#E4938A; --badBg:rgba(228,147,138,.15);
+    --cardLine:#2D3034; --sheet:#1C1E20; --ring:rgba(255,255,255,.16); --sk:#212427;
+    --flaskLiquid:#8C70D4; --flaskGlass:#CDBEF0;
+    --primary:var(--accentInk); --onPrimary:var(--bg); --scrim:rgba(0,0,0,.6);
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #D9E0E5; font-family: "BarlowApp", "Barlow", system-ui, sans-serif; color: #1B2B36; }
+  .top { position: sticky; top: 0; z-index: 9; padding: 12px 28px; background: #D9E0E5; border-bottom: 1px solid #C3CDD4; }
+  .top h1 { margin: 0; font-size: 20px; font-weight: 700; }
+  .doc { padding: 6px 28px 80px; }
+  .row { margin-top: 34px; }
+  .lbl { font-size: 16px; font-weight: 700; margin: 0 0 10px 4px; display: flex; gap: 8px; align-items: center; }
+  .lbl .k { display: inline-grid; place-items: center; min-width: 26px; height: 24px; padding: 0 7px; border-radius: 8px; background: #2D4A5F; color: #fff; font-size: 13px; }
+  .pair { display: flex; gap: 22px; align-items: flex-start; flex-wrap: wrap; }
+  .col { display: flex; flex-direction: column; gap: 6px; }
+  .tag { font-size: 13px; font-weight: 700; color: #5C6B76; margin-left: 4px; }
+  .tag.new { color: #2D4A5F; }
+  .nows { display: flex; gap: 10px; }
+  .shot { width: 360px; height: 780px; border-radius: 26px; border: 1px solid #B9C5CE; display: block; object-fit: cover; background: #000; }
+  .none { width: 120px; height: 780px; border-radius: 26px; border: 2px dashed #AEBBC4; display: grid; place-items: center; color: #7D8C96; font-size: 13px; font-weight: 600; }
+  .arrow { align-self: center; color: #7D8C96; }
+
+  /* phone, 360 x 800 */
+  .phone { width: 360px; height: 800px; background: var(--bg); color: var(--text); border-radius: 26px; overflow: hidden; border: 1px solid #B9C5CE; position: relative; display: flex; flex-direction: column; }
+  .dark.phone { border-color: #3A4046; }
+  .sbar { height: 24px; flex: none; }
+  .pbar { height: 64px; flex: none; display: flex; align-items: center; }
+  .pbar .back { width: 48px; height: 48px; display: grid; place-items: center; margin-left: 4px; color: var(--text); flex: none; }
+  .pbar .ttl { margin-left: 4px; font-size: 22px; line-height: 28px; font-weight: 700; flex: 1; }
+  .pbar .xb { width: 48px; height: 48px; display: grid; place-items: center; margin-right: 4px; color: var(--text); }
+  .scroll { flex: 0 1 auto; min-height: 0; overflow: hidden; padding: 8px 16px 0; position: relative; }
+  .grow { flex: 1; }
+  .gest { height: 22px; flex: none; display: grid; place-items: center; }
+  .gest i { width: 108px; height: 4px; border-radius: 2px; background: var(--text4); opacity: .55; }
+  .foot { flex: none; padding: 24px 16px 6px; position: relative; }
+  .foot.pinned { padding-top: 8px; }
+  .foot.pinned::before { content: ""; position: absolute; left: 0; right: 0; top: -18px; height: 18px; background: linear-gradient(to bottom, transparent, var(--bg)); }
+
+  svg.ic { display: block; flex: none; }
+  .inl { display: inline-block; vertical-align: -2px; margin-right: 6px; }
+  .inl svg { display: inline-block; }
+  .ai { display: grid; place-items: center; flex: none; overflow: hidden; box-shadow: inset 0 0 0 1px var(--ring); font-weight: 700; }
+  .light .nt { background: hsl(var(--h) 45% 89%); color: hsl(var(--h) 50% 32%); box-shadow: none; }
+  .dark .nt { background: hsl(var(--h) 30% 18%); color: hsl(var(--h) 55% 76%); box-shadow: none; }
+
+  /* SectionHeading, with its optional tag */
+  .sh { display: flex; align-items: center; gap: 8px; font-size: 16px; line-height: 19px; font-weight: 700; padding: 24px 0 10px; }
+  .sh .tg { font-size: 12px; line-height: 16px; font-weight: 600; color: var(--text3); background: var(--glass2); padding: 2px 9px; border-radius: 10px; }
+
+  /* TwoChoice (AskAvailability) */
+  .q { font-size: 14px; line-height: 19px; font-weight: 600; }
+  .two { display: flex; gap: 8px; margin-top: 8px; }
+  .two span { flex: 1; min-height: 48px; border-radius: 10px; border: 1px solid var(--glassBorderStrong); display: grid; place-items: center; font-size: 14px; font-weight: 500; color: var(--text2); }
+  .two span.on { background: var(--tile); border-color: var(--tileInk); color: var(--tileInk); font-weight: 600; }
+
+  /* tileFrame / CrewCard: 14dp, page colour, 1dp card line */
+  .card { background: var(--bg); border: 1px solid var(--cardLine); border-radius: 14px; }
+  .gcard { padding: 12px 14px 6px 16px; }
+  .addr { display: flex; align-items: center; gap: 4px; min-height: 40px; }
+  .addr .c { flex: 1; min-width: 0; }
+  .addr .a { font-size: 14.5px; line-height: 18px; font-weight: 600; color: var(--accentInk); white-space: nowrap; overflow: hidden; }
+  .addr .l { margin-top: 2px; font-size: 12.5px; line-height: 14px; font-weight: 500; color: var(--text3); }
+  .addr .cp { width: 40px; height: 40px; display: grid; place-items: center; color: var(--accentInk); margin-right: -8px; }
+  .ia { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 8px; margin-left: -8px; font-size: 14px; font-weight: 700; color: var(--accentInk); border-radius: 16px; }
+
+  /* AppStartRow: CrewCard, icon tile, title and line, soft pill */
+  .ra { display: flex; align-items: center; gap: 12px; padding: 12px; min-height: 60px; }
+  .ra .it { width: 36px; height: 36px; border-radius: 11px; background: var(--tile); color: var(--tileInk); display: grid; place-items: center; flex: none; }
+  .ra .tc { flex: 1; min-width: 0; }
+  .ra .t { font-size: 16px; line-height: 20px; font-weight: 600; }
+  .ra .s { font-size: 12.5px; line-height: 16px; color: var(--text3); }
+  .pill { flex: none; min-height: 32px; padding: 7px 14px; border-radius: 16px; background: var(--tile); color: var(--accentInk); font-size: 13.5px; line-height: 16px; font-weight: 700; }
+
+  /* QuietNote */
+  .qn { text-align: center; font-size: 12px; line-height: 16px; color: var(--text4); margin: 10px 0 12px; }
+
+  /* OutlinedField, 48dp notched */
+  .fld { position: relative; border: 1px solid var(--glassBorderStrong); border-radius: 10px; padding: 13px 14px; min-height: 48px; font-size: 15px; line-height: 20px; font-weight: 500; color: var(--text); }
+  .fld.one { white-space: nowrap; }
+  .fld .v { display: block; overflow: hidden; text-overflow: ellipsis; }
+  .fld.multi .v { white-space: pre-wrap; }
+  .fld.foc { border: 2px solid var(--primary); padding: 12px 13px; }
+  .fld.err { border-color: var(--bad); }
+  .fld .lab { position: absolute; top: -9px; left: 10px; padding: 0 4px; background: var(--bg); font-size: 12px; line-height: 16px; font-weight: 600; color: var(--text3); white-space: nowrap; }
+  .fld.foc .lab { color: var(--accentInk); left: 9px; top: -10px; }
+  .fld.err .lab { color: var(--bad); }
+  .fld .down { color: var(--text4); font-weight: 400; }
+  .fld .cur { display: inline-block; width: 2px; height: 18px; background: var(--primary); vertical-align: -3px; }
+  .fld.dim { opacity: .5; }
+  .cnt { text-align: right; margin-top: 4px; font-size: 11.5px; line-height: 14px; color: var(--text4); font-feature-settings: "tnum"; }
+  .cnt.near { color: var(--warn); font-weight: 600; }
+  .fgap { height: 14px; }
+
+  /* InfoLine / FailureLine: icon as the first glyph, words run back to the edge */
+  .il { margin-top: 12px; font-size: 13px; line-height: 18px; color: var(--text2); }
+  .il .inl { color: var(--text3); }
+  .il.bad, .il.warn { color: var(--text); }
+  .il.bad .inl { color: var(--bad); } .il.warn .inl { color: var(--warn); }
+  .il b { font-weight: 600; }
+
+  /* AppHero */
+  .hero { display: flex; flex-direction: column; align-items: center; padding-top: 14px; }
+  .hico { position: relative; width: 96px; height: 96px; }
+  .pen { position: absolute; right: 0; bottom: 0; width: 30px; height: 30px; border-radius: 50%; background: var(--bg); border: 1px solid var(--glassBorder); display: grid; place-items: center; color: var(--accentInk); }
+  .hn { margin-top: 12px; display: inline-flex; align-items: center; gap: 8px; font-size: 22px; line-height: 26px; font-weight: 700; text-align: center; padding: 2px 6px; }
+  .hn .pn { color: var(--accentInk); }
+  .hp { margin-top: 4px; font-size: 12px; line-height: 16px; color: var(--text3); text-align: center; }
+  .achips { display: flex; gap: 6px; margin-top: 12px; justify-content: center; }
+  .achip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 99px; font-size: 13px; line-height: 17px; font-weight: 600; white-space: nowrap; }
+  .achip.n { background: var(--glass2); color: var(--text3); } .achip.ok { background: var(--okBg); color: var(--ok); }
+  .achip.warn { background: var(--warnBg); color: var(--warn); } .achip.bad { background: var(--badBg); color: var(--bad); }
+  .hero .pill { margin-top: 12px; }
+
+  /* About the app, as Play has it */
+  /* SmallHeading (12/16 bold, text3) over each text; nothing cut */
+  .smh { font-size: 12px; line-height: 16px; font-weight: 700; color: var(--text3); margin-bottom: 4px; }
+  .smh.gap { margin-top: 16px; }
+  .sd { font-size: 15px; line-height: 21px; font-weight: 500; color: var(--text); }
+  .fd p { margin: 0; font-size: 14px; line-height: 20px; color: var(--text); }
+  .fd p + p { margin-top: 10px; }
+
+  /* Primary, pinned */
+  .pbtn { height: 52px; border-radius: 26px; background: var(--primary); color: var(--onPrimary); display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 15px; font-weight: 700; }
+  .pbtn.off { background: color-mix(in srgb, var(--text) 12%, transparent); color: color-mix(in srgb, var(--text) 38%, transparent); }
+  .spin { width: 16px; height: 16px; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; }
+  .dis .in { opacity: .45; }
+
+  /* PageMessage */
+  .pmsg { margin: 0 16px 6px; display: flex; align-items: center; gap: 10px; padding: 11px 10px 11px 14px; border-radius: 14px; background: var(--glass); border: 1px solid var(--glassBorder); font-size: 14px; line-height: 19px; flex: none; }
+  .pmsg .w { flex: 1; } .pmsg .x { color: var(--text3); } .pmsg .m { color: var(--bad); }
+
+  /* skeleton */
+  .sk { display: block; background: var(--sk); border-radius: 6px; position: relative; overflow: hidden; }
+  .sk::after { content: ""; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 30%, color-mix(in srgb, var(--accentInk) 7%, transparent) 50%, transparent 70%); animation: shm 1.6s infinite; }
+  @keyframes shm { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+
+  /* PickerSheet */
+  .scrimL { position: absolute; inset: 0; background: var(--scrim); z-index: 5; }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 6; background: var(--sheet); border-radius: 22px 22px 0 0; padding: 0 16px; display: flex; flex-direction: column; overflow: hidden; }
+  .sheet .hd { width: 38px; height: 4px; border-radius: 2px; background: var(--text4); opacity: .5; margin: 10px auto 14px; flex: none; }
+  .sheet .st { font-size: 17px; line-height: 22px; font-weight: 700; margin-bottom: 14px; flex: none; }
+  .sheet .fld .lab { background: var(--sheet); }
+  .srch { height: 48px; border-radius: 24px; border: 1.2px solid var(--glassBorderStrong); background: var(--bg); display: flex; align-items: center; gap: 10px; padding: 0 8px 0 16px; font-size: 15px; font-weight: 500; color: var(--text4); flex: none; }
+  .srch.foc { border: 1.6px solid var(--text); color: var(--text); }
+  .srch .w { flex: 1; } .srch .x { width: 26px; height: 26px; border-radius: 50%; background: var(--glass2); display: grid; place-items: center; color: var(--text3); }
+  .srch .cur { display: inline-block; width: 2px; height: 18px; background: var(--primary); vertical-align: -3px; }
+  .empty { padding: 16px 4px; font-size: 14px; line-height: 20px; color: var(--text3); }
+  /* the phone's apps: the Ask picker's app tiles (appTileFrame + AppHead), 8dp apart */
+  .apps { display: flex; flex-direction: column; gap: 8px; }
+  .at { display: flex; align-items: center; gap: 12px; min-height: 68px; padding: 10px 12px; background: var(--bg); border: 1px solid var(--cardLine); border-radius: 14px; }
+  .at.on { background: var(--leafAccentSoft); border-color: transparent; }
+  .at .tc { flex: 1; min-width: 0; }
+  .at .t { font-size: 16px; line-height: 19px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .at.on .t { font-weight: 700; color: var(--tabSelected); }
+  .at .s { margin-top: 2px; font-size: 12.5px; line-height: 15px; font-weight: 500; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .at .ck { width: 20px; display: grid; place-items: center; color: var(--tabSelected); flex: none; }
+  /* a test build: the red alert mark in a 40dp target; its callout (InfoDot) says why and what to do */
+  .errw { position: relative; flex: none; display: inline-flex; }
+  .errb { width: 40px; height: 40px; display: grid; place-items: center; color: var(--bad); border-radius: 50%; }
+  .at .errw { margin: -10px -6px -10px 0; }
+  .achips .errw { margin: -6px 0 -6px -4px; }
+
+  .pop { position: absolute; top: calc(100% + 6px); right: var(--r, -4px); width: 282px; z-index: 7; background: var(--sheet); border: 1px solid var(--glassBorder); border-radius: 14px; padding: 11px 13px; font-size: 13px; line-height: 18px; font-weight: 400; color: var(--text2); text-align: left; box-shadow: 0 8px 24px rgba(16,47,70,.16); }
+  .pop::before { content: ""; position: absolute; top: -7px; right: calc(var(--cr, 18px) - 6px); width: 12px; height: 12px; background: var(--sheet); border-left: 1px solid var(--glassBorder); border-top: 1px solid var(--glassBorder); transform: rotate(45deg); }
+  .pop b { color: var(--text); font-weight: 600; }
+
+  /* GroupHowToDialog: full screen, a picture for each step */
+  .hw { flex: 1; overflow: hidden; padding: 8px 16px 0; }
+  .hw .in { position: relative; }
+  .sth { display: flex; align-items: center; gap: 12px; min-height: 32px; margin-top: 24px; }
+  .sth .n { width: 24px; height: 24px; border-radius: 50%; background: var(--tile); color: var(--tileInk); display: grid; place-items: center; font-size: 12.5px; font-weight: 700; flex: none; }
+  .sth .w { font-size: 15px; line-height: 20px; font-weight: 600; }
+  .spic { display: block; width: 100%; margin-top: 10px; border-radius: 12px; border: 1px solid var(--glassBorder); background: #fff; }
+  .zh { margin-top: 8px; font-size: 12.5px; line-height: 16px; font-weight: 600; color: var(--text3); }
+
+  /* Ask dialog */
+  .dlg { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 312px; background: var(--sheet); border-radius: 28px; padding: 24px; z-index: 6; }
+  .dlg .t { font-size: 20px; line-height: 26px; font-weight: 700; }
+  .dlg .b { margin-top: 10px; font-size: 14px; line-height: 20px; color: var(--text2); }
+  .dlg .fld { margin-top: 20px; } .dlg .fld .lab { background: var(--sheet); }
+  .dlg .bt { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+  .dlg .bt span { height: 40px; padding: 0 20px; border-radius: 20px; display: grid; place-items: center; font-size: 14.5px; font-weight: 700; }
+  .dlg .bt .o { border: 1px solid var(--glassBorderStrong); color: var(--accentInk); }
+  .dlg .bt .f { background: var(--primary); color: var(--onPrimary); }
+  .bot { position: absolute; right: 22px; top: -46px; }
+
+  /* keyboard */
+  .kb { flex: none; height: 262px; background: #E8EBEE; padding: 10px 3px 0; }
+  .kb .r { display: flex; justify-content: center; gap: 5px; margin-bottom: 9px; }
+  .kb .r span { width: 29px; height: 42px; border-radius: 6px; background: #fff; box-shadow: 0 1px 0 #C3C8CD; display: grid; place-items: center; font: 400 18px "Roboto", system-ui; color: #202124; }
+  .kb .r span.w { width: 44px; background: #D3D7DB; }
+  .kb .r span.sp { width: 150px; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute"><defs>
+  <linearGradient id="gm" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#EA4335"/><stop offset=".38" stop-color="#FBBC04"/><stop offset=".66" stop-color="#34A853"/><stop offset="1" stop-color="#4285F4"/></linearGradient>
+</defs></svg>
+<div class="top"><h1>Add an app</h1></div>
+<div class="doc" id="doc"></div>
+<script>
+const L = {
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+  alert: '<circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>',
+  tri: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+  clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  flask: '<path d="M14 2v6a2 2 0 0 0 .245.96l5.51 10.08A2 2 0 0 1 18 22H6a2 2 0 0 1-1.755-2.96l5.51-10.08A2 2 0 0 0 10 8V2"/><path d="M6.453 15h11.094"/><path d="M8.5 2h7"/>',
+  globe: '<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>',
+  badgeCheck: '<path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/>',
+  pencil: '<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/>',
+  copy: '<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+  phone: '<rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/>',
+  search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
+  arrowR: '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
+  chevD: '<path d="m6 9 6 6 6-6"/>',
+};
+const ic = (n, s = 16, w = 2) => `<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${L[n]}</svg>`;
+const inl = (n, s = 14, w = 2.2) => `<span class="inl">${ic(n, s, w)}</span>`;
+/* arrow_back_ios_new */
+const BACK = `<svg width="22" height="22" viewBox="0 0 24 24" style="fill:currentColor"><path d="M17.77 3.77 16 2 6 12l10 10 1.77-1.77L9.54 12z"/></svg>`;
+const sp = (h) => `<div style="height:${h}px"></div>`;
+const GROUP = 'googleclosetesting@googlegroups.com';
+const PICS = '../../../app/src/main/res/drawable-nodpi/';
+
+/* ---------- app art ---------- */
+const APP = {
+  maps: { n: 'Google Maps', p: 'com.google.android.apps.maps', art: 'maps' },
+  mapsT: { n: 'Maps', p: 'com.google.android.apps.maps', art: 'maps' },
+  anydesk: { n: 'AnyDesk', p: 'com.anydesk.anydeskandroid', art: 'anydesk' },
+  budgetDev: { n: 'Pocket Budget', p: 'com.pocketbudget.app.debug', h: 150 },
+};
+function art(a, s) {
+  const base = `width:${s}px;height:${s}px;border-radius:${Math.round(s * 0.3)}px;`;
+  const g = Math.round(s * 0.66);
+  const sv = (body) => `<svg width="${g}" height="${g}" viewBox="0 0 24 24">${body}</svg>`;
+  switch (a.art) {
+    case 'maps': return `<span class="ai" style="${base}background:#fff">${sv('<path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7z" fill="url(#gm)"/><circle cx="12" cy="9" r="2.8" fill="#fff"/>')}</span>`;
+    case 'anydesk': return `<span class="ai" style="${base}background:#EF443B;box-shadow:none">${sv('<path d="M3.5 12 8.5 7l5 5-5 5z" fill="#fff"/><path d="M13.5 6.5 19 12l-5.5 5.5-1.7-1.7L15.6 12l-3.8-3.8z" fill="#fff"/>')}</span>`;
+    case 'solid': return `<span class="ai" style="${base}background:${a.bg};color:#fff;box-shadow:none;font-size:${Math.round(s * 0.42)}px">${a.n[0]}</span>`;
+    default: return `<span class="ai nt" style="${base}--h:${a.h};font-size:${Math.round(s * 0.45)}px">${a.n[0]}</span>`;
+  }
+}
+const ROBOT = `<svg width="92" height="70" viewBox="0 0 92 70">
+  <line x1="46" y1="8" x2="46" y2="20" stroke="#2F5D86" stroke-width="3"/><circle cx="46" cy="8" r="6" fill="#F28C78"/>
+  <rect x="6" y="34" width="12" height="22" rx="6" fill="#7DB6E0"/><rect x="74" y="34" width="12" height="22" rx="6" fill="#7DB6E0"/>
+  <rect x="12" y="18" width="68" height="52" rx="20" fill="#3D7BB0"/>
+  <rect x="20" y="28" width="52" height="34" rx="15" fill="#FFF8EC"/>
+  <circle cx="35" cy="43" r="5" fill="#13212E"/><circle cx="57" cy="43" r="5" fill="#13212E"/>
+  <path d="M40 51q6 5 12 0" fill="none" stroke="#13212E" stroke-width="2.6" stroke-linecap="round"/></svg>`;
+
+/* ---------- shared parts ---------- */
+function twoChoice(live) {
+  return `<div class="q">Where can people try your app?</div>
+    <div class="two"><span class="${live ? 'on' : ''}">Live on Play</span><span class="${live ? '' : 'on'}">Closed testing</span></div>`;
+}
+const addrRow = () => `<div class="addr"><div class="c"><div class="a">${GROUP}</div><div class="l">Testers group address</div></div><span class="cp">${ic('copy', 18)}</span></div>`;
+const groupBlock = () => `<div class="sh">First, add our testers group</div><div class="card gcard">${addrRow()}<span class="ia">How to add it</span></div>`;
+const phoneRow = () => `<div class="card ra"><span class="it">${ic('phone', 19)}</span><div class="tc"><div class="t">Pick from this phone</div><div class="s">Works before Play is ready</div></div><span class="pill">Pick</span></div>`;
+function field(label, o = {}) {
+  const has = !!o.v;
+  const lab = has || o.focus ? `<span class="lab">${label}</span>` : '';
+  const inner = has ? `<span class="v">${o.v}${o.focus ? '<span class="cur"></span>' : ''}</span>`
+    : o.focus ? `<span class="cur"></span>${o.ph ? `<span class="down"> ${o.ph}</span>` : ''}` : `<span class="down">${label}</span>`;
+  const minH = o.lines ? Math.max(48, o.lines * 20 + 26) : 48;
+  const cnt = o.max != null ? `<div class="cnt${o.near ? ' near' : ''}">${o.n != null ? o.n : (has ? o.v.length : 0)}/${o.max}</div>` : '';
+  return `<div class="fld ${o.lines || o.wrap ? 'multi' : 'one'}${o.focus ? ' foc' : ''}${o.err ? ' err' : ''}${o.dim ? ' dim' : ''}" style="min-height:${minH}px">${lab}${inner}</div>${cnt}`;
+}
+/* FailureLine as it is: the title in bold, what to do under it */
+const failLine = (f) => `<div class="il ${f.tone}">${inl('alert', 14, 2.4)}<b>${f.title}</b><br>${f.detail}</div>`;
+const infoLine = (n) => `<div class="il ${n.tone || ''}" style="margin-top:${n.top != null ? n.top : 18}px">${inl(n.icon || 'info', 14, 2.2)}${n.t}</div>`;
+const foot = (label, o = {}) => `<div class="foot"><div class="pbtn${o.off ? ' off' : ''}">${o.busy ? '<span class="spin"></span>' : ''}${label}</div></div>`;
+function phone(th, o) {
+  const msg = o.msg ? `<div class="pmsg"><span class="m">${ic('alert', 17)}</span><span class="w">${o.msg}</span><span class="x">${ic('x', 16)}</span></div>` : '';
+  const bar = o.bar || `<div class="pbar"><span class="back">${BACK}</span><span class="ttl">Add an app</span></div>`;
+  const body = o.raw || `<div class="scroll${o.dis ? ' dis' : ''}"><div class="in" data-y="${o.scrollY || 0}">${o.body}</div></div>`;
+  return `<div class="phone ${th}"><div class="sbar"></div>${bar}${msg}${body}${o.foot || ''}<div class="grow"></div>${o.kb ? KB : '<div class="gest"><i></i></div>'}${o.over || ''}</div>`;
+}
+const KB = (() => {
+  const row = (keys) => `<div class="r">${keys.split('').map((k) => `<span>${k}</span>`).join('')}</div>`;
+  return `<div class="kb">${row('1234567890')}${row('qwertyuiop')}${row('asdfghjkl')}
+    <div class="r"><span class="w">&#8679;</span>${'zxcvbnm'.split('').map((k) => `<span>${k}</span>`).join('')}<span class="w">&#9003;</span></div>
+    <div class="r"><span class="w">!#1</span><span>/</span><span class="sp"></span><span>.</span><span class="w">${ic('search', 18)}</span></div></div>`;
+})();
+
+/* ---------- the start page ---------- */
+function start(th, o = {}) {
+  let b = twoChoice(o.live);
+  if (!o.live) b += groupBlock();
+  b += `<div class="sh">Your app</div>` + phoneRow() + `<div class="qn">or</div>`;
+  b += field('Play link or package name', { v: o.q, focus: o.focus, err: o.err, dim: o.looking, ph: 'com.example.myapp' });
+  if (o.fail) b += failLine(o.fail);
+  const label = o.looking ? 'Finding your app' : o.fail ? 'Try again' : 'Find my app';
+  const off = !o.looking && !(o.q && o.q.length >= 3);
+  return phone(th, { body: b, foot: foot(label, { off, busy: o.looking }), kb: o.kb, over: o.over ? o.over(th) : '' });
+}
+
+/* ---------- found or picked: one hero, then About the app ---------- */
+function heroOf(a, o) {
+  const achip = (t, tone, icon) => `<span class="achip ${tone}">${ic(icon, 14)}${t}</span>`;
+  const where = o.live ? achip('Live', 'n', 'globe') : achip('Closed test', 'n', 'flask');
+  const second = o.chip === 'found' ? achip('Found on Play', 'ok', 'badgeCheck')
+    : o.chip === 'test' ? errMark(o.popOpen, POP_HERO, '-64px', '84px') : achip('Not checked yet', 'warn', 'clock');
+  const icon = o.iconLoading ? `<span class="sk" style="width:88px;height:88px;border-radius:26px"></span>` : art(a, 88);
+  const name = o.edit ? `<div class="hn">${a.n}<span class="pn">${ic('pencil', 16)}</span></div>` : `<div class="hn">${a.n}</div>`;
+  return `<div class="hero"><span class="hico">${icon}${o.edit ? `<span class="pen">${ic('pencil', 15)}</span>` : ''}</span>
+    ${name}<div class="hp">${a.p}</div><div class="achips">${where}${second}</div>
+    ${o.noPick ? '' : '<span class="pill">Choose another app</span>'}</div>`;
+}
+const NOTE_CLOSED = { t: "We check it on Play once our testers group is on your closed track. You can put it in a crew before then." };
+const NOTE_LIVE = { t: "We look it up on Google Play's public page as you add it." };
+const POP_WHY = "<b>This is a test build</b><br>It isn't the copy installed from Play, so testers couldn't find it.";
+const POP_SHEET = `${POP_WHY}<br>1. Install your app from Play.<br>2. Pick it here.`;
+const POP_HERO = `${POP_WHY}<br>1. Install your app from Play.<br>2. Tap Choose another app and pick it.`;
+/* the red alert-circle mark, and its callout when open */
+const errMark = (open, text, r, cr) => `<span class="errw"><span class="errb">${ic('alert', 16, 2.2)}</span>${open ? `<div class="pop" style="--r:${r || '-4px'};--cr:${cr || '24px'}">${text}</div>` : ''}</span>`;
+
+/* Picked from the phone: no Play page yet, so the owner can write them */
+function aboutFields(o) {
+  const d = o.desc || {};
+  return `<div class="sh">About the app<span class="tg">Optional</span></div>${sp(4)}
+    ${field('Short description', { v: d.s, focus: d.fs, wrap: true, max: 80, near: d.s && d.s.length > 72 })}<div class="fgap"></div>
+    ${field('Full description', { v: d.f, focus: d.ff, max: 4000, lines: 3, n: d.fn, ph: '' })}`;
+}
+/* Found on Play: read from its listing */
+function aboutPlay(d) {
+  return `<div class="sh">About the app<span class="tg">From Play</span></div>
+    <div class="smh">Short description</div><div class="sd">${d.s}</div>
+    <div class="smh gap">Full description</div><div class="fd">${d.f.split('|').map((x) => `<p>${x}</p>`).join('')}</div>`;
+}
+function confirm(th, o) {
+  let b = heroOf(o.app, o);
+  if (o.note) b += infoLine(o.note);
+  if (o.play) b += aboutPlay(o.play);
+  else if (o.fields) b += aboutFields(o);
+  return phone(th, { body: b, scrollY: o.scrollY, foot: foot('Add to My apps', { busy: o.busy, off: o.iconLoading }), dis: o.busy, msg: o.msg, over: o.over ? o.over(th) : '', kb: o.kb });
+}
+
+/* ---------- the copy ---------- */
+const MAPS = {
+  s: 'Real-time GPS navigation, traffic and transit, and places to go nearby',
+  f: "Navigate your world faster and easier with Google Maps. Over 220 countries and territories mapped and hundreds of millions of businesses and places on the map.|Get real-time GPS navigation, traffic, and transit info, and explore local neighborhoods by knowing where to eat, drink and go, no matter what part of the world you're in.|Get there faster with real-time updates. Beat traffic with automatic rerouting based on live conditions, and find the best route with live traffic data and incident reports.",
+};
+const MAPS_SHORT = { s: 'Maps and directions for testing', f: 'An early build of our maps app. Try the search and the route screen.' };
+const DESK_SHORT = 'Reach your computer from your phone, wherever you are';
+const DESK_FULL = 'Open your office or home computer from your phone in seconds. Files, apps and settings are all there, just as if you were sitting in front of it.';
+const LONG_SHORT = 'Control your PC from your phone: remote desktop, file transfer and chat at once';
+const LONG_FULL = 'AnyDesk gives you fast, secure remote access to every computer you use. Help a friend fix a setting, open a file you left at the office, or show a client your screen without a single cable. Connections are encrypted end to end and each session asks before it starts, so nobody gets in without you saying yes. Transfer files both ways, print remotely, chat inside the session and record it for later. Works on Windows, macOS, Linux, Android and iOS, with no setup on the other side beyond the AnyDesk app. Light on data, so it stays smooth on mobile networks and slow hotel Wi-Fi alike. Free for personal use; plans for teams add address books, custom branding and session reports.';
+
+/* ---------- sheets, the how-to, the dialog ---------- */
+const PHONE_APPS = [
+  { n: 'Adobe Acrobat', p: 'com.adobe.reader', art: 'solid', bg: '#C8102E' },
+  { n: 'AirMouse', p: 'com.kumarav1nash.airmouse', art: 'solid', bg: '#2C3E9E' },
+  { n: 'AnyDesk', p: 'com.anydesk.anydeskandroid', art: 'anydesk' },
+  { n: 'AnyList', p: 'com.purplecover.anylist', art: 'solid', bg: '#1E9BE0' },
+  { n: 'Authenticator', p: 'com.google.android.apps.authenticator2', art: 'solid', bg: '#5F6368' },
+  { n: 'Pocket Budget', p: 'com.pocketbudget.app.debug', h: 150, test: true },
+  { n: 'Pocket Budget', p: 'com.pocketbudget.app', h: 150 },
+  { n: 'Quick Notes', p: 'com.quicknotes.lite', art: 'solid', bg: '#E2A400' },
+  { n: 'Tide Times', p: 'com.tidetimes.app', art: 'solid', bg: '#1F7A8C' },
+];
+function appTile(a, on, popOpen) {
+  const end = a.test ? errMark(popOpen, POP_SHEET, '-4px', '24px') : `<span class="ck">${on ? ic('check', 18, 2.6) : ''}</span>`;
+  return `<div class="at${on ? ' on' : ''}">${art(a, 44)}<div class="tc"><div class="t">${a.n}</div><div class="s">${a.p}</div></div>${end}</div>`;
+}
+function pickSheet(o = {}) {
+  return () => {
+    let list;
+    if (o.loading) {
+      const W = [[96, 170], [128, 150], [84, 186], [112, 140], [140, 160], [90, 176], [118, 132], [100, 160], [120, 150]];
+      list = `<div class="apps">${W.map(([a, b]) => `<div class="at"><span class="sk" style="width:44px;height:44px;border-radius:13px"></span><div class="tc"><span class="sk" style="width:${a}px;height:14px"></span>${sp(6)}<span class="sk" style="width:${b}px;height:11px"></span></div></div>`).join('')}</div>`;
+    } else if (o.none) {
+      list = `<div class="empty">No app on this phone matches "${o.search}".</div>`;
+    } else {
+      list = `<div class="apps">${PHONE_APPS.map((a) => appTile(a, o.chosen === a.p, o.pop)).join('')}</div>`;
+    }
+    const srch = o.search ? `<div class="srch foc">${ic('search', 18)}<span class="w" style="color:var(--text)">${o.search}<span class="cur"></span></span><span class="x">${ic('x', 14)}</span></div>`
+      : `<div class="srch">${ic('search', 18)}<span class="w">Search by name or package</span></div>`;
+    return `<div class="scrimL"></div><div class="sheet" style="top:34px"><div class="hd"></div><div class="st">Pick your app</div>${srch}${sp(12)}${list}</div>`;
+  };
+}
+/* GroupHowToDialog as the seat page has it: the address, then each step with its picture */
+const STEPS = [
+  ['Open Closed testing in Play Console', 'play_step1.webp'],
+  ['Open your track, then its Testers tab', 'play_step2.webp'],
+  ['Pick Google Groups, paste the address and save', 'play_step3.webp'],
+  ['Roll out a release to that track', 'play_step4.webp'],
+];
+function howTo(th, o = {}) {
+  const bar = `<div class="pbar" style="padding-left:16px"><span class="ttl" style="margin-left:0">Add the testers group</span><span class="xb">${ic('x', 24)}</span></div>`;
+  let b = addrRow();
+  STEPS.forEach(([t, f], i) => {
+    b += `<div class="sth"${i === 0 ? ' style="margin-top:20px"' : ''}><span class="n">${i + 1}</span><span class="w">${t}</span></div><img class="spic" src="${PICS}${f}" alt="">`;
+    if (i === 0) b += `<div class="zh">Pinch or double-tap to zoom</div>`;
+  });
+  b += sp(28) + (o.seat ? `<div class="pbtn">Verify on Play</div>` : '') + sp(20);
+  return phone(th, { bar, raw: `<div class="hw"><div class="in" style="margin-top:-${o.scrollY || 0}px">${b}</div></div>` });
+}
+function renameDialog() {
+  return `<div class="scrimL"></div><div class="dlg"><span class="bot">${ROBOT}</span><div class="t">The app's name</div><div class="b">As Play shows it, so testers know it is the same app.</div>
+    ${field('Name', { v: 'AnyDesk', focus: true })}<div class="cnt">7/30</div>
+    <div class="bt"><span class="o">Cancel</span><span class="f">Save</span></div></div>`;
+}
+/* Later, on the app page: the same fields in one sheet */
+function editSheet() {
+  return `<div class="scrimL"></div><div class="sheet" style="top:150px"><div class="hd"></div><div class="st">Edit details</div>${sp(6)}
+    ${field('Name', { v: 'AnyDesk', max: 30 })}<div class="fgap"></div>
+    ${field('Short description', { v: DESK_SHORT, max: 80, focus: true, wrap: true })}<div class="fgap"></div>
+    ${field('Full description', { v: DESK_FULL, max: 4000, lines: 3 })}${sp(18)}
+    <div class="pbtn">Save</div>${sp(28)}</div>`;
+}
+function appPage(th) {
+  const bar = `<div class="pbar"><span class="back">${BACK}</span></div>`;
+  return phone(th, { bar, body: heroOf(APP.anydesk, { edit: true, live: false, chip: 'unchecked', noPick: true }), over: editSheet() });
+}
+
+/* ---------- rows: today on the left, new on the right ---------- */
+const F_NOTFOUND = { tone: 'bad', title: "We couldn't find this app", detail: "Check the package name. If your app isn't public yet, choose Closed testing." };
+const F_NOACCESS = { tone: 'warn', title: "We can't access this listing", detail: 'Check that our testers group is on your closed track and the release is out. Just added it? Play can take a few hours. You can pick it from this phone instead.' };
+const PICKED = { app: APP.anydesk, edit: true, live: false, chip: 'unchecked', note: NOTE_CLOSED, fields: true };
+const ROWS = [
+  ['1', 'Start, closed test', ['31-light-step1-choose.png', '34-light-step2-closed-empty.png'], (th) => start(th, { live: false }), true],
+  ['2', 'Start, live on Play', ['13-step2-live-empty.png'], (th) => start(th, { live: true })],
+  ['3', 'Typing a link', ['15-step2-live-typing-invalid.png'], (th) => start(th, { live: true, q: 'play.google.com/store/apps/details?id=com.pocketbudget.app', focus: true, kb: true })],
+  ['4', 'Finding it', ['16-step2-live-lookup-spinner.png'], (th) => start(th, { live: true, q: 'com.pocketbudget.app', looking: true })],
+  ['5', 'Not found', ['35-light-live-not-found.png'], (th) => start(th, { live: true, q: 'com.does.not.exist.zz', err: true, fail: F_NOTFOUND })],
+  ['6', "Play can't see the closed test yet", [], (th) => start(th, { live: false, q: 'com.pocketbudget.app', fail: F_NOACCESS })],
+  ['7', 'How to add the group', ['20-step2-closed-with-text.png'], (th) => howTo(th, {})],
+  ['8', 'How to add the group, scrolled', [], (th) => howTo(th, { scrollY: 560 })],
+  ['9', 'Pick from this phone', ['32-light-phone-picker.png'], (th) => start(th, { live: false, over: pickSheet({ chosen: 'com.anydesk.anydeskandroid' }) }), true],
+  ['9b', 'Test build mark tapped', [], (th) => start(th, { live: false, over: pickSheet({ chosen: 'com.anydesk.anydeskandroid', pop: true }) })],
+  ['10', 'Phone apps loading', [], (th) => start(th, { live: false, over: pickSheet({ loading: true }) })],
+  ['11', 'No app matches', [], (th) => start(th, { live: false, over: pickSheet({ search: 'zzz', none: true }) })],
+  ['12', 'Picked, descriptions empty', ['33-light-phone-picked.png'], (th) => confirm(th, { ...PICKED }), true],
+  ['13', 'Picked, descriptions filled', [], (th) => confirm(th, { ...PICKED, desc: { s: DESK_SHORT, f: DESK_FULL }, scrollY: 170 })],
+  ['14', 'Picked, long text', [], (th) => confirm(th, { ...PICKED, desc: { s: LONG_SHORT, f: LONG_FULL, ff: true, fn: 1186 }, scrollY: 400 })],
+  ['15', 'Picked, live on Play', ['24-step2-phone-picked-live.png'], (th) => confirm(th, { ...PICKED, live: true, note: NOTE_LIVE })],
+  ['16', 'Picked a test build', [], (th) => confirm(th, { ...PICKED, app: APP.budgetDev, chip: 'test', note: null })],
+  ['16b', 'Picked a test build, mark tapped', [], (th) => confirm(th, { ...PICKED, app: APP.budgetDev, chip: 'test', note: null, popOpen: true })],
+  ['17', 'Icon loading', [], (th) => confirm(th, { ...PICKED, iconLoading: true })],
+  ['18', 'Rename', ['25-rename-dialog.png'], (th) => confirm(th, { ...PICKED, over: renameDialog })],
+  ['19', 'Found on Play, live', ['18-step2-live-found-preview.png'], (th) => confirm(th, { app: APP.maps, live: true, chip: 'found', play: MAPS }), true],
+  ['20', 'Found on Play, scrolled to the end', [], (th) => confirm(th, { app: APP.maps, live: true, chip: 'found', play: MAPS, scrollY: 300 })],
+  ['21', 'Found on Play, closed test, short text', ['21-step2-closed-found-preview.png'], (th) => confirm(th, { app: APP.mapsT, live: false, chip: 'found', play: MAPS_SHORT })],
+  ['22', 'Adding', [], (th) => confirm(th, { ...PICKED, desc: { s: DESK_SHORT, f: DESK_FULL }, scrollY: 170, busy: true })],
+  ['23', "Couldn't add", [], (th) => confirm(th, { ...PICKED, msg: "Couldn't add it. Check your connection." })],
+  ['24', 'Edit details, later on the app page', [], (th) => appPage(th)],
+];
+
+let h = '';
+for (const [i, [, label, now, fn, dark]] of ROWS.entries()) {
+  const k = i + 1;
+  const shots = now.length ? `<div class="nows">${now.map((f) => `<img class="shot" src="../add-app/current/${f}" alt="">`).join('')}</div>` : `<div class="none">None</div>`;
+  h += `<div class="row"><div class="lbl"><span class="k">${k}</span>${label}</div><div class="pair">
+    <div class="col"><span class="tag">Now</span>${shots}</div>
+    <span class="arrow">${ic('arrowR', 26, 2)}</span>
+    <div class="col"><span class="tag new">New</span>${fn('light')}</div>
+    ${dark ? `<div class="col"><span class="tag new">New, dark</span>${fn('dark')}</div>` : ''}</div></div>`;
+}
+document.getElementById('doc').innerHTML = h;
+/* pinned only when the content is taller than the room it has */
+function pinFeet() {
+  document.querySelectorAll('.phone').forEach((ph) => {
+    const sc = ph.querySelector('.scroll'), ft = ph.querySelector('.foot');
+    if (!sc || !ft) return;
+    ft.classList.remove('pinned');
+    const inner = sc.querySelector('.in');
+    inner.style.transform = '';
+    if (inner.scrollHeight + 8 > sc.clientHeight + 1) ft.classList.add('pinned');
+    /* a scrolled frame stops where the page would: its last block just over the button */
+    const max = Math.max(0, inner.scrollHeight + 20 - sc.clientHeight);
+    const y = Math.min(+inner.dataset.y || 0, max);
+    if (y) inner.style.transform = `translateY(-${y}px)`;
+  });
+}
+pinFeet();
+if (document.fonts) document.fonts.ready.then(pinFeet);
+window.addEventListener('load', pinFeet);
+</script>
+</body>
+</html>

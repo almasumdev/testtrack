@@ -1,0 +1,707 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Check review and Waiting: five options each</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  @font-face { font-family: "BarlowApp"; font-weight: 400; src: url("../../../app/src/main/res/font/barlow_regular.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 500; src: url("../../../app/src/main/res/font/barlow_medium.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 600; src: url("../../../app/src/main/res/font/barlow_semibold.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 700; src: url("../../../app/src/main/res/font/barlow_bold.ttf"); }
+  @font-face { font-family: "PlexApp"; font-weight: 700; src: url("../../../app/src/main/res/font/plexmono_bold.ttf"); }
+
+  /* OceanLight / OceanDark, ui/theme/Tokens.kt */
+  .light {
+    --bg:#F7FCFF; --text:#142F43; --text2:#203A4E; --text3:#223D50; --text4:#59758A;
+    --tabSelected:#2E4E66;
+    --glass:#F2F9FD; --glass2:#DFEDF6; --glassBorder:#B7D1E2; --glassBorderStrong:#789AAF;
+    --accent:#3A5B73; --onAccent:#FFFFFF; --accentInk:#22394B;
+    --tile:#DCE6EE; --tileInk:#3A5B73; --leafAccent:#3A5B73; --leafAccentSoft:rgba(74,114,144,.16);
+    --ok:#246B59; --okBg:rgba(36,107,89,.12); --warn:#8A611C; --warnBg:rgba(154,110,36,.12);
+    --bad:#9E3B2E; --badBg:rgba(158,59,46,.12);
+    --card:#F3F8FB; --cardLine:#E1ECF3; --sheet:#FFFFFF; --ring:rgba(20,47,67,.14); --track:#E4EEF4; --sk:#E3EDF4;
+    --flaskLiquid:#9279D6; --flaskGlass:#4A3B86;
+    --panelTop:#F7FCFF; --panelBottom:#E3F0F8; --panelGlow:rgba(184,204,219,.6); --panelOutline:#94B8CF;
+    --tixTop:#3F6680; --tixBottom:#2B4A60;
+    --primary:var(--accent); --onPrimary:var(--onAccent); --onTone:#FFFFFF; --scrim:rgba(20,34,48,.46);
+  }
+  .dark {
+    --bg:#0F1011; --text:#ECEEF0; --text2:#BCC1C6; --text3:#9DA3A9; --text4:#757C82;
+    --tabSelected:#B6CCDC;
+    --glass:#1C1E20; --glass2:#292C2F; --glassBorder:#383C41; --glassBorderStrong:#666D74;
+    --accent:#4A7290; --onAccent:#FFFFFF; --accentInk:#93B3CA;
+    --tile:#2A2D31; --tileInk:#A2BED2; --leafAccent:#93B3CA; --leafAccentSoft:#2A2D31;
+    --ok:#83D8C4; --okBg:rgba(131,216,196,.12); --warn:#D8B774; --warnBg:rgba(216,183,116,.14);
+    --bad:#E4938A; --badBg:rgba(228,147,138,.15);
+    --card:#1C1E20; --cardLine:#2D3034; --sheet:#1C1E20; --ring:rgba(255,255,255,.16); --track:#2D3034; --sk:#212427;
+    --flaskLiquid:#8C70D4; --flaskGlass:#CDBEF0;
+    --panelTop:#1F2225; --panelBottom:#18191B; --panelGlow:rgba(147,179,202,.06); --panelOutline:#40464C;
+    --tixTop:#4A7290; --tixBottom:#355A75;
+    --primary:var(--accentInk); --onPrimary:var(--bg); --onTone:#0F1011; --scrim:rgba(0,0,0,.6);
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #D9E0E5; font-family: "BarlowApp", "Barlow", system-ui, sans-serif; color: #1B2B36; }
+  body.dk { background: #2A3036; color: #E3E8EC; }
+  .top { position: sticky; top: 0; z-index: 9; display: flex; align-items: center; gap: 10px; padding: 12px 28px; background: inherit; border-bottom: 1px solid #C3CDD4; }
+  body.dk .top { border-color: #3A4249; }
+  .top h1 { margin: 0 14px 0 0; font-size: 20px; font-weight: 700; }
+  .top button, .top a { font: 600 15px/20px "BarlowApp", "Barlow", sans-serif; padding: 8px 18px; border-radius: 20px; border: 1px solid #B3C0C9; background: #F4F7F9; color: #2D4A5F; cursor: pointer; text-decoration: none; }
+  .top button.on { background: #2D4A5F; color: #fff; border-color: #2D4A5F; }
+  .top .gap { flex: 1; }
+  .doc { padding: 6px 28px 80px; }
+  .page { font-size: 30px; font-weight: 700; margin: 44px 0 6px 4px; }
+  .opt { margin-top: 44px; }
+  .ol { font-size: 22px; font-weight: 700; margin: 0 0 12px 4px; display: flex; gap: 10px; align-items: center; }
+  .ol .k { display: inline-grid; place-items: center; height: 30px; padding: 0 12px; border-radius: 9px; background: #2D4A5F; color: #fff; font-size: 15px; }
+  .ol .k.now { background: #8A949C; }
+  .ol .rec { font-size: 14px; padding: 4px 12px; border-radius: 99px; background: #246B59; color: #fff; }
+  body.dk .ol .k { background: #93B3CA; color: #0F1011; }
+  body.dk .ol .k.now { background: #5E666D; color: #fff; }
+  body.dk .ol .rec { background: #83D8C4; color: #0F1011; }
+  .optrow { display: flex; gap: 26px; align-items: flex-start; flex-wrap: wrap; }
+  .fr { display: flex; flex-direction: column; gap: 6px; }
+  .fl { font-size: 14px; font-weight: 700; margin-left: 4px; color: #4F5C66; }
+  body.dk .fl { color: #A8B2BA; }
+  .minis { display: flex; gap: 18px; align-items: flex-start; flex-wrap: wrap; }
+  .mini { zoom: .6; }
+  .cap { width: 412px; height: 892px; border-radius: 28px; border: 1px solid #3A4046; display: block; object-fit: cover; object-position: top; background: #0F1011; }
+  .cap.s { zoom: .6; }
+
+  /* phone */
+  .phone { width: 412px; height: 880px; background: var(--bg); color: var(--text); border-radius: 28px; overflow: hidden; border: 1px solid #B9C5CE; position: relative; display: flex; flex-direction: column; }
+  .dark.phone { border-color: #3A4046; }
+  .sbar { height: 24px; flex: none; }
+  .pbar { height: 64px; flex: none; display: flex; align-items: center; }
+  .pbar .back { width: 48px; height: 48px; display: grid; place-items: center; margin-left: 4px; color: var(--text); flex: none; }
+  .pbar .ttl { margin-left: 4px; font-size: 22px; line-height: 28px; font-weight: 700; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pbar .pr { margin-right: 4px; min-width: 48px; height: 48px; display: grid; place-items: center; color: var(--text2); font-size: 14px; font-weight: 700; font-feature-settings: "tnum"; padding: 0 8px; }
+  .pbar .tixp { margin-right: 14px; height: 34px; padding: 0 14px; border-radius: 17px; background: var(--tile); color: var(--tileInk); display: inline-flex; align-items: center; gap: 6px; font-size: 15px; font-weight: 700; }
+  .scroll { flex: 1; overflow-y: auto; padding: 8px 16px 20px; scrollbar-width: none; position: relative; }
+  .scroll::-webkit-scrollbar { display: none; }
+  .foot { flex: none; padding: 10px 16px 6px; }
+  .gest { height: 22px; flex: none; display: grid; place-items: center; }
+  .gest i { width: 108px; height: 4px; border-radius: 2px; background: var(--text4); opacity: .55; }
+
+  svg.ic { display: block; flex: none; }
+  .inl { display: inline-block; vertical-align: -2px; margin-right: 6px; }
+  .inl svg { display: inline-block; }
+  .ai { display: grid; place-items: center; flex: none; overflow: hidden; box-shadow: inset 0 0 0 1px var(--ring); font-weight: 700; }
+  .light .nt { background: hsl(var(--h) 45% 89%); color: hsl(var(--h) 50% 32%); box-shadow: none; }
+  .dark .nt { background: hsl(var(--h) 30% 18%); color: hsl(var(--h) 55% 76%); box-shadow: none; }
+
+  .ah { display: flex; align-items: center; gap: 12px; }
+  .aic { position: relative; flex: none; }
+  .src { position: absolute; right: -5px; bottom: -5px; width: 20px; height: 20px; border-radius: 50%; background: var(--sheet); box-shadow: 0 0 0 2px var(--bg); display: grid; place-items: center; }
+  .ah .col { flex: 1; min-width: 0; }
+  .an { font-size: 16px; line-height: 19px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ad { margin-top: 2px; font-size: 12.5px; line-height: 15px; font-weight: 500; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .card { background: var(--bg); border: 1px solid var(--cardLine); border-radius: 14px; position: relative; }
+  .il { font-size: 13.5px; line-height: 19px; color: var(--text2); position: relative; }
+  .il + .il { margin-top: 8px; }
+  .il .inl { color: var(--text3); }
+  .il b { color: var(--text); font-weight: 600; }
+  .il.warn { color: var(--text); } .il.warn .inl { color: var(--warn); }
+  .il.ok .inl { color: var(--ok); }
+  .il.sm { font-size: 12.5px; line-height: 17px; color: var(--text3); }
+  .ii { display: inline-grid; place-items: center; width: 22px; height: 18px; vertical-align: -3px; color: var(--text3); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 99px; font-size: 12.5px; line-height: 16px; font-weight: 700; white-space: nowrap; }
+  .chip.ok { background: var(--okBg); color: var(--ok); } .chip.warn { background: var(--warnBg); color: var(--warn); }
+  .chip.bad { background: var(--badBg); color: var(--bad); } .chip.quiet { background: var(--glass2); color: var(--text2); }
+  .pill { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 34px; padding: 7px 14px; border-radius: 17px; background: var(--tile); color: var(--accentInk); font-size: 13.5px; line-height: 16px; font-weight: 700; white-space: nowrap; }
+  .pill.bad { color: var(--bad); background: var(--badBg); }
+  .ia { display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 8px; font-size: 14px; font-weight: 700; color: var(--accentInk); border-radius: 16px; }
+  .ia.bad { color: var(--bad); } .ia.off { color: var(--text4); }
+  .pbtn { height: 52px; border-radius: 26px; background: var(--primary); color: var(--onPrimary); display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 15px; font-weight: 700; }
+  .pbtn.off { background: color-mix(in srgb, var(--text) 12%, transparent); color: color-mix(in srgb, var(--text) 38%, transparent); }
+  .spin { width: 20px; height: 20px; border-radius: 50%; border: 2.4px solid color-mix(in srgb, currentColor 28%, transparent); border-top-color: currentColor; }
+  .ta { display: flex; justify-content: center; align-items: center; min-height: 44px; }
+  .sys { align-self: center; display: inline-flex; align-items: center; gap: 6px; padding: 3px 12px; border-radius: 99px; background: var(--glass2); color: var(--text2); font-size: 12.5px; line-height: 17px; }
+  .sys.warn { background: var(--warnBg); color: var(--warn); font-weight: 600; }
+  .pmsg { margin: 0 16px 6px; display: flex; align-items: center; gap: 10px; padding: 11px 10px 11px 14px; border-radius: 14px; background: var(--glass); border: 1px solid var(--glassBorder); font-size: 14px; line-height: 19px; flex: none; }
+  .pmsg .w { flex: 1; } .pmsg .x { color: var(--text3); } .pmsg .m0 { color: var(--accentInk); }
+  .sk { display: block; background: var(--sk); border-radius: 6px; }
+  .ns .n { font-size: 14px; line-height: 20px; color: var(--text2); }
+  .ns .n + .n { margin-top: 8px; }
+  .ns .n b { color: var(--text); font-weight: 600; }
+  .nb { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--tile); color: var(--tileInk); font-size: 12px; font-weight: 700; margin-right: 8px; line-height: 20px; }
+  .meta { font-size: 12px; line-height: 16px; color: var(--text4); }
+  .meta.ok { color: var(--ok); font-weight: 600; }
+  .ttlS { font-size: 16px; line-height: 19px; font-weight: 700; }
+
+  /* reviewer face */
+  .rs { position: relative; flex: none; }
+  .rs .av { border-radius: 50%; background: var(--tile); color: var(--tileInk); display: grid; place-items: center; }
+  .rs.chk .av { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--warn); }
+  .rs .mk { position: absolute; right: -4px; bottom: -4px; width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--bg); display: grid; place-items: center; color: var(--onTone); background: var(--warn); }
+  .rr { display: flex; align-items: center; gap: 12px; }
+  .rr .col { flex: 1; min-width: 0; }
+  .rr .t { font-size: 16px; line-height: 20px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rr .s { margin-top: 2px; font-size: 12.5px; line-height: 16px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* chat bubbles (ThreadBubble) */
+  .thr { display: flex; flex-direction: column; gap: 10px; }
+  .m { display: flex; gap: 8px; align-items: flex-end; }
+  .m.r { justify-content: flex-end; }
+  .m .col { max-width: 82%; display: flex; flex-direction: column; align-items: flex-start; min-width: 0; }
+  .m.r .col { align-items: flex-end; }
+  .who { font-size: 12px; font-weight: 600; color: var(--text3); margin: 0 12px 3px; }
+  .bub { background: var(--glass2); color: var(--text); border-radius: 18px 18px 18px 6px; padding: 7px 12px; font-size: 14.5px; line-height: 20px; }
+  .m.r .bub { border-radius: 18px 18px 6px 18px; }
+  .m.mine .bub { background: var(--accent); color: var(--onAccent); }
+  .m.ghost .bub { background: transparent; border: 1.5px dashed var(--glassBorder); color: var(--text3); }
+  .bub.haspic { padding: 4px 4px 7px; }
+  .bub .pic { border-radius: 14px; overflow: hidden; margin-bottom: 6px; }
+  .bub.onlypic { padding: 4px; } .bub.onlypic .pic { margin: 0; }
+  .bub .tx { padding: 0 8px; display: block; }
+  .mt { font-size: 11.5px; line-height: 15px; color: var(--text4); margin: 3px 10px 0; }
+  .fav { width: 28px; height: 28px; border-radius: 50%; background: var(--tile); color: var(--tileInk); display: grid; place-items: center; flex: none; }
+  .fav.dev { background: var(--glass2); color: var(--text2); }
+
+  /* a picture's corner: open it whole */
+  .shw { position: relative; overflow: hidden; flex: none; background: #fff; }
+  .xb { position: absolute; right: 8px; bottom: 8px; width: 30px; height: 30px; border-radius: 50%; background: rgba(0,0,0,.5); color: #fff; display: grid; place-items: center; }
+  .plab { position: absolute; left: 8px; top: 8px; padding: 2px 9px; border-radius: 99px; background: rgba(0,0,0,.55); color: #fff; font-size: 11.5px; line-height: 16px; font-weight: 600; }
+
+  /* the reviewer's Play screenshot: their content, white in both themes */
+  .ps { width: 180px; background: #fff; color: #202124; font-family: Roboto, "Segoe UI", system-ui, sans-serif; overflow: hidden; }
+  .ps .q0 { display: flex; justify-content: space-between; padding: 6px 10px 0; font-size: 7px; font-weight: 600; color: #3C4043; }
+  .ps .qa { display: flex; gap: 8px; align-items: center; padding: 11px 10px 0; }
+  .ps .qa i { width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; color: #fff; font: 700 14px system-ui; font-style: normal; flex: none; }
+  .ps .qa b { display: block; font-size: 10px; line-height: 12px; }
+  .ps .qa span { font-size: 7px; color: #01875F; font-weight: 600; }
+  .ps .qo { margin: 9px 10px 0; height: 18px; border-radius: 9px; border: 1px solid #DADCE0; display: grid; place-items: center; font-size: 7.5px; font-weight: 600; color: #01875F; }
+  .ps .qh { padding: 11px 10px 0; font-size: 8.5px; font-weight: 700; }
+  .ps .qs { padding: 3px 10px 0; color: #01875F; font-size: 12px; letter-spacing: 2px; line-height: 14px; }
+  .ps .qb { margin: 5px 10px 0; border: 1px solid #01875F; border-radius: 6px; padding: 6px; font-size: 6.6px; line-height: 9px; color: #3C4043; min-height: 46px; }
+  .ps .qk { padding: 4px 10px 0; font-size: 7px; color: #01875F; font-weight: 600; }
+  .ps .ql { margin: 5px 10px 0; height: 4px; border-radius: 2px; background: #E1E3E6; }
+  .ps .qr2 { display: flex; gap: 10px; padding: 6px 10px 0; align-items: center; }
+  .ps .qr2 .qbg { font-size: 22px; font-weight: 500; line-height: 24px; }
+  .ps .qr2 .qbars { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+  .ps .qr2 .qbars i { height: 3px; border-radius: 2px; background: #01875F; display: block; }
+  .ps .qg { font-size: 6.5px; color: #5F6368; padding: 3px 10px 0; line-height: 9px; }
+
+  /* ===== Check 1: the screenshot first ===== */
+  .c1 { padding: 12px; }
+  .c1w { margin-top: 12px; font-size: 14.5px; line-height: 20px; padding: 0 2px; }
+  .c1m { margin-top: 6px; padding: 0 2px; }
+  .c1two { display: flex; gap: 8px; }
+
+  /* ===== Check 2: summary and verdict ===== */
+  .panel { position: relative; border-radius: 18px; padding: 14px; background: radial-gradient(circle at 100% 0, var(--panelGlow), transparent 55%), linear-gradient(160deg, var(--panelTop), var(--panelBottom)); outline: 1.5px dashed var(--panelOutline); outline-offset: -1.5px; }
+  .facts { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 14px; }
+  .fact .l { font-size: 11.5px; line-height: 14px; color: var(--text3); font-weight: 600; }
+  .fact .v { margin-top: 2px; font-size: 16px; line-height: 20px; font-weight: 700; font-feature-settings: "tnum"; }
+  .fact .v.warn { color: var(--warn); }
+  .sent2 { display: flex; gap: 12px; margin-top: 14px; }
+  .sent2 .tx { font-size: 13.5px; line-height: 19px; color: var(--text); display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden; }
+  .verdict { margin-top: 18px; }
+  .vh { display: flex; align-items: baseline; gap: 8px; }
+  .vh .big { font-family: "PlexApp", monospace; font-size: 30px; line-height: 34px; font-weight: 700; color: var(--warn); }
+  .vh .w { font-size: 13.5px; color: var(--text2); }
+  .vbtn { display: flex; align-items: center; gap: 14px; min-height: 64px; padding: 0 18px; border-radius: 32px; margin-top: 10px; }
+  .vbtn .a { font-size: 16px; line-height: 20px; font-weight: 700; }
+  .vbtn .b { font-size: 12.5px; line-height: 16px; opacity: .85; }
+  .vbtn.go { background: var(--primary); color: var(--onPrimary); }
+  .vbtn.no { background: var(--badBg); color: var(--bad); min-height: 56px; }
+  .vbtn .ico { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: color-mix(in srgb, currentColor 16%, transparent); flex: none; }
+
+  /* ===== Check 3 and Waiting 5: thread ===== */
+  .datep { align-self: center; font-size: 12px; font-weight: 600; color: var(--text3); }
+  .qr { display: flex; gap: 8px; padding-bottom: 10px; }
+  .bar3 { display: flex; gap: 10px; align-items: center; }
+  .bar3 .pbtn { flex: 1; }
+
+  /* ===== Check 4 and Waiting 3: rail ===== */
+  .tbar { margin-top: 2px; }
+  .tbar .tr0 { height: 6px; border-radius: 3px; background: var(--track); overflow: hidden; margin-top: 8px; }
+  .tbar .tr0 i { display: block; height: 100%; background: var(--warn); border-radius: 3px; }
+  .rail { position: relative; margin-top: 18px; }
+  .rail .stp { position: relative; padding-left: 40px; padding-bottom: 22px; }
+  .rail .stp::before { content: ""; position: absolute; left: 13px; top: 30px; bottom: 2px; width: 2px; background: var(--cardLine); }
+  .rail .stp:last-child::before { display: none; }
+  .rail .no { position: absolute; left: 0; top: 0; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 700; background: var(--tile); color: var(--tileInk); }
+  .rail .no.ok { background: var(--ok); color: var(--onTone); }
+  .rail .no.now { background: var(--accent); color: var(--onAccent); }
+  .rail .no.later { background: var(--glass2); color: var(--text3); }
+  .rail .no.warn { background: var(--warn); color: var(--onTone); }
+  .rail .h { font-size: 16px; line-height: 28px; font-weight: 700; }
+  .rail .h.later { color: var(--text2); font-weight: 600; }
+  .rail .h small { font-size: 12px; font-weight: 600; color: var(--text3); margin-left: 6px; }
+  .rail .d { font-size: 13px; line-height: 18px; color: var(--text3); }
+  .quote { margin-top: 8px; padding: 10px 12px; border-radius: 14px; background: var(--glass2); font-size: 14px; line-height: 20px; }
+
+  /* ===== Check 5: split ===== */
+  .split { display: flex; gap: 12px; }
+  .split .rc { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+  .split .tx { font-size: 14px; line-height: 20px; }
+  .dock5 { flex: none; background: var(--sheet); border-radius: 22px 22px 0 0; padding: 12px 16px 6px; box-shadow: 0 -6px 24px rgba(16,47,70,.12); }
+  .dark .dock5 { box-shadow: 0 -6px 24px rgba(0,0,0,.5); }
+  .dock5 .hd { width: 38px; height: 4px; border-radius: 2px; background: var(--text4); opacity: .5; margin: 0 auto 12px; }
+  .dock5 .row { display: flex; align-items: center; gap: 10px; }
+  .dock5 .pay { display: flex; align-items: center; gap: 8px; font-size: 22px; line-height: 26px; font-weight: 700; flex: 1; font-feature-settings: "tnum"; }
+  .dock5 .pay small { font-size: 12.5px; font-weight: 600; color: var(--text3); }
+  .yd { font-size: 12px; font-weight: 700; letter-spacing: .6px; color: var(--text3); margin-bottom: 8px; }
+
+  /* ===== Waiting 1: ring ===== */
+  .ringw { display: flex; flex-direction: column; align-items: center; text-align: center; padding-top: 18px; }
+  .ring { position: relative; width: 184px; height: 184px; }
+  .ring > svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+  .ring .in { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .ring .v { font-family: "PlexApp", monospace; font-size: 40px; line-height: 44px; font-weight: 700; color: var(--text); }
+  .ring .u { font-size: 13px; font-weight: 600; color: var(--text3); }
+  .ring .ico { width: 30px; height: 30px; border-radius: 50%; background: var(--tile); color: var(--tileInk); display: grid; place-items: center; margin-bottom: 4px; }
+  .rt1 { margin-top: 16px; font-size: 22px; line-height: 27px; font-weight: 700; }
+  .rl1 { margin-top: 4px; font-size: 14px; line-height: 20px; color: var(--text2); max-width: 300px; }
+  .sentrow { display: flex; gap: 12px; align-items: center; padding: 10px; }
+  .sentrow .col { flex: 1; min-width: 0; }
+  .sentrow .tx { font-size: 13.5px; line-height: 18px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+  /* ===== Waiting 2: receipt ===== */
+  .rcp { position: relative; margin-top: 18px; border-radius: 18px; background: radial-gradient(circle at 100% 0, var(--panelGlow), transparent 55%), linear-gradient(170deg, var(--panelTop), var(--panelBottom)); outline: 1.5px dashed var(--panelOutline); outline-offset: -1.5px; }
+  .rcp .tp { padding: 18px 16px 16px; display: flex; align-items: center; gap: 12px; }
+  .rcp .amt { font-size: 30px; line-height: 34px; font-weight: 700; font-feature-settings: "tnum"; display: flex; align-items: center; gap: 8px; }
+  .rcp .cut { position: relative; height: 0; border-top: 1.5px dashed var(--panelOutline); margin: 0 14px; }
+  .rcp .cut::before, .rcp .cut::after { content: ""; position: absolute; top: -10px; width: 18px; height: 18px; border-radius: 50%; background: var(--bg); }
+  .rcp .cut::before { left: -24px; } .rcp .cut::after { right: -24px; }
+  .rcp .rows { padding: 6px 16px 14px; }
+  .rcp .rw2 { display: flex; gap: 12px; padding: 9px 0; font-size: 14px; line-height: 19px; }
+  .rcp .rw2 .k { width: 104px; flex: none; color: var(--text3); font-weight: 500; }
+  .rcp .rw2 .v { flex: 1; min-width: 0; font-weight: 600; }
+  .rcp .rw2 .v.tx { font-weight: 400; color: var(--text2); display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+
+  /* ===== Waiting 4: one card ===== */
+  .one { margin-top: 40px; padding: 22px 18px 18px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+  .one .nm { margin-top: 12px; font-size: 18px; line-height: 22px; font-weight: 700; }
+  .one .st { margin-top: 8px; font-size: 15px; font-weight: 600; color: var(--text2); display: flex; align-items: center; gap: 6px; }
+  .one .pics { display: flex; gap: 8px; margin-top: 18px; }
+  .one .pay { margin-top: 18px; display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; color: var(--text2); }
+  .one .pay b { color: var(--text); font-size: 17px; }
+</style>
+</head>
+<body>
+<div class="top"><h1>Check review and Waiting</h1><button data-t="light" class="on">Light</button><button data-t="dark">Dark</button><span class="gap"></span><a href="#p1">Check review</a><a href="#p2">Waiting</a></div>
+<div class="doc" id="doc"></div>
+<script>
+const L = {
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  plus: '<path d="M5 12h14"/><path d="M12 5v14"/>',
+  info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+  alert: '<circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>',
+  tri: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+  star: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+  text: '<path d="M15 18H3"/><path d="M17 6H3"/><path d="M21 12H3"/>',
+  clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  camera: '<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>',
+  image: '<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>',
+  imagePlus: '<path d="M16 5h6"/><path d="M19 2v6"/><path d="M21 11.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7.5"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/><circle cx="9" cy="9" r="2"/>',
+  download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/>',
+  phone: '<rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/>',
+  msq: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  help: '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>',
+  user: '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  scale: '<path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/>',
+  eye: '<path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/>',
+  eyeOff: '<path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/>',
+  lock: '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  hourglass: '<path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>',
+  send: '<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>',
+  shield: '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>',
+  flag: '<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/>',
+  copy: '<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+  calendar: '<rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/>',
+  quote: '<path d="M16 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z"/><path d="M5 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z"/>',
+  chevR: '<path d="m9 18 6-6-6-6"/>', chevD: '<path d="m6 9 6 6 6-6"/>', chevU: '<path d="m18 15-6-6-6 6"/>',
+  msg: '<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>',
+  grid: '<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>',
+  trophy: '<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>',
+  trash: '<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>',
+  rotate: '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
+};
+Object.assign(L, {
+  expand: '<path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/>',
+  ticket: '<path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/>',
+  thumbUp: '<path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/>',
+});
+const ic = (n, s = 16, w = 2) => `<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${L[n]}</svg>`;
+const inl = (n, s = 14, w = 2.2) => `<span class="inl">${ic(n, s, w)}</span>`;
+const BACK = `<svg width="22" height="22" viewBox="0 0 24 24" style="fill:currentColor"><path d="M17.77 3.77 16 2 6 12l10 10 1.77-1.77L9.54 12z"/></svg>`;
+const sp = (h) => `<div style="height:${h}px"></div>`;
+const TMARK = (s) => `<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" style="transform:rotate(-12deg)"><path d="M4.5 4.5H19.5a2.5 2.5 0 0 1 2.5 2.5V9a3 3 0 0 0 0 6v2a2.5 2.5 0 0 1-2.5 2.5H4.5A2.5 2.5 0 0 1 2 17v-2a3 3 0 0 0 0-6V7a2.5 2.5 0 0 1 2.5-2.5Z" fill="var(--card)" stroke="var(--leafAccent)" stroke-width="1.6" stroke-linejoin="round"/><path d="M16 7.4v.4M16 11.8v.4M16 16.2v.4" stroke="var(--leafAccent)" stroke-width="1.9" stroke-linecap="round"/></svg>`;
+const FLASK = `<svg width="12" height="12" viewBox="0 0 24 24"><path d="M9 2.5h6M10 2.5v6.2L4.6 18.6A2 2 0 0 0 6.4 21.5h11.2a2 2 0 0 0 1.8-2.9L14 8.7V2.5" fill="none" stroke="var(--flaskGlass)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/><path d="M6.6 15h10.8l1.6 3.4a1.2 1.2 0 0 1-1.1 1.7H6.1A1.2 1.2 0 0 1 5 18.4Z" fill="var(--flaskLiquid)"/></svg>`;
+const PLAY = `<svg width="12" height="12" viewBox="0 0 24 24"><path d="M3.6 1.8 13.4 12 3.6 22.2c-.4-.2-.6-.6-.6-1.1V2.9c0-.5.2-.9.6-1.1Z" fill="#00A0FF"/><path d="M16.8 8.6 13.4 12 3.6 1.8c.3-.2.8-.2 1.2 0Z" fill="#00F076"/><path d="M16.8 15.4 4.8 22.2c-.4.2-.9.2-1.2 0L13.4 12Z" fill="#FF3A44"/><path d="m16.8 8.6 3.6 2a1.6 1.6 0 0 1 0 2.8l-3.6 2L13.4 12Z" fill="#FFCE00"/></svg>`;
+
+/* ---------- apps and words (dev server demo data) ---------- */
+const A = {
+  buddy: { n: 'Budget Buddy', art: 'buddy', c: '#2E9C8F', dev: 'Hasan Apps' },
+  tides: { n: 'Tide Times', h: 200, c: '#3D8BFD', dev: 'Coastline Labs' },
+  study: { n: 'Study Cards', h: 210, c: '#8E5B7B', dev: 'Seed Studio' },
+  wave: { n: 'Wave Weather', h: 240, c: '#2F80ED', dev: 'Seed Studio' },
+  sky: { n: 'Sky Notes', h: 300, c: '#5B8DB8', dev: 'Seed Studio' },
+};
+const TXT_BUDDY = 'Adding an expense takes two taps and the monthly chart is easy to read. The category list was long on my small phone, so a search box would help.';
+const TXT_NOBOX = 'Play shows no review box for me. The app opens fast and the notes sync well. Search could be quicker on long lists, and a widget would be nice.';
+const TXT_TIDES = 'Clear chart and the widget works. Good for my morning walks.';
+const TXT_STUDY = 'Setup was quick and the main actions are on the first screen. Scrolling is smooth and text reads well in light and dark. The back gesture closes the app from the second screen.';
+const TXT_WAVE = 'Clear hourly chart and the rain alert came on time. The radar is slow to load on mobile data.';
+
+function art(a, s) {
+  const base = `width:${s}px;height:${s}px;border-radius:${Math.round(s * 0.3)}px;`;
+  if (a.art === 'buddy') return `<span class="ai" style="${base}background:linear-gradient(150deg,#1F6E8C,#2E9C8F)"><span style="width:${s * .5}px;height:${s * .42}px;border-radius:${s * .1}px;background:#fff;display:grid;grid-template-columns:1fr 1fr;gap:2px;padding:${s * .07}px"><i style="background:#7BB6FF;border-radius:2px"></i><i style="background:#6EE0B8;border-radius:2px"></i><i style="background:#FFD166;border-radius:2px"></i><i style="background:#C59BFF;border-radius:2px"></i></span></span>`;
+  return `<span class="ai nt" style="${base}--h:${a.h};font-size:${Math.round(s * 0.45)}px">${a.n[0]}</span>`;
+}
+const len = (t) => t.trim().split(/\s+/).join(' ').length;
+
+/* a real-looking Play screenshot, drawn 180 wide and zoomed to fit [w] x [h] */
+function play(p) {
+  const a = p.app;
+  let b = `<div class="q0"><span>${p.time || '21:34'}</span><span>${p.again ? '5G 82%' : '5G 64%'}</span></div>
+    <div class="qa"><i style="background:${a.c}">${a.n[0]}</i><div><b>${a.n}</b><span>${a.dev}</span></div></div>
+    <div class="qo">${p.k === 'feedback' ? 'Open' : 'Uninstall          Open'}</div>`;
+  const words = (p.text || '').slice(0, 150);
+  if (p.k === 'review') b += `<div class="qh">Your review</div><div class="qs">★★★★☆</div><div class="qb">${words || 'Good app. Works as it says.'}</div><div class="qg">Posted publicly. ${p.again ? 'Edited today' : 'Today'}</div>`;
+  if (p.k === 'feedback') b += `<div class="qh">Private feedback to the developer</div><div class="qk">✓ Sent to the developer</div><div class="qs">★★★★★</div><div class="qb">${words}</div>`;
+  if (p.k === 'nobox') b += `<div class="qh">Ratings and reviews</div><div class="qr2"><span class="qbg">4.3</span><span class="qbars"><i style="width:90%"></i><i style="width:55%"></i><i style="width:24%"></i><i style="width:12%"></i><i style="width:18%"></i></span></div><div class="qg">2.1K reviews</div><div class="qg" style="padding-top:8px">You can't rate this app yet.</div>`;
+  b += `<div class="qh">About this app</div><div class="ql"></div><div class="ql" style="width:70%"></div><div class="ql" style="width:84%"></div><div class="ql" style="width:52%"></div>`;
+  return `<div class="ps">${b}</div>`;
+}
+function shot(p, w, h, r = 12, o = {}) {
+  const z = w / 180;
+  return `<div class="shw" style="width:${w}px;height:${h}px;border-radius:${r}px;${o.line ? 'box-shadow:inset 0 0 0 1px var(--cardLine)' : ''}"><div style="zoom:${z};height:${h / z}px;overflow:hidden">${play(p)}</div>${o.lab ? `<span class="plab">${o.lab}</span>` : ''}${o.x === false ? '' : `<span class="xb">${ic('expand', 15, 2.2)}</span>`}</div>`;
+}
+
+/* ---------- pieces ---------- */
+const ii = () => `<span class="ii"><span>${ic('info', 14)}</span></span>`;
+const il = (icon, text, cls = '', more = '') => `<div class="il ${cls}">${inl(icon)}${text}${more}</div>`;
+const chip = (t, tone, icon) => `<span class="chip ${tone}">${icon ? ic(icon, 13, 2.4) : ''}${t}</span>`;
+const pill = (t, icon, cls = '') => `<span class="pill ${cls}">${icon ? ic(icon, 15, 2.3) : ''}${t}</span>`;
+const ia = (t, cls = '', icon) => `<span class="ia ${cls}">${icon ? ic(icon, 15, 2.3) : ''}${t}</span>`;
+const pbtn = (t, o = {}) => `<div class="pbtn${o.off ? ' off' : ''}">${o.busy ? '<span class="spin"></span>' : t}</div>`;
+const sys = (t, warn) => `<div class="sys${warn ? ' warn' : ''}">${t}</div>`;
+const nsteps = (arr) => `<div class="ns">${arr.map((t, i) => `<div class="n"><span class="nb">${i + 1}</span>${t}</div>`).join('')}</div>`;
+function face(k = 'chk', s = 40) {
+  return `<span class="rs ${k}" style="width:${s}px;height:${s}px"><span class="av" style="width:${s}px;height:${s}px">${ic('user', Math.round(s * .48), 2)}</span>${k === 'chk' ? `<span class="mk">${ic('eye', 10, 2.8)}</span>` : ''}</span>`;
+}
+function head(a, live, o = {}) {
+  const s = o.s || 52;
+  return `<div class="ah"><span class="aic" style="width:${s}px;height:${s}px">${art(a, s)}<span class="src">${live ? PLAY : FLASK}</span></span>
+    <div class="col"><div class="an">${a.n}</div><div class="ad">${o.sub || (live ? 'Live app' : 'Closed test')}</div></div>${o.end || ''}</div>`;
+}
+function M(o) {
+  const av = o.side === 'r' ? '' : `<span class="fav${o.dev ? ' dev' : ''}">${ic(o.dev ? 'grid' : 'user', 15, 2)}</span>`;
+  const pic = o.pic ? `<div class="pic">${shot(o.pic, o.pw || 172, o.ph || 250, 14)}</div>` : '';
+  const cls = `bub${o.pic ? (o.text ? ' haspic' : ' onlypic') : ''}`;
+  const tx = o.text ? `<span class="tx" style="${o.pic ? `max-width:${o.pw || 172}px` : 'max-width:270px'}">${o.text}</span>` : '';
+  return `<div class="m ${o.side || 'l'} ${o.tone || ''}">${av}<div class="col">${o.who ? `<div class="who">${o.who}</div>` : ''}<div class="${cls}">${pic}${tx}</div>${o.meta ? `<div class="mt">${o.meta}</div>` : ''}</div></div>`;
+}
+function phone(th, o) {
+  const right = o.right ? `<span class="pr">${o.right}</span>` : o.tix ? `<span class="tixp">${o.tix}</span>` : '';
+  const bar = `<div class="pbar"><span class="back">${BACK}</span><span class="ttl">${o.title || ''}</span>${right}</div>`;
+  const msg = o.msg ? `<div class="pmsg"><span class="m0">${ic('info', 17)}</span><span class="w">${o.msg}</span><span class="x">${ic('x', 16)}</span></div>` : '';
+  return `<div class="phone ${th}"><div class="sbar"></div>${bar}${msg}
+    ${o.raw ? o.body : `<div class="scroll">${o.body}</div>`}${o.foot ? `<div class="foot">${o.foot}</div>` : ''}${o.dock || ''}<div class="gest"><i></i></div></div>`;
+}
+const F = (label, html) => `<div class="fr"><div class="fl">${label}</div>${html}</div>`;
+const MINI = (label, html) => `<div class="fr"><div class="fl">${label}</div><div class="mini">${html}</div></div>`;
+
+/* ==================== PAGE 1: CHECK REVIEW ==================== */
+/* every case a review can be in when the developer opens it */
+const CK = {
+  main: { app: A.buddy, live: false, who: 'Tania Ahmed', left: '2h', warn: true, pays: 30, pager: '1 of 2', need: 100, kind: 'Written',
+    text: TXT_BUDDY, ready: 'Changed your ready review', pics: [{ k: 'feedback', app: A.buddy, text: TXT_BUDDY }], canAsk: true },
+  again: { app: A.tides, live: true, who: 'Tania Rahman', left: '7h', warn: true, pays: 20, need: 0, text: '', canAsk: false,
+    pics: [{ k: 'review', app: A.tides, text: TXT_TIDES, time: '09:12' }, { k: 'review', app: A.tides, text: TXT_TIDES, time: '18:40', again: true }] },
+  half: { app: A.tides, live: true, who: 'Farhan Rahman', left: '1d 4h', warn: false, pays: 10, half: true, back: 10, gone: true, need: 100, kind: 'Written',
+    text: TXT_NOBOX, ready: 'In their own words', pics: [{ k: 'nobox', app: A.tides }], canAsk: false },
+};
+CK.busy = { ...CK.main, busy: true };
+const PAYS = (d) => `Pays ${d.pays} tix${d.half ? ', half' : ''}`;
+const LEFT = (d) => chip(`${d.left} left`, d.warn ? 'warn' : 'quiet', 'clock');
+const ACCEPTS = (d) => il('clock', `Accepts itself in <b>${d.left}</b> if you do nothing.`, '', ii());
+const ASK = (d) => d.canAsk ? `<div class="il">${inl('help')}Can't find it on Play?<span style="margin-left:2px">${ia('Ask for a new one', d.busy ? 'off' : '')}</span></div>` : '';
+const GONE = (d) => d.gone ? il('tri', 'They uninstalled it within a day of reviewing. Google may doubt the review.', 'warn', ii()) : '';
+const HALF = (d) => d.half ? il('info', `Play showed them no review box, so they sent it here. The other <b>${d.back} tix</b> come back to you.`) : '';
+const TEXTOK = (d) => d.text && d.need ? `<span class="meta ok">${inl('check', 13, 2.6)}${len(d.text)} characters, ${d.need}+ asked</span>` : '';
+const FOOT = (d) => pbtn(`Accept and pay ${d.pays} tix`, { busy: d.busy }) + `<div class="ta">${ia('Refuse', d.busy ? 'off' : 'bad')}</div>`;
+
+/* Option 1: the screenshot first, a Play review card */
+function C1(th, d) {
+  const pics = d.pics.length > 1
+    ? `<div class="c1two">${d.pics.map((p, i) => shot(p, 165, 290, 12, { lab: i ? 'New' : 'First' })).join('')}</div>`
+    : shot(d.pics[0], 352, d.text ? 330 : 400, 12);
+  const card = `<div class="card c1">
+      <div class="rr">${face('chk', 36)}<div class="col"><div class="t">${d.who}</div><div class="s">${d.pics.length > 1 ? 'Sent a new one when you asked' : d.ready || 'Sent this'}</div></div>${chip(PAYS(d), 'quiet')}</div>
+      <div style="margin-top:12px">${pics}</div>
+      ${d.text ? `<div class="c1w">${d.text}</div><div class="c1m">${TEXTOK(d)}</div>` : ''}
+    </div>`;
+  const warns = [GONE(d), HALF(d)].filter(Boolean).join('');
+  const body = head(d.app, d.live, { s: 40, end: LEFT(d) }) + sp(14) + (warns ? warns + sp(14) : '') + card + sp(16) + ASK(d) + (d.canAsk ? sp(8) : '') + ACCEPTS(d);
+  return phone(th, { title: 'Check review', right: d.pager, body, foot: FOOT(d) });
+}
+
+/* Option 2: a summary panel up top, a big verdict area below */
+function C2(th, d) {
+  const thumb = d.pics.length > 1
+    ? `<div style="display:flex;gap:6px">${d.pics.map((p, i) => shot(p, 84, 150, 10, { lab: i ? 'New' : '1st', x: false })).join('')}</div>`
+    : shot(d.pics[0], 96, 170, 10, { x: false });
+  const words = d.text ? `<div class="col" style="flex:1;min-width:0"><div class="tx">${d.text}</div>${sp(6)}${TEXTOK(d)}</div>`
+    : `<div class="col" style="flex:1;min-width:0;align-self:center">${il('image', 'Tap a picture to see it whole.', 'sm')}</div>`;
+  const panel = `<div class="panel">
+      <div class="rr">${face('chk', 40)}<div class="col"><div class="t">${d.who}</div><div class="s">${d.app.n}, ${d.live ? 'Live app' : 'Closed test'}</div></div></div>
+      <div class="facts">
+        <div class="fact"><div class="l">Pays</div><div class="v">${d.pays} tix${d.half ? ' <small style="font-size:12px;color:var(--warn)">half</small>' : ''}</div></div>
+        <div class="fact"><div class="l">Asked for</div><div class="v">${d.kind || 'Stars'}</div></div>
+        <div class="fact"><div class="l">Text</div><div class="v">${d.text ? len(d.text) : 'None'}</div></div>
+      </div>
+      <div class="sent2">${thumb}${words}</div>
+    </div>`;
+  const warns = [GONE(d), HALF(d)].filter(Boolean).join('');
+  const verdict = `<div class="verdict">
+      <div class="vh"><span class="big">${d.left}</span><span class="w">until it accepts itself</span>${ii()}</div>
+      <div class="vbtn go"${d.busy ? ' style="justify-content:center"' : ''}>${d.busy ? '<span class="spin"></span>' : `<span class="ico">${ic('check', 18, 2.6)}</span><div><div class="a">Accept</div><div class="b">Pays ${d.pays} tix now</div></div>`}</div>
+      <div class="vbtn no"${d.busy ? ' style="opacity:.45"' : ''}><span class="ico">${ic('x', 18, 2.6)}</span><div><div class="a">Refuse</div><div class="b">Three members decide</div></div></div>
+      ${d.canAsk ? `<div class="ta" style="margin-top:4px"><span class="meta" style="font-size:13px;color:var(--text3)">Can't find it on Play?</span>${ia('Ask for a new one', d.busy ? 'off' : '')}</div>` : ''}
+    </div>`;
+  const body = head(d.app, d.live, { s: 40 }) + sp(14) + (warns ? warns + sp(14) : '') + panel + verdict;
+  return phone(th, { title: 'Check review', right: d.pager, body });
+}
+
+/* Option 3: a chat thread with the reviewer */
+function C3(th, d) {
+  let t = `<div class="datep">Today</div>`;
+  t += M({ side: 'r', tone: 'mine', text: d.need ? `${d.kind} feedback, ${d.need}+ characters` : 'Stars only', meta: 'Your request' });
+  if (d.pics.length > 1) {
+    t += M({ who: d.who, pic: d.pics[0], pw: 150, ph: 210, meta: 'First screenshot' });
+    t += `<div class="sys">${ic('rotate', 13, 2.4)}You asked for a new one</div>`;
+    t += M({ pic: d.pics[1], pw: 150, ph: 210, meta: 'New, taken on Play when asked' });
+  } else {
+    t += M({ who: d.who, pic: d.pics[0], text: d.text, pw: 190, ph: 250, meta: d.text ? `${len(d.text)} characters. ${d.ready}` : '' });
+  }
+  if (d.gone) t += `<div class="sys warn">${ic('tri', 13, 2.4)}Uninstalled within a day of reviewing</div>`;
+  if (d.half) t += `<div class="sys">${ic('info', 13, 2.4)}No review box on Play, so it pays half. ${d.back} tix come back.</div>`;
+  t += `<div class="sys${d.warn ? ' warn' : ''}">${ic('clock', 13, 2.4)}Accepts itself in ${d.left}</div>`;
+  const body = head(d.app, d.live, { s: 36, sub: `${d.who}, ${PAYS(d).toLowerCase()}` }) + sp(14) + `<div class="thr">${t}</div>`;
+  const foot = (d.canAsk ? `<div class="qr">${pill('Ask for a new one', 'rotate')}${pill('What happens if I refuse', 'info')}</div>` : '') +
+    `<div class="bar3">${pill('Refuse', 'x', 'bad')}${pbtn(`Accept and pay ${d.pays} tix`, { busy: d.busy })}</div>`;
+  return phone(th, { title: 'Check review', right: d.pager, body, foot });
+}
+
+/* Option 4: three checks down a rail */
+function C4(th, d) {
+  const used = d.left === '2h' ? 92 : d.left === '7h' ? 70 : 20;
+  const timer = `<div class="tbar">${il('clock', `Accepts itself in <b>${d.left}</b> if you do nothing.`, d.warn ? 'warn' : '', ii())}<div class="tr0"><i style="width:${used}%"></i></div></div>`;
+  const who = `<div class="rr" style="margin-top:18px">${face('chk', 40)}<div class="col"><div class="t">${d.who}</div><div class="s">${d.app.n}</div></div>${chip(PAYS(d), 'quiet')}</div>`;
+  let s1;
+  if (d.half) s1 = `<div class="stp"><span class="no warn">1</span><div class="h">Is it on Play?</div>${HALF(d)}${sp(8)}${shot(d.pics[0], 150, 170, 12)}</div>`;
+  else if (d.pics.length > 1) s1 = `<div class="stp"><span class="no">1</span><div class="h">Is it on Play?<small>New screenshot came</small></div>${sp(6)}<div style="display:flex;gap:8px">${d.pics.map((p, i) => shot(p, 150, 210, 12, { lab: i ? 'New' : 'First' })).join('')}</div></div>`;
+  else s1 = `<div class="stp"><span class="no">1</span><div class="h">Is it on Play?</div>${sp(6)}${shot(d.pics[0], 186, 260, 12)}${sp(6)}${ASK(d)}</div>`;
+  const s2 = d.text
+    ? `<div class="stp"><span class="no">2</span><div class="h">Is the text enough?</div><div class="quote">${d.text}</div>${sp(6)}${TEXTOK(d)}<span class="meta"> ${d.ready}</span></div>`
+    : `<div class="stp"><span class="no later">2</span><div class="h later">Text<small>Not asked for</small></div></div>`;
+  const s3 = `<div class="stp"><span class="no now">3</span><div class="h">Decide</div><div class="d">Accept pays ${d.pays} tix. Refuse and three members decide.</div>${d.gone ? sp(8) + GONE(d) : ''}</div>`;
+  const body = head(d.app, d.live, { s: 40 }) + sp(14) + timer + who + `<div class="rail">${s1}${s2}${s3}</div>`;
+  return phone(th, { title: 'Check review', right: d.pager, body, foot: FOOT(d) });
+}
+
+/* Option 5: what they did on top, what you decide in a sheet that stays */
+function C5(th, d) {
+  const left = d.pics.length > 1
+    ? `<div style="display:flex;flex-direction:column;gap:8px">${d.pics.map((p, i) => shot(p, 160, 220, 12, { lab: i ? 'New' : 'First' })).join('')}</div>`
+    : shot(d.pics[0], 168, 330, 12);
+  const right = `<div class="rc">
+      <div class="rr">${face('chk', 34)}<div class="col"><div class="t" style="font-size:15px">${d.who}</div></div></div>
+      ${d.text ? `<div class="tx">${d.text}</div>${TEXTOK(d)}<span class="meta">${d.ready}</span>` : `<div class="il sm">${inl('rotate')}Sent a new one when you asked.</div>`}
+    </div>`;
+  const warns = [GONE(d), HALF(d)].filter(Boolean).join('');
+  const body = head(d.app, d.live, { s: 40 }) + sp(14) + `<div class="yd">THEY SENT</div><div class="split">${left}${right}</div>` + sp(14) + (warns ? warns + sp(10) : '') + ASK(d);
+  const dock = `<div class="dock5"><div class="hd"></div><div class="yd">YOU DECIDE</div>
+      <div class="row"><span class="pay">${TMARK(22)}${d.pays} tix${d.half ? '<small>half pay</small>' : ''}</span>${LEFT(d)}</div>${sp(8)}
+      ${ACCEPTS(d)}${sp(12)}${FOOT(d)}</div>`;
+  return phone(th, { title: 'Check review', right: d.pager, body, dock });
+}
+
+/* ==================== PAGE 2: WAITING FOR THE DEVELOPER ==================== */
+const WT = {
+  main: { app: A.study, live: false, title: 'Feedback', tix: 55, sent: '20 Nov, 9:41', by: '21 Nov, 9:41', left: '18h', used: .25, text: TXT_STUDY,
+    pics: [{ k: 'feedback', app: A.study, text: TXT_STUDY }] },
+  again: { app: A.wave, live: true, title: 'Review', tix: 35, sent: '19 Nov, 18:40', left: '1d', used: .1, again: true, text: TXT_WAVE,
+    pics: [{ k: 'review', app: A.wave, text: TXT_WAVE, time: '09:05' }, { k: 'review', app: A.wave, text: TXT_WAVE, time: '18:40', again: true }] },
+  checking: { app: A.wave, live: true, title: 'Review', tix: 35, held: true, by: 'Saturday at 2:10 PM', left: '1d 4h', used: .4, checking: true,
+    pics: [{ k: 'review', app: A.wave, text: TXT_WAVE, time: '09:05' }] },
+  half: { app: A.sky, live: true, title: 'Review', tix: 20, half: true, sent: '20 Nov, 8:15', left: '20h', used: .17, text: TXT_NOBOX,
+    pics: [{ k: 'nobox', app: A.sky }] },
+};
+const TIX = (d) => d.half ? `Half pay, +${d.tix} tix` : d.held ? `Held, ${d.tix} tix` : `+${d.tix} tix`;
+const NEXTLINE = (d) => d.live ? 'They can accept it any time.' : `Up to a day, then it accepts itself.`;
+const KEEP = (d) => d.live ? il('phone', 'Keep the app installed. If they don\'t answer, we check after a day and pay you.', 'sm') : '';
+const CAPTURE = `<div style="display:flex;gap:12px;align-items:center"><span class="shw" style="width:64px;height:110px;border-radius:10px;background:transparent;border:1.5px dashed var(--glassBorderStrong);display:grid;place-items:center;color:var(--text4)">${ic('image', 20)}</span><div>${pill('Capture on Play', 'camera')}${sp(8)}${il('info', 'It has to be taken now, on Play.', 'sm')}</div></div>`;
+const STEPS3 = nsteps(['Tap <b>Capture on Play</b>.', 'Find your review on the app\'s page.', 'Tap the <b>camera button</b>.']);
+const SENDNEW = pbtn('Send the new screenshot', { off: true });
+const DONE = pbtn('Done');
+
+/* Option 1: a big status with a countdown ring */
+function ring(d, warn) {
+  const r = 82, c = 2 * Math.PI * r, left = 1 - d.used;
+  const col = warn ? 'var(--warn)' : 'var(--accent)';
+  return `<div class="ring"><svg width="184" height="184" viewBox="0 0 184 184"><circle cx="92" cy="92" r="${r}" fill="none" stroke="var(--track)" stroke-width="10"/>
+    <circle cx="92" cy="92" r="${r}" fill="none" stroke="${col}" stroke-width="10" stroke-linecap="round" stroke-dasharray="${c * left} ${c}"/></svg>
+    <div class="in"><span class="ico" style="${warn ? 'background:var(--warnBg);color:var(--warn)' : ''}">${ic(warn ? 'camera' : 'hourglass', 16, 2.2)}</span><span class="v">${d.left}</span><span class="u">${warn ? 'to send it' : d.live ? 'until we check' : 'until it accepts itself'}</span></div></div>`;
+}
+function W1(th, d) {
+  const sentRow = d.checking ? '' : `<div class="card sentrow">${d.pics.length > 1 ? `<div style="display:flex;gap:4px">${d.pics.map((p) => shot(p, 48, 86, 8, { x: false })).join('')}</div>` : shot(d.pics[0], 56, 100, 8, { x: false })}
+      <div class="col"><div class="ttlS" style="font-size:14.5px">What you sent</div><div class="tx" style="color:var(--text2);margin-top:2px">${d.text}</div><div class="meta" style="margin-top:4px">Sent on ${d.sent}</div></div></div>`;
+  let mid;
+  if (d.checking) {
+    mid = `<div class="ringw">${ring(d, true)}<div class="rt1">Show your review again</div><div class="rl1">The developer couldn't find it on Play. Send it by <b>${d.by}</b>.</div></div>` + sp(18) + STEPS3 + sp(16) + CAPTURE;
+  } else {
+    const chips = [chip('Your part is done', 'ok', 'check'), chip(d.half ? `${d.tix} tix, half pay` : `${d.tix} tix once accepted`, 'quiet')];
+    if (d.again) chips.splice(1, 0, chip('New screenshot sent', 'quiet', 'rotate'));
+    mid = `<div class="ringw">${ring(d)}<div class="rt1">With the developer</div><div class="rl1">${NEXTLINE(d)}</div><div class="chips" style="justify-content:center;margin-top:12px">${chips.join('')}</div></div>` +
+      (d.live ? sp(14) + `<div style="text-align:center">${KEEP(d)}</div>` : '') + sp(22) + sentRow;
+  }
+  const body = head(d.app, d.live, { s: 40 }) + mid;
+  return phone(th, { title: d.title, tix: TIX(d), body, foot: d.checking ? SENDNEW : DONE });
+}
+
+/* Option 2: a receipt of what you sent */
+function W2(th, d) {
+  if (d.checking) {
+    const body = head(d.app, d.live, { s: 40 }) + `<div class="rcp"><div class="tp"><div style="flex:1"><div class="amt">${TMARK(26)}${d.tix} tix</div><div class="meta" style="margin-top:2px;font-size:12.5px">Held until you show it again</div></div>${chip('Needs you', 'warn', 'tri')}</div>
+      <div class="cut"></div><div class="rows">
+        <div class="rw2"><span class="k">Why</span><span class="v">The developer couldn't find it on Play</span></div>
+        <div class="rw2"><span class="k">Send it by</span><span class="v" style="color:var(--warn)">${d.by}</span></div>
+        <div class="rw2"><span class="k">First one</span><span class="v">${shot(d.pics[0], 64, 110, 8, { x: false })}</span></div>
+      </div></div>` + sp(18) + STEPS3 + sp(16) + CAPTURE;
+    return phone(th, { title: d.title, tix: TIX(d), body, foot: SENDNEW });
+  }
+  const pics = d.pics.map((p, i) => shot(p, 64, 110, 8, { x: false, lab: d.pics.length > 1 ? (i ? 'New' : '1st') : '' })).join('');
+  const rows = `<div class="rw2"><span class="k">Sent</span><span class="v">${d.sent}</span></div>
+      <div class="rw2"><span class="k">Screenshot${d.pics.length > 1 ? 's' : ''}</span><span class="v" style="display:flex;gap:6px">${pics}</span></div>
+      <div class="rw2"><span class="k">Your words</span><span class="v tx">${d.text}</span></div>
+      <div class="rw2"><span class="k">${d.live ? 'Checked by us' : 'Accepts itself'}</span><span class="v">${d.live ? 'In a day, if they don\'t answer' : d.by}</span></div>`;
+  const body = head(d.app, d.live, { s: 40 }) + `<div class="rcp"><div class="tp"><div style="flex:1"><div class="amt">${TMARK(26)}${d.tix} tix</div><div class="meta" style="margin-top:2px;font-size:12.5px">${d.half ? 'Half pay, sent here' : 'Paid once it\'s accepted'}</div></div>${chip('Waiting', 'quiet', 'hourglass')}</div>
+      <div class="cut"></div><div class="rows">${rows}</div></div>` + sp(16) + il('hourglass', `The developer checks it. ${NEXTLINE(d)}`) + (d.live ? sp(8) + KEEP(d) : '');
+  return phone(th, { title: d.title, tix: TIX(d), body, foot: DONE });
+}
+
+/* Option 3: a timeline with times */
+function W3(th, d) {
+  const stp = (k, n, h, sub, inner = '') => `<div class="stp"><span class="no ${k}">${n}</span><div class="h${k === 'later' ? ' later' : ''}">${h}${sub ? `<small>${sub}</small>` : ''}</div>${inner}</div>`;
+  let r = '';
+  if (d.checking) {
+    r += stp('ok', ic('check', 14, 3), 'You sent it', '19 Nov', sp(6) + shot(d.pics[0], 110, 150, 10));
+    r += stp('warn', ic('tri', 13, 2.6), 'They asked for a new one', 'Today', `<div class="d">They couldn't find it on Play. Send it by <b style="color:var(--text)">${d.by}</b>.</div>` + sp(12) + STEPS3 + sp(12) + CAPTURE);
+    r += stp('later', '', 'The developer checks it again');
+    r += stp('later', '', `${d.tix} tix to you`, 'once accepted');
+    return phone(th, { title: d.title, tix: TIX(d), body: head(d.app, d.live, { s: 40 }) + `<div class="rail">${r}</div>`, foot: SENDNEW });
+  }
+  if (d.again) {
+    r += stp('ok', ic('check', 14, 3), 'You sent it', '19 Nov', sp(6) + shot(d.pics[0], 110, 150, 10));
+    r += stp('ok', ic('rotate', 13, 2.6), 'They asked for a new one', '19 Nov');
+    r += stp('ok', ic('check', 14, 3), 'You sent a new one', d.sent, sp(6) + shot(d.pics[1], 110, 150, 10));
+  } else {
+    r += stp('ok', ic('check', 14, 3), 'You sent it', d.sent, `<div style="margin-top:8px">${M({ side: 'r', tone: 'mine', pic: d.pics[0], text: d.text, pw: 168, ph: 200 })}</div>`);
+  }
+  r += stp('now', ic('hourglass', 13, 2.4), 'The developer checks it', 'Now', `<div class="d">${NEXTLINE(d)}</div>`);
+  if (d.live) r += stp('later', '', 'Keep the app installed', '', `<div class="d">If they don't answer, we check after a day and pay you.</div>`);
+  else r += stp('later', '', 'Accepts itself', d.by, `<div class="d">If they don't answer.</div>`);
+  r += stp('later', '', `${d.tix} tix to you`, d.half ? 'half pay' : 'once accepted');
+  return phone(th, { title: d.title, tix: TIX(d), body: head(d.app, d.live, { s: 40 }) + `<div class="rail">${r}</div>`, foot: DONE });
+}
+
+/* Option 4: one quiet card */
+function W4(th, d) {
+  if (d.checking) {
+    const body = `<div class="card one">${art(d.app, 64)}<div class="nm">${d.app.n}</div>
+      <div class="st" style="color:var(--warn)">${ic('camera', 16, 2.2)}Show your review again${ii()}</div>
+      <div class="meta" style="margin-top:4px;font-size:13px">By ${d.by}</div>
+      <div class="pics">${shot(d.pics[0], 96, 160, 10, { lab: 'First' })}<span class="shw" style="width:96px;height:160px;border-radius:10px;background:transparent;border:1.5px dashed var(--glassBorderStrong);display:grid;place-items:center;color:var(--text4)">${ic('camera', 22)}</span></div>
+      <div style="margin-top:16px">${pill('Capture on Play', 'camera')}</div></div>`;
+    return phone(th, { title: d.title, tix: TIX(d), body, foot: SENDNEW });
+  }
+  const pics = d.pics.map((p, i) => shot(p, d.pics.length > 1 ? 96 : 120, d.pics.length > 1 ? 160 : 200, 10, { lab: d.pics.length > 1 ? (i ? 'New' : 'First') : '' })).join('');
+  const body = `<div class="card one">${art(d.app, 64)}<div class="nm">${d.app.n}</div>
+      <div class="st">${ic('hourglass', 16, 2.2)}With the developer${ii()}</div>
+      <div class="pics">${pics}</div>
+      <div class="pay">${TMARK(20)}<b>${d.tix} tix</b>${d.half ? 'half pay' : 'once accepted'}</div></div>` +
+      sp(14) + `<div style="text-align:center">${il('check', 'Your part is done.', 'sm ok')}</div>`;
+  return phone(th, { title: d.title, tix: TIX(d), body, foot: DONE });
+}
+
+/* Option 5: a chat with the developer */
+function W5(th, d) {
+  let t = `<div class="datep">${d.again || d.checking ? '19 Nov' : '20 Nov'}</div>`;
+  if (d.checking) {
+    t += M({ side: 'r', tone: 'mine', pic: d.pics[0], pw: 150, ph: 200, meta: 'You sent this' });
+    t += `<div class="datep">Today</div>`;
+    t += M({ dev: true, who: 'Developer', text: 'Asked you for a new screenshot. Your review wasn&#39;t found on Play.' });
+    t += `<div class="sys warn">${ic('clock', 13, 2.4)}Send it by ${d.by}</div>`;
+    const body = head(d.app, d.live, { s: 36, sub: 'With the developer' }) + sp(14) + `<div class="thr">${t}</div>`;
+    return phone(th, { title: d.title, tix: TIX(d), body, foot: `<div class="qr" style="justify-content:center">${pill('Capture on Play', 'camera')}</div>` + SENDNEW });
+  }
+  if (d.again) {
+    t += M({ side: 'r', tone: 'mine', pic: d.pics[0], pw: 130, ph: 170, meta: 'First screenshot' });
+    t += M({ dev: true, who: 'Developer', text: 'Asked you for a new screenshot' });
+    t += M({ side: 'r', tone: 'mine', pic: d.pics[1], pw: 130, ph: 170, meta: `New, ${d.sent}` });
+  } else {
+    t += M({ side: 'r', tone: 'mine', pic: d.pics[0], text: d.text, pw: 190, ph: 240, meta: `Sent ${d.sent.split(', ')[1]}` });
+    t += `<div class="sys">${ic('check', 13, 2.6)}All 4 steps done</div>`;
+  }
+  t += `<div class="m l ghost"><span class="fav dev">${ic('grid', 15, 2)}</span><div class="col"><div class="bub">${ic('hourglass', 14, 2.2).replace('class="ic"', 'class="ic" style="display:inline-block;vertical-align:-2px;margin-right:6px"')}Not checked yet</div><div class="mt">${d.live ? 'We check after a day if they don\'t answer' : `Accepts itself in ${d.left}`}</div></div></div>`;
+  const body = head(d.app, d.live, { s: 36, sub: 'With the developer' }) + sp(14) + `<div class="thr">${t}</div>` + (d.live ? sp(14) + KEEP(d) : '');
+  return phone(th, { title: d.title, tix: TIX(d), body, foot: DONE });
+}
+
+/* ---------- the page ---------- */
+const OPTS1 = [
+  ['1', 'The screenshot first', C1, true],
+  ['2', 'Summary and a big verdict', C2],
+  ['3', 'A chat with the reviewer', C3],
+  ['4', 'Three checks down a rail', C4],
+  ['5', 'They sent, you decide', C5],
+];
+const OPTS2 = [
+  ['1', 'Countdown ring', W1, true],
+  ['2', 'A receipt', W2],
+  ['3', 'Timeline', W3],
+  ['4', 'One quiet card', W4],
+  ['5', 'A chat with the developer', W5],
+];
+function section(id, title, nows, opts, data, minis) {
+  let h = `<div class="page" id="${id}">${title}</div>`;
+  h += `<div class="opt"><div class="ol"><span class="k now">Today</span>On the phone now</div><div class="optrow">${nows}</div></div>`;
+  for (const [k, name, fn, rec] of opts) {
+    h += `<div class="opt"><div class="ol"><span class="k">Option ${k}</span>${name}${rec ? '<span class="rec">Recommended</span>' : ''}</div><div class="optrow">`;
+    h += F('Main', fn(TH, data.main));
+    h += `<div class="minis">${minis.map(([key, label]) => MINI(label, fn(TH, data[key]))).join('')}</div>`;
+    h += `</div></div>`;
+  }
+  return h;
+}
+const IMG = (src, label) => F(label, `<img class="cap" src="${src}" alt="${label}">`);
+const IMGS = (src, label) => `<div class="fr"><div class="fl">${label}</div><img class="cap s" src="${src}" alt="${label}"></div>`;
+let TH = 'light';
+function show(th) {
+  TH = th;
+  let h = section('p1', 'Check review', IMG('device/B1-check.png', 'Dark, 1 of 2') + `<div class="minis">${IMGS('device/render-B02-kept.png', 'Light, uninstalled warning')}${IMGS('device/render-B04-recheck.png', 'New screenshot came')}${IMGS('device/render-B03-half.png', 'Half pay')}</div>`,
+    OPTS1, CK, [['again', 'New screenshot came'], ['half', 'Half pay, uninstalled'], ['busy', 'Accepting']]);
+  h += section('p2', 'Waiting for the developer', IMG('current/waiting_sent-1.png', 'Sent, waiting') + `<div class="minis">${IMGS('current/waiting_sent-2-scrolled.png', 'Scrolled')}${IMGS('current/waiting_half-1.png', 'Live, half pay')}${IMGS('current/waiting_checking-1.png', 'Asked for a new one')}</div>`,
+    OPTS2, WT, [['again', 'Sent again'], ['checking', 'Asked for a new one'], ['half', 'Live, half pay']]);
+  document.getElementById('doc').innerHTML = h;
+  document.body.classList.toggle('dk', th === 'dark');
+  document.querySelectorAll('.top button').forEach((b) => b.classList.toggle('on', b.dataset.t === th));
+  history.replaceState(null, '', location.hash.startsWith('#p') ? location.hash : '#' + th);
+}
+document.querySelectorAll('.top button').forEach((b) => b.addEventListener('click', () => { history.replaceState(null, '', '#' + b.dataset.t); show(b.dataset.t); }));
+show(location.hash === '#dark' ? 'dark' : 'light');
+if (document.fonts) document.fonts.ready.then(() => show(TH));
+</script>
+</body>
+</html>

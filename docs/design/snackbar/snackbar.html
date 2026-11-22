@@ -1,0 +1,634 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>TestTrack: one snackbar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  @font-face { font-family: "BarlowApp"; font-weight: 400; src: url("../../../app/src/main/res/font/barlow_regular.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 500; src: url("../../../app/src/main/res/font/barlow_medium.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 600; src: url("../../../app/src/main/res/font/barlow_semibold.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 700; src: url("../../../app/src/main/res/font/barlow_bold.ttf"); }
+
+  @font-face { font-family: "IBM Plex Mono"; font-weight: 500; src: url("../../../app/src/main/res/font/plexmono_medium.ttf"); }
+  @font-face { font-family: "IBM Plex Mono"; font-weight: 600; src: url("../../../app/src/main/res/font/plexmono_semibold.ttf"); }
+
+  /* OceanLight / OceanDark, ui/theme/Tokens.kt. --s* are the new snack tone inks (the other theme's ok/bad/warn). */
+  .light {
+    --bg:#F7FCFF; --text:#142F43; --text2:#203A4E; --text3:#223D50; --text4:#59758A;
+    --tabSelected:#2E4E66; --tabUnselected:#526B7D;
+    --glass:#F2F9FD; --glass2:#DFEDF6; --glassBorder:#B7D1E2; --glassBorderStrong:#789AAF;
+    --accent:#3A5B73; --onAccent:#FFFFFF; --accentInk:#22394B;
+    --tile:#DCE6EE; --tileInk:#3A5B73; --leafAccentSoft:rgba(74,114,144,.16);
+    --selFill:#3A5B73; --onSel:#FFFFFF;
+    --ok:#246B59; --okBg:rgba(36,107,89,.12); --warn:#8A611C; --warnBg:rgba(154,110,36,.12);
+    --bad:#9E3B2E; --badBg:rgba(158,59,46,.12);
+    --cardLine:#E1ECF3; --sheet:#FFFFFF; --ring:rgba(20,47,67,.14);
+    --primary:#3A5B73; --onPrimary:#FFFFFF;
+    --inverse:#172F42; --onInverse:#EFF7FC; --inverseAccent:#A9C3D6;
+    --sOk:#83D8C4; --sBad:#E4938A; --sWarn:#D8B774; --sInfo:#A9C3D6; --sAct:#A9C3D6;
+    --snackShadow:0 6px 20px rgba(16,47,70,.24);
+    --bubble:#DFEDF6; --own:#3A5B73;
+    --kb:#E8EBEE; --key:#FFFFFF; --keyInk:#202124; --keyW:#D3D7DB;
+  }
+  .dark {
+    --bg:#0F1011; --text:#ECEEF0; --text2:#BCC1C6; --text3:#9DA3A9; --text4:#757C82;
+    --tabSelected:#B6CCDC; --tabUnselected:#989EA4;
+    --glass:#1C1E20; --glass2:#292C2F; --glassBorder:#383C41; --glassBorderStrong:#666D74;
+    --accent:#4A7290; --onAccent:#FFFFFF; --accentInk:#93B3CA;
+    --tile:#2A2D31; --tileInk:#A2BED2; --leafAccentSoft:#2A2D31;
+    --selFill:#2A2D31; --onSel:#93B3CA;
+    --ok:#83D8C4; --okBg:rgba(131,216,196,.12); --warn:#D8B774; --warnBg:rgba(216,183,116,.14);
+    --bad:#E4938A; --badBg:rgba(228,147,138,.15);
+    --cardLine:#2D3034; --sheet:#1C1E20; --ring:rgba(255,255,255,.16);
+    --primary:#93B3CA; --onPrimary:#0F1011;
+    --inverse:#E8EBEE; --onInverse:#15181A; --inverseAccent:#3F6681;
+    --sOk:#246B59; --sBad:#9E3B2E; --sWarn:#8A611C; --sInfo:#3F6681; --sAct:#3F6681;
+    --snackShadow:0 6px 22px rgba(0,0,0,.55);
+    --bubble:#2E3236; --own:#4A7290;
+    --kb:#1B1D20; --key:#3A3D41; --keyInk:#E8EAED; --keyW:#2A2D31;
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #D9E0E5; font-family: "BarlowApp", "Barlow", system-ui, sans-serif; color: #1B2B36; }
+  .top { position: sticky; top: 0; z-index: 20; padding: 12px 28px; background: #D9E0E5; border-bottom: 1px solid #C3CDD4; display: flex; gap: 22px; align-items: baseline; }
+  .top h1 { margin: 0; font-size: 20px; font-weight: 700; }
+  .top a { font-size: 14px; font-weight: 600; color: #2D4A5F; text-decoration: none; }
+  .doc { padding: 6px 28px 80px; }
+  h2 { font-size: 18px; margin: 40px 0 6px 4px; }
+  .row { margin-top: 30px; }
+  .lbl { font-size: 16px; font-weight: 700; margin: 0 0 10px 4px; display: flex; gap: 8px; align-items: center; }
+  .lbl .k { display: inline-grid; place-items: center; min-width: 26px; height: 24px; padding: 0 7px; border-radius: 8px; background: #2D4A5F; color: #fff; font-size: 13px; }
+  .pair { display: flex; gap: 22px; align-items: flex-start; flex-wrap: wrap; }
+  .col { display: flex; flex-direction: column; gap: 6px; }
+  .tag { font-size: 13px; font-weight: 700; color: #5C6B76; margin-left: 4px; }
+
+  /* phone, 360 x 800 */
+  .phone { width: 360px; height: 800px; background: var(--bg); color: var(--text); border-radius: 26px; overflow: hidden; border: 1px solid #B9C5CE; position: relative; display: flex; flex-direction: column; }
+  .dark.phone { border-color: #3A4046; }
+  .sbar { height: 28px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 18px 0 20px; font-size: 13px; font-weight: 600; color: var(--text); }
+  .sbar .sr { display: flex; gap: 6px; align-items: center; }
+  .sbar .bat { width: 20px; height: 10px; border-radius: 3px; border: 1.5px solid currentColor; position: relative; }
+  .sbar .bat::after { content: ""; position: absolute; inset: 1px 3px 1px 1px; background: currentColor; border-radius: 1px; }
+  .gest { height: 20px; flex: none; display: grid; place-items: center; }
+  .gest i { width: 108px; height: 4px; border-radius: 2px; background: var(--text4); opacity: .55; }
+  .pbar { height: 60px; flex: none; display: flex; align-items: center; }
+  .pbar .back { width: 48px; height: 48px; display: grid; place-items: center; margin-left: 4px; color: var(--text); flex: none; }
+  .pbar .ttl { margin-left: 4px; font-size: 22px; line-height: 26px; font-weight: 700; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pbar .ttl small { display: block; font-size: 14px; line-height: 18px; font-weight: 600; color: var(--warn); }
+  .pbar .end { margin-right: 16px; color: var(--text2); font-size: 17px; font-weight: 600; }
+  .pbar .xb { width: 48px; height: 48px; display: grid; place-items: center; margin-right: 4px; color: var(--text); }
+  .body { flex: 1; min-height: 0; overflow: hidden; position: relative; }
+  svg.ic { display: block; flex: none; }
+  .inl { display: inline-block; vertical-align: -2px; margin-right: 6px; }
+
+  /* the snackbar */
+  .snack { position: absolute; left: 16px; right: 16px; z-index: 8; display: flex; align-items: flex-start; gap: 10px; min-height: 48px; padding: 14px 16px 14px 14px; border-radius: 14px; background: var(--inverse); color: var(--onInverse); box-shadow: var(--snackShadow); font-size: 14px; line-height: 19px; font-weight: 500; }
+  .snack.act { padding-right: 4px; }
+  .snack .si { margin-top: .5px; }
+  .snack .st { flex: 1; min-width: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .snack .sa { align-self: center; height: 40px; margin: -10px 0; padding: 0 12px; border-radius: 20px; display: grid; place-items: center; color: var(--sAct); font-weight: 700; font-size: 14.5px; white-space: nowrap; }
+  .snack.static { position: relative; left: auto; right: auto; width: 328px; }
+
+  /* the old message, for the before strip */
+  .pmsg { display: flex; align-items: center; gap: 10px; padding: 11px 10px 11px 14px; border-radius: 14px; background: var(--glass); border: 1px solid var(--glassBorder); font-size: 14px; line-height: 19px; }
+  .pmsg .w { flex: 1; } .pmsg .x { color: var(--text3); }
+
+  /* Circle tab: header, segmented tabs, tickets, bottom bar */
+  .hud { height: 64px; flex: none; display: flex; align-items: center; gap: 12px; padding: 0 16px; }
+  .hud .lv { flex: 1; } .hud .lv b { display: block; font-size: 17px; line-height: 21px; font-weight: 600; } .hud .lv span { font-size: 13px; color: var(--text2); }
+  .hud .tx { display: flex; align-items: center; gap: 8px; font: 600 22px "IBM Plex Mono", monospace; color: var(--text); }
+  .hud .tx svg { color: var(--accentInk); }
+  .bot { position: relative; width: 48px; height: 46px; flex: none; }
+  .bot .lvb { position: absolute; left: 9px; bottom: -2px; min-width: 30px; height: 16px; border-radius: 8px; background: var(--bg); border: 1.5px solid #3D7BB0; font: 700 10px/13px "BarlowApp"; text-align: center; color: var(--text); }
+  .seg { margin: 6px 16px 14px; height: 48px; border: 1px solid var(--glassBorder); border-radius: 24px; padding: 4px; display: flex; flex: none; }
+  .seg span { flex: 1; border-radius: 20px; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 14.5px; font-weight: 600; color: var(--text2); white-space: nowrap; }
+  .seg span.on { background: var(--selFill); color: var(--onSel); }
+  .seg i { font-style: normal; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; background: var(--glass2); color: var(--text3); font: 600 11.5px/20px "IBM Plex Mono", monospace; text-align: center; }
+  .list { padding: 0 16px; display: flex; flex-direction: column; gap: 8px; }
+  .tk { display: flex; height: 74px; border: 1px solid var(--cardLine); border-radius: 14px; background: var(--bg); position: relative; flex: none; }
+  .tk .tl { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 0 10px 0 12px; }
+  .tk .tc { min-width: 0; } .tk .t { font-size: 16px; line-height: 19px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .tk .s { font-size: 13px; line-height: 17px; color: var(--text3); }
+  .tk .stub { width: 58px; flex: none; border-radius: 0 13px 13px 0; background: var(--tile); color: var(--tileInk); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border-left: 1.5px dashed var(--glassBorderStrong); }
+  .tk .stub b { font: 600 17px "IBM Plex Mono", monospace; color: var(--text); }
+  .tk .n1, .tk .n2 { position: absolute; right: 52px; width: 12px; height: 12px; border-radius: 50%; background: var(--bg); border: 1px solid var(--cardLine); }
+  .tk .n1 { top: -7px; } .tk .n2 { bottom: -7px; }
+  .ai { display: grid; place-items: center; flex: none; overflow: hidden; font-weight: 700; box-shadow: inset 0 0 0 1px var(--ring); }
+  .nav { position: absolute; left: 0; right: 0; bottom: 0; background: var(--bg); border-top: 1px solid var(--cardLine); z-index: 3; }
+  .nav .r { display: flex; height: 64px; }
+  .nav .tb { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: var(--tabUnselected); font-size: 11.5px; font-weight: 500; }
+  .nav .tb .ib { width: 52px; height: 32px; border-radius: 8px; display: grid; place-items: center; position: relative; }
+  .nav .tb.on { color: var(--tabSelected); font-weight: 600; } .nav .tb.on .ib { background: var(--leafAccentSoft); }
+  .nav .tb .nb { position: absolute; top: -2px; left: 30px; padding: .5px 4.5px; border-radius: 8px; background: var(--primary); color: var(--onPrimary); font: 700 10px/12px "BarlowApp"; box-shadow: 0 0 0 1.5px var(--bg); }
+  .nav .add { flex: 1; display: grid; place-items: center; }
+  .nav .add span { width: 48px; height: 36px; border-radius: 11px; background: var(--accent); color: var(--onAccent); display: grid; place-items: center; }
+
+  /* Crew chat */
+  .chat { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 12px 6px; display: flex; flex-direction: column; }
+  .when { text-align: center; font-size: 11.5px; font-weight: 600; letter-spacing: .4px; color: var(--text3); margin: 14px 0 8px; }
+  .msg { display: flex; align-items: flex-end; gap: 8px; }
+  .msg .av { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; color: #fff; flex: none; }
+  .msg .who { font-size: 12.5px; font-weight: 600; color: var(--text3); margin: 0 0 3px 14px; }
+  .bub { padding: 9px 14px; border-radius: 20px; background: var(--bubble); font-size: 15px; line-height: 20px; max-width: 262px; }
+  .bub b { color: var(--accentInk); font-weight: 600; }
+  .mine { align-self: flex-end; background: var(--own); color: #fff; max-width: 270px; }
+  .mine u { font-weight: 700; }
+  .sent { align-self: flex-end; font-size: 12px; color: var(--text3); margin: 3px 6px 0 0; }
+  .comp { display: flex; align-items: center; gap: 8px; padding: 8px 12px 10px; background: var(--bg); flex: none; }
+  .comp .ci { width: 44px; height: 44px; border-radius: 50%; background: var(--glass2); color: var(--tileInk); display: grid; place-items: center; position: relative; flex: none; }
+  .comp .ci i { position: absolute; top: -3px; right: -3px; width: 18px; height: 18px; border-radius: 50%; background: var(--accent); color: #fff; font: 700 10.5px/18px "BarlowApp"; text-align: center; font-style: normal; box-shadow: 0 0 0 1.5px var(--bg); }
+  .comp .cf { flex: 1; min-width: 0; height: 44px; border-radius: 22px; border: 1.4px solid var(--glassBorderStrong); padding: 0 16px; display: flex; align-items: center; font-size: 15px; color: var(--text4); white-space: nowrap; overflow: hidden; }
+  .comp .cf.on { color: var(--text); border: 2px solid var(--primary); padding: 0 15px; }
+  .comp .cf .cur { display: inline-block; width: 2px; height: 18px; background: var(--primary); margin-left: 1px; }
+  .comp .cs { width: 44px; height: 44px; border-radius: 50%; background: var(--glass2); color: var(--text4); display: grid; place-items: center; flex: none; }
+  .comp .cs.on { background: var(--accent); color: #fff; }
+
+  /* Check review */
+  .approw { display: flex; align-items: center; gap: 14px; padding: 8px 16px 0; }
+  .approw .nm { font-size: 20px; line-height: 24px; font-weight: 600; } .approw .sb { font-size: 14px; color: var(--text2); margin-top: 2px; }
+  .fl { position: absolute; right: -4px; bottom: -4px; width: 22px; height: 22px; border-radius: 50%; background: var(--bg); display: grid; place-items: center; color: #9279D6; }
+  .shot { width: 150px; height: 196px; border-radius: 16px; border: 2px solid #333; background: #fff; overflow: hidden; padding: 8px; color: #222; font-size: 7px; }
+  .shot .l { height: 5px; border-radius: 2px; background: #DDE3E8; margin-top: 6px; }
+  .foot { position: absolute; left: 0; right: 0; bottom: 0; padding: 8px 16px 0; background: var(--bg); z-index: 3; }
+  .foot::before { content: ""; position: absolute; left: 0; right: 0; top: -18px; height: 18px; background: linear-gradient(to bottom, transparent, var(--bg)); }
+  .pbtn { height: 52px; border-radius: 26px; background: var(--primary); color: var(--onPrimary); display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 15.5px; font-weight: 700; }
+  .auto { display: flex; align-items: center; justify-content: center; gap: 7px; font-size: 14px; font-weight: 600; color: var(--warn); margin-bottom: 10px; }
+  .two { display: flex; justify-content: space-around; height: 46px; align-items: center; margin-top: 4px; }
+  .two span { display: flex; align-items: center; gap: 7px; font-size: 15px; font-weight: 700; color: var(--accentInk); }
+  .two span.r { color: var(--bad); }
+  .giveup { text-align: center; font-size: 14px; color: var(--text2); height: 44px; line-height: 44px; }
+  .giveup u { font-weight: 700; color: var(--text); margin-left: 8px; }
+
+  /* Ask for feedback */
+  .pad { padding: 0 16px; }
+  .sh { display: flex; align-items: center; justify-content: space-between; font-size: 16px; line-height: 20px; font-weight: 700; padding: 18px 0 10px; }
+  .sh .tg { font-size: 12px; font-weight: 600; color: var(--text3); background: var(--glass2); padding: 2px 9px; border-radius: 10px; }
+  .step { display: flex; align-items: center; gap: 14px; font: 600 18px "IBM Plex Mono", monospace; }
+  .step span { width: 38px; height: 38px; border-radius: 50%; background: var(--glass2); display: grid; place-items: center; color: var(--text2); }
+  .chips { display: flex; gap: 8px; }
+  .chips span { flex: 1; height: 36px; border-radius: 18px; border: 1px solid var(--cardLine); display: grid; place-items: center; font: 600 14px "IBM Plex Mono", monospace; color: var(--text2); }
+  .chips span.on { background: var(--leafAccentSoft); border-color: transparent; color: var(--tabSelected); }
+  .lvls { display: flex; gap: 8px; }
+  .lvls div { flex: 1; height: 82px; border-radius: 14px; border: 1px solid var(--cardLine); padding: 10px 12px; position: relative; }
+  .lvls div.on { background: var(--leafAccentSoft); border-color: transparent; }
+  .lvls b { display: block; margin-top: 8px; font-size: 15.5px; font-weight: 600; } .lvls small { font-size: 12.5px; color: var(--text3); }
+  .lvls svg.ck { position: absolute; top: 10px; right: 10px; color: var(--tabSelected); }
+  .hint { font-size: 13px; color: var(--text2); margin-top: 8px; }
+  .sld { position: relative; height: 22px; margin: 6px 0 2px; }
+  .sld::before { content: ""; position: absolute; left: 0; right: 0; top: 9px; height: 4px; border-radius: 2px; background: var(--glass2); }
+  .sld i { position: absolute; left: 0; top: 0; width: 22px; height: 22px; border-radius: 50%; background: var(--primary); }
+  .rng { display: flex; justify-content: space-between; font: 500 11.5px "IBM Plex Mono", monospace; color: var(--text3); }
+  .fld { position: relative; border: 1px solid var(--glassBorderStrong); border-radius: 10px; padding: 13px 14px; min-height: 48px; font-size: 15px; line-height: 20px; font-weight: 500; color: var(--text); }
+  .fld .lab { position: absolute; top: -9px; left: 10px; padding: 0 4px; background: var(--bg); font-size: 12px; line-height: 16px; font-weight: 600; color: var(--text3); white-space: nowrap; }
+  .fld .ph { color: var(--text4); }
+  .cnt { text-align: right; margin-top: 4px; font-size: 11.5px; color: var(--text4); }
+  .sum { display: flex; align-items: center; gap: 14px; margin-top: 16px; }
+  .sum .it { width: 40px; height: 40px; border-radius: 12px; background: var(--tile); color: var(--tileInk); display: grid; place-items: center; }
+  .sum b { display: block; font-size: 16px; font-weight: 600; } .sum span { font-size: 13px; color: var(--text3); }
+
+  /* Add an app */
+  .hero { display: flex; flex-direction: column; align-items: center; padding-top: 10px; }
+  .hico { position: relative; width: 96px; height: 96px; }
+  .pen { position: absolute; right: 0; bottom: 0; width: 30px; height: 30px; border-radius: 50%; background: var(--bg); border: 1px solid var(--glassBorder); display: grid; place-items: center; color: var(--accentInk); }
+  .hn { margin-top: 10px; display: inline-flex; align-items: center; gap: 8px; font-size: 22px; line-height: 26px; font-weight: 700; }
+  .hn .pn { color: var(--accentInk); }
+  .hp { margin-top: 4px; font-size: 12px; color: var(--text3); }
+  .achips { display: flex; gap: 6px; margin-top: 12px; }
+  .achip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 99px; font-size: 13px; font-weight: 600; white-space: nowrap; }
+  .achip.n { background: var(--glass2); color: var(--text3); } .achip.warn { background: var(--warnBg); color: var(--warn); }
+  .pill { margin-top: 12px; min-height: 32px; padding: 7px 14px; border-radius: 16px; background: var(--tile); color: var(--accentInk); font-size: 13.5px; font-weight: 700; }
+  .il { margin-top: 16px; font-size: 13px; line-height: 18px; color: var(--text2); }
+  .il .inl { color: var(--text3); }
+  .il.bad { color: var(--text); } .il.bad .inl { color: var(--bad); }
+
+  /* Send the proof */
+  .stp { display: flex; align-items: flex-start; justify-content: space-between; padding: 14px 18px 0; position: relative; }
+  .stp::before { content: ""; position: absolute; left: 50px; right: 50px; top: 33px; height: 2px; background: var(--text2); }
+  .stp div { width: 72px; display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 12px; position: relative; }
+  .stp div i { width: 38px; height: 38px; border-radius: 50%; background: var(--glass2); color: var(--text); display: grid; place-items: center; font-style: normal; }
+  .stp div.on i { background: var(--accent); color: #fff; box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent); }
+  .stp div.on { font-weight: 700; }
+  .proof { display: flex; gap: 12px; margin-top: 14px; }
+  .thumb { width: 66px; height: 112px; border-radius: 9px; border: 1.5px solid var(--glassBorder); background: #fff; padding: 5px; }
+  .thumb .l { height: 3px; border-radius: 1px; background: #DDE3E8; margin-top: 5px; }
+  .softb { display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 14px; border-radius: 17px; background: var(--glass2); font-size: 14px; font-weight: 700; color: var(--text); }
+  .okline { font-size: 12.5px; font-weight: 600; color: var(--ok); margin-top: 5px; }
+
+  /* keyboard */
+  .kb { flex: none; height: 250px; background: var(--kb); padding: 10px 3px 0; }
+  .kb .r { display: flex; justify-content: center; gap: 5px; margin-bottom: 9px; }
+  .kb .r span { width: 29px; height: 40px; border-radius: 6px; background: var(--key); box-shadow: 0 1px 0 rgba(0,0,0,.18); display: grid; place-items: center; font: 400 18px "Roboto", system-ui; color: var(--keyInk); }
+  .kb .r span.w { width: 44px; background: var(--keyW); }
+  .kb .r span.sp { width: 150px; }
+
+  /* the specimen boards */
+  .board { display: flex; gap: 22px; flex-wrap: wrap; }
+  .sheetb { width: 392px; border-radius: 22px; padding: 22px 32px; display: flex; flex-direction: column; gap: 14px; background: var(--bg); border: 1px solid #B9C5CE; }
+  .sheetb .cap { font-size: 12px; font-weight: 700; color: var(--text3); margin: 4px 0 -6px 2px; }
+  .meas { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  .meas span { background: #fff; border: 1px solid #C3CDD4; border-radius: 10px; padding: 6px 11px; font-size: 13.5px; font-weight: 600; color: #2D4A5F; display: inline-flex; align-items: center; gap: 7px; }
+  .before { display: flex; gap: 22px; align-items: center; flex-wrap: wrap; }
+  .before .old { width: 392px; border-radius: 22px; padding: 22px 32px; background: var(--bg); border: 1px solid #B9C5CE; opacity: .9; }
+  .strike { font-size: 13px; font-weight: 700; color: #9E3B2E; margin-bottom: 8px; }
+
+  /* behaviour cards */
+  .cards { display: grid; grid-template-columns: repeat(3, 360px); gap: 16px; }
+  .bc { background: #fff; border: 1px solid #C3CDD4; border-radius: 18px; padding: 16px 18px; }
+  .bc h3 { margin: 0 0 12px; font-size: 15px; display: flex; align-items: center; gap: 8px; color: #142F43; }
+  .bc h3 svg { color: #3A5B73; }
+  .bc ol { margin: 0; padding-left: 20px; font-size: 14px; line-height: 21px; color: #203A4E; }
+  .bars { display: flex; flex-direction: column; gap: 8px; }
+  .bar { display: grid; grid-template-columns: 112px 1fr; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #203A4E; }
+  .bar i { display: flex; align-items: center; height: 20px; border-radius: 6px; background: #3A5B73; color: #fff; font: 600 11.5px "IBM Plex Mono", monospace; font-style: normal; padding: 0 7px; }
+  .bar i.st { background: repeating-linear-gradient(135deg, #8A611C 0 6px, #A57A2E 6px 12px); width: 100%; }
+  .note { font-size: 12.5px; color: #5C6B76; margin-top: 10px; line-height: 17px; }
+  .mini { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+  .mini .snack { width: 100%; min-height: 36px; padding: 8px 12px; font-size: 12.5px; line-height: 17px; border-radius: 11px; box-shadow: none; }
+  .mini .snack .sa { font-size: 12.5px; height: 28px; margin: -6px 0; }
+  .mini .gone { opacity: .35; }
+
+  /* mapping table */
+  .tables { display: flex; gap: 22px; align-items: flex-start; flex-wrap: wrap; }
+  table { border-collapse: separate; border-spacing: 0; background: #fff; border: 1px solid #C3CDD4; border-radius: 14px; overflow: hidden; font-size: 13px; width: 640px; }
+  th { text-align: left; font-size: 11.5px; letter-spacing: .3px; color: #5C6B76; padding: 8px 10px; background: #EEF3F6; }
+  td { padding: 5px 10px; vertical-align: middle; color: #142F43; line-height: 17px; }
+  tr.g td { background: #F4F8FA; font-weight: 700; color: #2D4A5F; padding-top: 9px; }
+  tr:not(.g) + tr:not(.g) td { border-top: 1px solid #EEF3F6; }
+  .tn { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; font-size: 12px; white-space: nowrap; }
+  .tn.info svg { color: #3F6681; } .tn.done svg { color: #246B59; } .tn.error svg { color: #9E3B2E; } .tn.offline svg { color: #8A611C; } .tn.inline { color: #5C6B76; }
+  .ac { font-weight: 700; color: #3F6681; white-space: nowrap; }
+  .tm { font: 600 12px "IBM Plex Mono", monospace; white-space: nowrap; color: #203A4E; }
+  .was { display: inline-block; margin-left: 5px; font-size: 10.5px; font-weight: 700; color: #8A611C; background: rgba(154,110,36,.12); border-radius: 6px; padding: 0 5px; cursor: help; }
+  .rules { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 760px; }
+</style>
+</head>
+<body>
+<div class="top"><h1>One snackbar for TestTrack</h1><a href="#look">Look</a><a href="#frames">In use</a><a href="#rules">How it behaves</a><a href="#map">Every message</a></div>
+<div class="doc" id="doc"></div>
+
+<script>
+const L = {
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+  alert: '<circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>',
+  circleCheck: '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
+  wifiOff: '<path d="M12 20h.01"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/><path d="M5 12.859a10 10 0 0 1 5.17-2.69"/><path d="M19 12.859a10 10 0 0 0-2.007-1.523"/><path d="M2 8.82a15 15 0 0 1 4.177-2.643"/><path d="M22 8.82a15 15 0 0 0-11.288-3.764"/><path d="m2 2 20 20"/>',
+  wifi: '<path d="M12 20h.01"/><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.859a10 10 0 0 1 14 0"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/>',
+  msg: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  grid: '<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>',
+  user: '<circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/>',
+  plus: '<path d="M5 12h14"/><path d="M12 5v14"/>',
+  minus: '<path d="M5 12h14"/>',
+  ticket: '<path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/>',
+  more: '<circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/>',
+  imagePlus: '<path d="M16 5h6"/><path d="M19 2v6"/><path d="M21 11.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7.5"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/><circle cx="9" cy="9" r="2"/>',
+  send: '<path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/>',
+  clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  undo: '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
+  flask: '<path d="M14 2v6a2 2 0 0 0 .245.96l5.51 10.08A2 2 0 0 1 18 22H6a2 2 0 0 1-1.755-2.96l5.51-10.08A2 2 0 0 0 10 8V2"/><path d="M6.453 15h11.094"/><path d="M8.5 2h7"/>',
+  pencil: '<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/>',
+  star: '<path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"/>',
+  lines: '<path d="M15 12H3"/><path d="M17 18H3"/><path d="M21 6H3"/>',
+  doc: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>',
+  coins: '<circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/><path d="m16.71 13.88.7.71-2.82 2.82"/>',
+  camera: '<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>',
+  image: '<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>',
+  eyeOff: '<path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/>',
+  globe: '<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>',
+  hand: '<path d="M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2"/><path d="M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/>',
+  vibrate: '<path d="m2 8 2 2-2 2 2 2-2 2"/><path d="m22 8-2 2 2 2-2 2 2 2"/><rect width="8" height="14" x="8" y="5" rx="1"/>',
+  ear: '<path d="M6 8.5a6.5 6.5 0 1 1 13 0c0 6-6 6-6 10a3.5 3.5 0 1 1-7 0"/><path d="M15 8.5a2.5 2.5 0 0 0-5 0v1a2 2 0 1 1 0 4"/>',
+  timer: '<line x1="10" x2="14" y1="2" y2="2"/><line x1="12" x2="15" y1="14" y2="11"/><circle cx="12" cy="14" r="8"/>',
+  layers: '<path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>',
+  pin: '<path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/>',
+  sprout: '<path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/>',
+};
+const ic = (n, s = 16, w = 2) => `<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${L[n]}</svg>`;
+const inl = (n, s = 14, w = 2.2) => `<span class="inl">${ic(n, s, w)}</span>`;
+const BACK = `<svg width="22" height="22" viewBox="0 0 24 24" style="fill:currentColor"><path d="M17.77 3.77 16 2 6 12l10 10 1.77-1.77L9.54 12z"/></svg>`;
+const sp = (h) => `<div style="height:${h}px;flex:none"></div>`;
+const gest = () => `<div class="gest"><i></i></div>`;
+const sbar = () => `<div class="sbar"><span>2:33</span><span class="sr">${ic('wifi', 14, 2.4)}<span class="bat"></span></span></div>`;
+const pbar = (title, end = '') => `<div class="pbar"><span class="back">${BACK}</span><span class="ttl">${title}</span>${end}</div>`;
+const icon = (s, bg, fg, letter, r = 0.3, fs = 0.46) => `<span class="ai" style="width:${s}px;height:${s}px;border-radius:${Math.round(s * r)}px;background:${bg};color:${fg};font-size:${Math.round(s * fs)}px">${letter}</span>`;
+
+/* ---------- the snackbar ---------- */
+const TONE = { info: ['info', 'var(--sInfo)'], done: ['circleCheck', 'var(--sOk)'], error: ['alert', 'var(--sBad)'], offline: ['wifiOff', 'var(--sWarn)'] };
+function snack(text, tone = 'info', o = {}) {
+  const [i, col] = TONE[tone];
+  return `<div class="snack${o.action ? ' act' : ''}${o.static ? ' static' : ''}" role="status"><span class="si" style="color:${col}">${ic(o.icon || i, 18, 2.2)}</span><span class="st">${text}</span>${o.action ? `<span class="sa">${o.action}</span>` : ''}</div>`;
+}
+function phone(th, inner, s) {
+  return `<div class="phone ${th}">${sbar()}${inner}${s ? snack(s.text, s.tone, s) : ''}</div>`;
+}
+
+/* ---------- Circle tab ---------- */
+const ROBOT = `<svg width="48" height="40" viewBox="0 0 92 70">
+  <line x1="46" y1="8" x2="46" y2="20" stroke="#2F5D86" stroke-width="3"/><circle cx="46" cy="8" r="6" fill="#F28C78"/>
+  <rect x="6" y="34" width="12" height="22" rx="6" fill="#7DB6E0"/><rect x="74" y="34" width="12" height="22" rx="6" fill="#7DB6E0"/>
+  <rect x="12" y="18" width="68" height="52" rx="20" fill="#3D7BB0"/><rect x="20" y="28" width="52" height="34" rx="15" fill="#FFF8EC"/>
+  <circle cx="35" cy="43" r="5" fill="#13212E"/><circle cx="57" cy="43" r="5" fill="#13212E"/>
+  <path d="M40 51q6 5 12 0" fill="none" stroke="#13212E" stroke-width="2.6" stroke-linecap="round"/></svg>`;
+const TICKETS = [
+  ['Smart English', 'Live app', 20, icon(44, '#FFFFFF', '#1E5FB4', 'S', .28)],
+  ['Nept Track: Habit and Budget', 'Live app, written review', 35, icon(44, '#FF6A00', '#FFFFFF', 'N', .28)],
+  ['Shared Grocery List: ListKin', 'Live app', 50, icon(44, '#2EAA5C', '#FFFFFF', 'L', .28)],
+  ['Pianica: Piano Lessons', 'Live app', 20, icon(44, '#16181B', '#FFFFFF', 'P', .28)],
+  ['Kaaj', 'Closed test', 20, icon(44, '#FFFFFF', '#1A9A50', 'K', .28)],
+  ['Loudest Alarm Clock', 'Live app', 20, icon(44, '#1E88E5', '#FFFFFF', 'A', .28)],
+  ['Gaan Music Player', 'Live app', 20, icon(44, '#26282B', '#F5B800', 'G', .28)],
+];
+const ticket = ([n, s, pay, art]) => `<div class="tk"><div class="tl">${art}<div class="tc"><div class="t">${n}</div><div class="s">${s}</div></div></div><span class="n1"></span><span class="n2"></span><div class="stub">${ic('ticket', 17)}<b>${pay}</b></div></div>`;
+function navBar() {
+  const tab = (k, l, on, n) => `<div class="tb${on ? ' on' : ''}"><span class="ib">${ic(k, 22)}${n ? `<b class="nb">${n}</b>` : ''}</span>${l}</div>`;
+  return `<div class="nav floor"><div class="r">${tab('msg', 'Circle', true, 38)}${tab('users', 'Crew', false, 14)}<div class="add"><span>${ic('plus', 24, 2.2)}</span></div>${tab('grid', 'My apps', false, 2)}${tab('user', 'You', false)}</div>${gest()}</div>`;
+}
+function circle(th, s) {
+  const hud = `<div class="hud"><span class="bot">${ROBOT}<span class="lvb">13</span></span><div class="lv"><b>Level 13</b><span>275 exp to level 14</span></div><span class="tx">${ic('ticket', 24, 1.8)}290</span></div>`;
+  const seg = `<div class="seg"><span class="on">Feedback</span><span>My reviews <i>9</i></span><span>To check <i>28</i></span></div>`;
+  return phone(th, `${hud}${seg}<div class="body"><div class="list">${TICKETS.map(ticket).join('')}</div>${navBar()}</div>`, s);
+}
+
+/* ---------- Crew chat ---------- */
+function composer(o = {}) {
+  return `<div class="comp floor"><span class="ci">${ic('imagePlus', 20)}<i>3</i></span><span class="cf${o.text ? ' on' : ''}">${o.text ? `${o.text}<span class="cur"></span>` : 'Message Crew 125'}</span><span class="cs${o.text ? ' on' : ''}">${ic('send', 19)}</span></div>`;
+}
+function chatLines(short) {
+  const other = (av, col, who, text) => `<div class="msg"><span class="av" style="background:${col}">${av}</span><div><div class="who">${who}</div><div class="bub">${text}</div></div></div>`;
+  let h = '';
+  if (!short) {
+    h += `<div class="when">THU AT 4:40 AM</div>` + other('K', '#2E7D6B', 'Kenji Sato', 'Opened all four tonight. Pocket Notes asked for a sign-in again.');
+    h += `<div class="when">THU AT 5:03 AM</div><div class="bub mine"><u>@Raj Patel</u> I cannot see your picture for last night yet. Can you send it?</div><div class="sent">Sent</div>`;
+    h += `<div class="when">THU AT 5:26 AM</div>` + other('R', '#5D6A74', 'Raj Patel', '<b>@Nurul</b> Sending it now, sorry!');
+  }
+  h += `<div class="when">THU AT 5:48 AM</div>` + other('D', '#F26B3A', 'Diego Alvarez', '<b>Budget Buddy</b> the new build is much faster. It is still day 5 here.');
+  h += `<div class="when">THU AT 6:07 AM</div>` + other('H', '#E2336B', 'Hana Sato', 'Done for the night.');
+  return h;
+}
+function chat(th, s, o = {}) {
+  const bar = pbar('Crew 125 chat', `<span class="xb">${ic('more', 22)}</span>`);
+  const kb = o.kb ? KB : gest();
+  return phone(th, `${bar}<div class="body"><div class="chat"${s && s.tone === 'offline' ? ' data-room' : ''}>${chatLines(o.kb)}</div></div>${composer(o)}${kb}`, s);
+}
+const KB = (() => {
+  const row = (keys) => `<div class="r">${keys.split('').map((k) => `<span>${k}</span>`).join('')}</div>`;
+  return `<div class="kb">${row('1234567890')}${row('qwertyuiop')}${row('asdfghjkl')}
+    <div class="r"><span class="w">&#8679;</span>${'zxcvbnm'.split('').map((k) => `<span>${k}</span>`).join('')}<span class="w">&#9003;</span></div>
+    <div class="r"><span class="w">!#1</span><span>,</span><span class="sp"></span><span>.</span><span class="w">&#8629;</span></div></div>`;
+})();
+
+/* ---------- Check a review ---------- */
+function check(th, s) {
+  const bar = `<div class="pbar" style="height:68px"><span class="back">${BACK}</span><span class="ttl">Arjun Mehta's review<small>20h left, pays 30 tix</small></span><span class="end">1 of 1</span></div>`;
+  const app = `<div class="approw"><span style="position:relative">${icon(56, 'linear-gradient(135deg,#1C5F7E,#2C7FA2)', '#fff', 'B', .3)}<span class="fl">${ic('flask', 13, 2.2)}</span></span><div><div class="nm">Budget Buddy</div><div class="sb">Closed test</div></div></div>`;
+  const shot = `<div class="shot"><div style="display:flex;gap:6px;align-items:center;font-size:9px;font-weight:600"><span style="width:22px;height:22px;border-radius:5px;background:#0E8A72;color:#fff;display:grid;place-items:center;font-size:11px">B</span>Budget Buddy</div>
+    <div style="margin-top:8px;background:#E4F3EE;color:#0E7A5F;border-radius:4px;padding:4px;font-size:7px">Only the developer can see this feedback</div>
+    <div style="margin-top:8px;color:#0E8A72;font-size:9px;letter-spacing:1px">&#9733;&#9733;&#9733;&#9733;&#9734;</div>
+    <div style="margin-top:4px;font-size:8px">Easy to add a spend. The chart is clear.</div><div class="l" style="width:80%"></div><div class="l" style="width:60%"></div><div class="l" style="width:70%"></div></div>`;
+  const thread = `<div style="text-align:center;color:var(--text3);font-size:14px;font-weight:600;margin:22px 0 12px">Today</div>
+    <div style="padding:0 16px"><div style="font-size:13px;font-weight:600;color:var(--text3);margin:0 0 4px 44px">Arjun Mehta</div>
+    <div style="display:flex;align-items:flex-end;gap:10px"><span class="ai" style="width:34px;height:34px;border-radius:50%;background:var(--glass2);color:var(--text3)">${ic('user', 17)}</span>${shot}</div>
+    <div style="font-size:12.5px;color:var(--text3);margin:6px 0 0 44px">9:12 AM</div></div>`;
+  const foot = `<div class="foot floor"><div class="auto">${ic('clock', 16)}Accepts itself if you do nothing.<span style="color:var(--text3)">${ic('info', 15)}</span></div>
+    <div class="pbtn">Accept and pay 30 tix</div><div class="two"><span>${ic('undo', 17)}Ask for a new one</span><span class="r">${ic('x', 17)}Refuse</span></div>${gest()}</div>`;
+  return phone(th, `${bar}<div class="body">${app}${thread}${foot}</div>`, s);
+}
+
+/* ---------- Ask for feedback ---------- */
+function ask(th, s) {
+  const lv = (k, t, p, on) => `<div class="${on ? 'on' : ''}">${ic(k, 18)}${on ? `<svg class="ic ck" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">${L.check}</svg>` : ''}<b>${t}</b><small>${p}</small></div>`;
+  const b = `<div class="pad">
+    <div class="sh">Reviews<span class="step"><span>${ic('minus', 18)}</span>3<span>${ic('plus', 18)}</span></span></div>
+    <div class="chips"><span class="on">3</span><span>5</span><span>10</span><span>20</span><span>50</span></div>
+    <div class="sh">Each review has</div>
+    <div class="lvls">${lv('star', 'Stars', 'From 20 tix', true)}${lv('lines', 'Written', 'From 35 tix')}${lv('doc', 'Detailed', 'From 50 tix')}</div>
+    <div class="hint">A star rating only.</div>
+    <div class="sh">Each review pays<span style="display:flex;gap:6px;align-items:center;color:var(--accentInk);font-size:17px">${ic('ticket', 18)}20 tix</span></div>
+    <div class="sld"><i></i></div><div class="rng"><span>20</span><span>200</span></div>
+    <div class="sh">For testers<span class="tg">Optional</span></div>
+    <div class="fld" style="min-height:80px"><span class="ph">What to look at</span></div><div class="cnt">0/200</div>
+    <div class="sum"><span class="it">${ic('coins', 20)}</span><div><b>3 reviews, 60 tix</b><span>You have 290 tix</span></div></div></div>`;
+  const foot = `<div class="foot floor" style="padding-top:10px"><div class="pbtn">Ask for feedback</div>${sp(10)}${gest()}</div>`;
+  return phone(th, `${pbar('Ask for feedback')}<div class="body">${b}${foot}</div>`, s);
+}
+
+/* ---------- Add an app ---------- */
+function addApp(th, s) {
+  const art = `<span class="ai" style="width:88px;height:88px;border-radius:26px;background:#EF443B"><svg width="58" height="58" viewBox="0 0 24 24"><path d="M3.5 12 8.5 7l5 5-5 5z" fill="#fff"/><path d="M13.5 6.5 19 12l-5.5 5.5-1.7-1.7L15.6 12l-3.8-3.8z" fill="#fff"/></svg></span>`;
+  const b = `<div class="pad"><div class="hero"><span class="hico">${art}<span class="pen">${ic('pencil', 15)}</span></span>
+    <div class="hn">AnyDesk<span class="pn">${ic('pencil', 16)}</span></div><div class="hp">com.anydesk.anydeskandroid</div>
+    <div class="achips"><span class="achip n">${ic('flask', 14)}Closed test</span><span class="achip warn">${ic('clock', 14)}Not checked yet</span></div>
+    <span class="pill">Choose another app</span></div>
+    <div class="il">${inl('info')}We check it on Play once our testers group is on your closed track. You can put it in a crew before then.</div>
+    <div class="sh">About the app<span class="tg">Optional</span></div>
+    <div class="fld"><span class="lab">Short description</span>Reach your computer from your phone, wherever you are</div><div class="cnt">53/80</div>
+    ${sp(10)}<div class="fld" style="min-height:86px"><span class="lab">Full description</span>Open your office or home computer from your phone in seconds.</div></div>`;
+  const foot = `<div class="foot floor" style="padding-top:10px"><div class="pbtn">Add to My apps</div>${sp(10)}${gest()}</div>`;
+  return phone(th, `${pbar('Add an app')}<div class="body">${b}${foot}</div>`, s);
+}
+
+/* ---------- Send the proof (two lines) ---------- */
+function proof(th, s) {
+  const bar = pbar('Feedback', `<span class="achip n" style="margin-right:16px;font-size:15px;padding:7px 14px;background:var(--tile);color:var(--accentInk)">+40 tix</span>`);
+  const app = `<div class="approw" style="padding-top:2px"><span style="position:relative"><span class="ai" style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#36B89A,#1F8E74);color:#fff">${ic('sprout', 24)}</span><span class="fl" style="width:20px;height:20px">${ic('flask', 12, 2.2)}</span></span><div><div class="nm" style="font-size:18px">Habit Garden</div><div class="sb" style="font-size:13px">com.example.habitgarden</div></div></div>`;
+  const step = (n, t, on) => `<div class="${on ? 'on' : ''}"><i>${on ? ic('camera', 17) : ic('check', 16, 2.4)}</i>${n}. ${t}</div>`;
+  const steps = `<div class="stp">${step(1, 'Install')}${step(2, 'Use app')}${step(3, 'Feedback')}${step(4, 'Send proof', true)}</div>`;
+  const pr = `<div class="pad"><div class="proof"><div class="thumb"><div style="width:14px;height:14px;border-radius:50%;background:#2AA788"></div><div class="l"></div><div class="l" style="width:70%"></div><div style="height:26px;border:1px solid #2AA788;border-radius:3px;margin-top:6px"></div><div class="l"></div><div class="l" style="width:60%"></div></div>
+    <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-start;padding-top:2px"><span class="softb">${ic('camera', 16)}Capture again</span><span class="softb">${ic('image', 16)}Gallery</span><span class="softb" style="background:none;padding-left:4px">${ic('eyeOff', 16)}Hide details</span></div></div>
+    ${sp(16)}<div class="fld"><span class="lab">Your feedback for the developer</span>Adding an expense takes two taps and the monthly chart is easy to read.</div>
+    <div style="display:flex;justify-content:space-between"><span class="okline">72 characters, enough</span><span class="cnt">72/600</span></div>
+    <div class="sh" style="padding-top:14px">Put the ready review in</div>
+    <div class="il" style="margin-top:0">${inl('eyeOff')}The developer sees this picture. Hide anything personal.</div></div>`;
+  const foot = `<div class="foot floor" style="padding-top:10px"><div class="pbtn">Send the proof</div><div class="giveup">Can't finish?<u>Give up review</u></div>${gest()}</div>`;
+  return phone(th, `${bar}<div class="body">${app}${steps}${pr}${foot}</div>`, s);
+}
+
+/* ---------- the page ---------- */
+const S_ACCEPT = { text: 'Accepted. Tania has been paid.', tone: 'done' };
+const S_OFF = { text: "You're offline. The chat catches up once you're back.", tone: 'offline' };
+const S_ON = { text: 'Back online.', tone: 'done', icon: 'wifi' };
+const S_REFUSE = { text: 'Refused. Three members will decide it.', tone: 'info' };
+const S_ASK = { text: "Couldn't send your request. Check your connection.", tone: 'error', action: 'Try again' };
+const S_ADD = { text: "Couldn't add it. Check your connection.", tone: 'error', action: 'Try again' };
+const S_TWO = { text: 'Your new screenshot replaced the one before. Hide anything personal again.', tone: 'info' };
+const S_LINK = { text: "Links can't be sent here.", tone: 'error' };
+
+const FRAMES = [
+  ['Circle, after Accept', (th) => circle(th, S_ACCEPT)],
+  ['Crew chat, offline (stays)', (th) => chat(th, S_OFF)],
+  ['Crew chat, back online', (th) => chat(th, S_ON)],
+  ['Check a review, after Refuse', (th) => check(th, S_REFUSE)],
+  ['Ask for feedback, send failed', (th) => ask(th, S_ASK)],
+  ["Add an app, couldn't add", (th) => addApp(th, S_ADD)],
+  ['Two lines', (th) => proof(th, S_TWO)],
+  ['Keyboard open', (th) => chat(th, S_LINK, { kb: true, text: 'see play.google.com/apps/te' })],
+];
+
+let h = '';
+
+/* Look */
+h += `<h2 id="look">The snackbar</h2>`;
+const board = (th) => `<div class="sheetb ${th}">
+  <div class="cap">Info</div>${snack('Refused. Three members will decide it.', 'info', { static: true })}
+  <div class="cap">Done</div>${snack('Accepted. Tania has been paid.', 'done', { static: true })}
+  <div class="cap">Error, with a button</div>${snack("Couldn't add it. Check your connection.", 'error', { static: true, action: 'Try again' })}
+  <div class="cap">Offline, stays</div>${snack("You're offline. The chat catches up once you're back.", 'offline', { static: true })}
+  <div class="cap">Done, with Undo</div>${snack('Chat muted. You still hear when someone mentions you.', 'done', { static: true, action: 'Undo' })}</div>`;
+h += `<div class="row"><div class="pair"><div class="col"><span class="tag">Light</span>${board('light')}</div><div class="col"><span class="tag">Dark</span>${board('dark')}</div>
+  <div class="col"><span class="tag">Goes away</span><div class="before"><div class="old light"><div class="strike">Top of page message</div><div class="pmsg"><span style="color:var(--bad)">${ic('alert', 17)}</span><span class="w">Couldn't add it. Check your connection.</span><span class="x">${ic('x', 16)}</span></div></div></div></div></div>
+  <div class="meas"><span>Inverse surface</span><span>Corner 14</span><span>16 from each side</span><span>8 above what is pinned</span><span>48 high at least</span><span>Icon 18, tone colour</span><span>Barlow 14, up to 2 lines</span><span>Button: bold, no fill</span><span>No X</span><span>Swipe away</span></div></div>`;
+
+/* Frames */
+h += `<h2 id="frames">In use</h2>`;
+FRAMES.forEach(([label, fn], i) => {
+  h += `<div class="row"><div class="lbl"><span class="k">${i + 1}</span>${label}</div><div class="pair">
+    <div class="col"><span class="tag">Light</span>${fn('light')}</div><div class="col"><span class="tag">Dark</span>${fn('dark')}</div></div></div>`;
+});
+
+/* Behaviour */
+const ms = (t, tone, o = {}) => snack(t, tone, { ...o, static: true });
+h += `<h2 id="rules">How it behaves</h2><div class="cards">
+  <div class="bc"><h3>${ic('timer', 18)}How long it stays</h3><div class="bars">
+    <div class="bar">Done or info<i style="width:30%">3 s</i></div>
+    <div class="bar">Two lines<i style="width:50%">5 s</i></div>
+    <div class="bar">Error<i style="width:60%">6 s</i></div>
+    <div class="bar">With a button<i style="width:80%">8 s</i></div>
+    <div class="bar">Offline<i class="st">until back online</i></div></div>
+    <div class="note">Touching it pauses the time. With TalkBack on, one with a button waits for you.</div></div>
+
+  <div class="bc"><h3>${ic('layers', 18)}One at a time</h3><ol>
+    <li>A new one replaces the one showing.</li><li>The same words again only restart the time.</li><li>Offline steps aside for a new one, then comes back.</li></ol>
+    <div class="mini light">${ms('Chat muted. You still hear when someone mentions you.', 'done', { action: 'Undo' })}<div class="gone">${ms("You're offline. Back after this one.", 'offline')}</div></div></div>
+
+  <div class="bc"><h3>${ic('pin', 18)}Where it sits</h3><ol>
+    <li>Above the tab bar.</li><li>Above pinned buttons and the chat box.</li><li>Above the keyboard.</li><li>It follows you to the next page.</li><li>One that stays makes room: the list ends above it.</li></ol>
+    <div class="note">A page marks what is pinned at its foot. The snackbar sits 8 above the highest one, or above the keyboard if that is higher.</div></div>
+
+  <div class="bc"><h3>${ic('hand', 18)}Closing it</h3><ol>
+    <li>Swipe it left or right.</li><li>Tap its button: it acts and closes.</li><li>Or wait.</li></ol>
+    <div class="note">Swiping the offline one hides it until the next time you go offline.</div></div>
+
+  <div class="bc"><h3>${ic('vibrate', 18)}Feel</h3><ol>
+    <li>Done: one light tick.</li><li>Error: a short double buzz.</li><li>Info and offline: nothing.</li></ol></div>
+
+  <div class="bc"><h3>${ic('ear', 18)}TalkBack</h3><ol>
+    <li>Read out once, as it shows.</li><li>Errors and offline cut in at once.</li><li>The button is read with the words: "Try again, button".</li></ol></div>
+</div>`;
+
+/* What stays on the page */
+h += `<div class="row"><div class="lbl">Snackbar or on the page</div><div class="rules">
+  <div class="bc"><h3>${ic('layers', 18)}Snackbar</h3><ol>
+    <li>The result of something you just did.</li><li>Online and offline.</li><li>A tap that can't work right now, said in one line.</li><li>A failed send, with Try again.</li></ol></div>
+  <div class="bc"><h3>${ic('pin', 18)}Stays on the page</h3><ol>
+    <li>A problem with a field, under that field.</li><li>A page that could not load.</li><li>Anything you must read to go on, or longer than two lines.</li><li>Press back again to leave: becomes a snackbar too.</li></ol>
+    <div class="light" style="margin-top:12px;padding:10px 12px;border-radius:12px;background:var(--bg);color:var(--text)"><div class="fld" style="border-color:var(--bad)"><span class="lab" style="color:var(--bad)">Play link or package name</span>com.does.not.exist.zz</div>
+    <div class="il bad" style="margin-top:8px">${inl('alert', 14, 2.4)}<b>We couldn't find this app</b><br>Check the package name.</div></div></div>
+</div></div>`;
+
+/* Mapping table */
+const MAP_A = [
+  ['Circle, Request and Check'],
+  ['Accepted. {name} has been paid.', 'done', '', '3 s'],
+  ['Accepted. The reviewer has been paid.', 'done', '', '3 s'],
+  ['Refused. Three members will decide it.', 'info', '', '3 s'],
+  ['Asked. They have 24 hours to send a new screenshot.', 'info', '', '5 s'],
+  ['Counted. Thank you.', 'done', '', '3 s'],
+  ['Closed. {n} tix came back to you.', 'done', '', '3 s'],
+  ['Closed. Reviews already under way can still finish.', 'info', '', '5 s'],
+  ['Back in the feed. Testers can take it again.', 'done', '', '5 s'],
+  ["{the server's reason}", 'error', '', '6 s'],
+  ['App page'],
+  ['Your request is on Circle.', 'done', 'Open', '8 s'],
+  ["Can't delete. {why}", 'info', '', '5 s'],
+  ['Ask for feedback'],
+  ["Couldn't send your request. {why}", 'error', 'Try again', '8 s'],
+  ["Sign-in didn't finish. Your request is still here.", 'error', 'Try again', '8 s', "Sign-in couldn't finish. Please try again. Your request is still here."],
+  ['Add an app'],
+  ["Couldn't add it. Check your connection.", 'error', 'Try again', '8 s'],
+  ["Couldn't use that picture. Try another.", 'error', 'Choose', '8 s', 'That picture could not be used. Try another one.'],
+  ["{the server's reason}", 'error', '', '6 s'],
+  ['Review, send and waiting'],
+  ['Your new screenshot replaced the one before. Hide anything personal again.', 'info', '', '5 s'],
+  ["You're offline. Your screenshot and note are saved.", 'offline', '', 'Stays', "You're offline. Your screenshot and note are saved; send them once you're back."],
+  ['Add your screenshot again.', 'error', '', '6 s'],
+  ['Sent. The developer and the members will see your answer.', 'done', '', '5 s'],
+  ['Thanks. The developer is told why. Nothing counts against you.', 'done', '', '5 s', 'Thanks. The developer is told why, and nothing counts against you.'],
+  ['Everywhere'],
+  ["Couldn't reach TestTrack. Check your connection.", 'error', 'Try again', '8 s', 'We could not reach TestTrack. Check your connection.'],
+  ['Press back again to leave TestTrack', 'info', '', '2 s', 'LeaveHint, its own pill today'],
+];
+const MAP_B = [
+  ['Crew chat'],
+  ["You're offline. The chat catches up once you're back.", 'offline', '', 'Stays'],
+  ['Back online.', 'done', '', '3 s'],
+  ['Chat muted. You still hear when someone mentions you.', 'done', 'Undo', '8 s'],
+  ['Chat unmuted.', 'done', '', '3 s'],
+  ['That message is gone.', 'info', '', '3 s'],
+  ["Couldn't load older messages.", 'error', 'Try again', '8 s', "Couldn't load older messages. Try again."],
+  ["Couldn't change that.", 'error', 'Try again', '8 s', "Couldn't change that. Try again."],
+  ["Couldn't delete it.", 'error', 'Try again', '8 s', "Couldn't delete it. Try again."],
+  ['No pictures left today.', 'info', '', '3 s'],
+  ["That can't be sent right now.", 'error', '', '6 s'],
+  ["Links can't be sent here.", 'error', '', '6 s'],
+  ['Crew tab and Crew page'],
+  ['{app} is in. Play shows it to the testers group.', 'done', '', '5 s'],
+  ['That is tonight done.', 'done', '', '3 s'],
+  ['{n} left. {first reason}', 'info', '', '5 s'],
+  ['{app} counted. {n} left.', 'info', 'Open all', '8 s', '{app} counted. Open all again for the {n} left.'],
+  ['{app} was open {s}s. It needs 30 to count.', 'info', '', '5 s', 'That was {s}s in {app}. It needs 30, so it has not counted yet.'],
+  ["{app} can't open from here. Use your phone's app list.", 'info', '', '5 s', "{app} can't be opened from here. Open it from your phone's app list instead."],
+  ['Tonight needs a picture of each app.', 'info', 'Open all', '8 s', "Tonight needs a picture of each app, so TestTrack has to see your screen while they're open. Tap Open all when you're ready."],
+  ["Couldn't read that picture. Choose another.", 'error', '', '6 s', 'That picture could not be read. Choose another.'],
+  ['The crew was told. They have 24 hours to update.', 'done', '', '5 s'],
+  ['Marked down. Nobody owes it tonight.', 'done', '', '3 s', 'Marked down tonight. Nobody owes it tonight, and nobody is marked down for it.'],
+  ['Sent. The team usually answers within a day.', 'done', '', '5 s'],
+  ['Feedback for {app} sent. Thank you.', 'done', '', '3 s'],
+  ['{app} is in.', 'done', '', '3 s'],
+  ['{app} went back to its owner to fix.', 'info', '', '3 s'],
+  ['Thanks. One more answer decides it.', 'done', '', '3 s'],
+  ["Reported. {owner} has been told. Tonight doesn't count against you.", 'done', '', '5 s', "Reported. {owner} has been told, and tonight doesn't count against you."],
+  ['Taken out. Its {n} tix are back.', 'done', '', '3 s', 'Taken back out, and its {n} tix are back. You can put an app in again.'],
+  ['Taken out. It was placed free, so nothing comes back.', 'info', '', '5 s', 'Taken back out. It was placed free, so there was nothing to refund. You can put an app in again.'],
+  ["Couldn't send.", 'error', 'Try again', '8 s', "Couldn't send. Try again."],
+  ['Install your app from Google Play on this phone first. (3 Update guards)', 'inline', '', ''],
+];
+const TONE_ICON = { info: 'info', done: 'circleCheck', error: 'alert', offline: 'wifiOff' };
+const TONE_WORD = { info: 'Info', done: 'Done', error: 'Error', offline: 'Offline', inline: 'On the page' };
+function table(rows) {
+  let t = `<table><tr><th>Words</th><th>Tone</th><th>Button</th><th>Time</th></tr>`;
+  for (const r of rows) {
+    if (r.length === 1) { t += `<tr class="g"><td colspan="4">${r[0]}</td></tr>`; continue; }
+    const [w, tone, act, time, was] = r;
+    const ti = r[0] === 'Back online.' ? 'wifi' : TONE_ICON[tone];
+    t += `<tr><td>${w}${was ? `<span class="was" title="Today: ${was.replace(/"/g, '&quot;')}">new words</span>` : ''}</td>
+      <td><span class="tn ${tone}">${ti ? ic(ti, 14, 2.2) : ''}${TONE_WORD[tone]}</span></td><td class="ac">${act}</td><td class="tm">${time}</td></tr>`;
+  }
+  return t + `</table>`;
+}
+h += `<h2 id="map">Every message</h2><div class="note" style="margin:0 0 10px 4px">Hover "new words" to see today's wording.</div><div class="tables">${table(MAP_A)}${table(MAP_B)}</div>`;
+
+document.getElementById('doc').innerHTML = h;
+
+/* The snackbar's rule, applied: 8 above the highest thing marked as the floor. */
+function place() {
+  document.querySelectorAll('.phone').forEach((ph) => {
+    const sn = ph.querySelector(':scope > .snack');
+    if (!sn) return;
+    const top = ph.getBoundingClientRect().top;
+    let floor = ph.clientHeight;
+    ph.querySelectorAll('.floor').forEach((f) => { floor = Math.min(floor, f.getBoundingClientRect().top - top - 1); });
+    sn.style.bottom = `${ph.clientHeight - floor + 8}px`;
+    /* a snackbar that stays makes room: the list ends above it, so the newest message is never under it */
+    const room = ph.querySelector('[data-room]');
+    if (room) room.style.paddingBottom = `${sn.offsetHeight + 14}px`;
+  });
+}
+place();
+if (document.fonts) document.fonts.ready.then(place);
+window.addEventListener('load', place);
+</script>
+</body>
+</html>

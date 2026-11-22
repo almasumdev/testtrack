@@ -1,0 +1,1453 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>TestTrack: tester row options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  @font-face { font-family: "BarlowApp"; font-weight: 400; src: url("../../../app/src/main/res/font/barlow_regular.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 500; src: url("../../../app/src/main/res/font/barlow_medium.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 600; src: url("../../../app/src/main/res/font/barlow_semibold.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 700; src: url("../../../app/src/main/res/font/barlow_bold.ttf"); }
+  @font-face { font-family: "PlexApp"; font-weight: 500; src: url("../../../app/src/main/res/font/plexmono_medium.ttf"); }
+  @font-face { font-family: "PlexApp"; font-weight: 600; src: url("../../../app/src/main/res/font/plexmono_semibold.ttf"); }
+  @font-face { font-family: "PlexApp"; font-weight: 700; src: url("../../../app/src/main/res/font/plexmono_bold.ttf"); }
+
+  /* OceanLight / OceanDark from ui/theme/Tokens.kt. Every colour inside a phone is one of these. */
+  .light {
+    --bg:#F7FCFF; --text:#142F43; --text2:#203A4E; --text3:#223D50; --text4:#59758A;
+    --tabSelected:#2E4E66; --tabUnselected:#526B7D;
+    --glass:#F2F9FD; --glass2:#DFEDF6; --glassBorder:#B7D1E2; --glassBorderStrong:#789AAF;
+    --accent:#3A5B73; --onAccent:#FFFFFF; --accentInk:#22394B; --badgeFill:#3A5B73;
+    --tile:#DCE6EE; --tileInk:#3A5B73; --dock:#E8F3FA; --dockInk:#304C60;
+    --ok:#246B59; --okBg:rgba(36,107,89,.12); --warn:#8A611C; --warnBg:rgba(154,110,36,.12); --warnBorder:rgba(154,110,36,.24);
+    --bad:#9E3B2E; --badBg:rgba(158,59,46,.12); --badBorder:rgba(158,59,46,.24);
+    --track:#E4EEF4; --card:#F3F8FB; --cardLine:#E1ECF3; --sheet:#FFFFFF; --ring:rgba(20,47,67,.14);
+    /* derived exactly as in TtTokens: primary/onPrimary, inkOn(ok) */
+    --primary:var(--accent); --onPrimary:var(--onAccent); --inkOnOk:var(--onAccent); --scrim:rgba(20,34,48,.46);
+  }
+  .dark {
+    --bg:#0F1011; --text:#ECEEF0; --text2:#BCC1C6; --text3:#9DA3A9; --text4:#757C82;
+    --tabSelected:#B6CCDC; --tabUnselected:#989EA4;
+    --glass:#1C1E20; --glass2:#292C2F; --glassBorder:#383C41; --glassBorderStrong:#666D74;
+    --accent:#4A7290; --onAccent:#FFFFFF; --accentInk:#93B3CA; --badgeFill:#4A7290;
+    --tile:#2A2D31; --tileInk:#A2BED2; --dock:#1C1E20; --dockInk:#BCC1C6;
+    --ok:#83D8C4; --okBg:rgba(131,216,196,.12); --warn:#D8B774; --warnBg:rgba(216,183,116,.14); --warnBorder:rgba(216,183,116,.26);
+    --bad:#E4938A; --badBg:rgba(228,147,138,.15); --badBorder:rgba(228,147,138,.3);
+    --track:#2D3034; --card:#1C1E20; --cardLine:#2D3034; --sheet:#1C1E20; --ring:rgba(255,255,255,.16);
+    --primary:var(--accentInk); --onPrimary:var(--bg); --inkOnOk:var(--bg); --scrim:rgba(0,0,0,.6);
+  }
+  .light, .dark { --band: color-mix(in srgb, var(--text) 5%, var(--bg)); } /* CrewRunAppStatus band: lerp(bg, text, 0.05) */
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #D9E0E5; font-family: "BarlowApp", "Barlow", system-ui, sans-serif; color: #1B2B36; }
+  .doc { padding: 28px 28px 80px; display: flex; flex-direction: column; gap: 46px; }
+  h2 { margin: 0 0 16px 4px; font-size: 24px; font-weight: 700; }
+  h3 { margin: 6px 0 12px 4px; font-size: 17px; font-weight: 700; color: #34505F; }
+  .row { display: flex; flex-wrap: wrap; gap: 30px; align-items: flex-start; }
+  .state { display: flex; flex-direction: column; gap: 8px; }
+  .lbl { font-size: 15px; font-weight: 700; margin-left: 4px; display: flex; gap: 8px; align-items: center; }
+  .rec { padding: 2px 9px; border-radius: 10px; background: #246B59; color: #fff; font-size: 11.5px; font-weight: 700; }
+  .pair { display: flex; flex-direction: column; gap: 10px; }
+
+  /* frames */
+  .phone { width: 412px; background: var(--bg); color: var(--text); border-radius: 28px; overflow: hidden; border: 1px solid #B9C5CE; position: relative; display: flex; flex-direction: column; }
+  .phone.fix { height: 780px; }
+  .dark.phone { border-color: #2A2D31; }
+  .mini { width: 412px; background: var(--bg); color: var(--text); border-radius: 20px; padding: 4px 16px 16px; border: 1px solid #B9C5CE; }
+  .dark.mini { border-color: #2A2D31; }
+  .cap { font-size: 13px; line-height: 16px; font-weight: 500; color: var(--text3); letter-spacing: .2px; margin: 14px 2px 8px; }
+  .sbar { height: 24px; flex: none; }
+  .pbar { height: 64px; flex: none; display: flex; align-items: center; padding: 0 16px 0 0; }
+  .pbar .back { width: 48px; height: 48px; display: grid; place-items: center; color: var(--text); flex: none; margin-left: 4px; }
+  .pbar .pt { flex: 1; font-size: 22px; line-height: 28px; font-weight: 700; }
+  .memb { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border: 1px solid var(--cardLine); border-radius: 20px; background: var(--bg); color: var(--accentInk); font-size: 14px; font-weight: 700; }
+  .scroll { padding: 8px 16px 24px; flex: 1; }
+  .tabs { margin: 8px 16px 0; height: 46px; border-radius: 23px; background: var(--card); border: 1px solid var(--cardLine); display: flex; padding: 4px; gap: 2px; flex: none; }
+  .tabs span { flex: 1; display: grid; place-items: center; border-radius: 19px; font-size: 15px; font-weight: 500; color: var(--tabUnselected); }
+  .tabs span.on { background: var(--tile); color: var(--tabSelected); font-weight: 600; }
+  .dock { position: absolute; left: 0; right: 0; bottom: 0; height: 74px; background: var(--dock); display: flex; align-items: center; justify-content: space-around; color: var(--dockInk); border-top: 1px solid var(--cardLine); }
+  .dock .d { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 12px; font-weight: 500; }
+  .dock .d .pill { width: 52px; height: 30px; border-radius: 15px; display: grid; place-items: center; }
+  .dock .d.on .pill { background: var(--tile); }
+  .dock .plus { width: 56px; height: 40px; border-radius: 14px; background: var(--accent); color: var(--onAccent); display: grid; place-items: center; }
+
+  /* type and helpers */
+  svg.ic { display: block; flex: none; }
+  .inl { display: inline-flex; vertical-align: -2px; margin-right: 5px; }
+  b { font-weight: 600; color: var(--text); }
+  .i-ok { color: var(--ok); } .i-warn { color: var(--warn); } .i-bad { color: var(--bad); }
+  .i-quiet { color: var(--text2); } .i-acc { color: var(--accentInk); } .i-text { color: var(--text); } .i-faint { color: var(--text3); }
+  .sp4 { height: 4px; } .sp8 { height: 8px; } .sp10 { height: 10px; } .sp12 { height: 12px; } .sp14 { height: 14px; } .sp16 { height: 16px; }
+
+  /* CrewCard */
+  .card { background: var(--bg); border: 1px solid var(--cardLine); border-radius: 14px; }
+  .p16 { padding: 16px; } .p14 { padding: 14px; } .p1416 { padding: 14px 16px; } .p12 { padding: 12px; }
+  .gap8 > * + * { margin-top: 8px; } .gap10 > * + * { margin-top: 10px; }
+
+  /* StatusChip */
+  .chip { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 99px; font-size: calc(12.5px * var(--fs, 1)); line-height: calc(16px * var(--fs, 1)); font-weight: 700; white-space: nowrap; flex: none; }
+  .chip.ok { background: var(--okBg); color: var(--ok); } .chip.warn { background: var(--warnBg); color: var(--warn); }
+  .chip.bad { background: var(--badBg); color: var(--bad); } .chip.quiet { background: var(--glass2); color: var(--text2); }
+  .chip.acc { background: var(--tile); color: var(--accentInk); }
+
+  /* CountBadge */
+  .cb { min-width: 22px; height: 22px; padding: 0 7px; border-radius: 11px; background: var(--badgeFill); color: var(--onAccent); font: 700 12px/22px "PlexApp", "IBM Plex Mono", monospace; text-align: center; display: inline-block; }
+
+  /* Record tile = CrewListRow anatomy */
+  .th { display: flex; align-items: center; gap: 8px; }
+  .th .nm { flex: 1; font-size: calc(18px * var(--fs, 1)); line-height: calc(23px * var(--fs, 1)); font-weight: 600; }
+  .th .dt { font-size: calc(12px * var(--fs, 1)); line-height: calc(17px * var(--fs, 1)); color: var(--text3); white-space: nowrap; }
+  .strip { display: flex; justify-content: space-between; margin-top: 14px; }
+  .stand { display: flex; align-items: flex-start; gap: 12px; }
+  .stand .hl { flex: 1; font-size: calc(15px * var(--fs, 1)); line-height: calc(20px * var(--fs, 1)); font-weight: 500; }
+  .stand .rt { font-size: 12px; line-height: 17px; color: var(--text3); text-align: right; }
+  .pq { margin-top: 10px; background: var(--band); border-radius: 10px; padding: 8px 4px 4px 10px; }
+  /* line 1: icon, question (may wrap), +10 tix at the end */
+  .pq-q { display: flex; align-items: flex-start; gap: 6px; padding-right: 8px; font-size: calc(13px * var(--fs, 1)); line-height: calc(18px * var(--fs, 1)); font-weight: 600; color: var(--text); }
+  .pq-q svg { color: var(--text3); margin-top: calc((18px * var(--fs, 1) - 14px) / 2); }
+  .pq-q .qt { flex: 1; min-width: 0; }
+  .pq-q .tix { flex: none; white-space: nowrap; color: var(--accentInk); font-weight: 700; }
+  /* line 2: hint takes the rest and wraps; actions at the end, on the last line */
+  .pq-r { display: flex; align-items: flex-end; gap: 4px; margin-top: 2px; }
+  .pq-r .hint { flex: 1; min-width: 0; padding: 0 0 12px; font-size: calc(12px * var(--fs, 1)); line-height: calc(16px * var(--fs, 1)); color: var(--text3); overflow-wrap: anywhere; }
+  .pq-acts { display: flex; flex: none; }
+  .lg .pq-r { flex-direction: column; align-items: stretch; gap: 0; }
+  .lg .pq-r .hint { padding-bottom: 2px; }
+  .lg .pq-acts { align-self: flex-end; }
+  .ia { min-height: 40px; min-width: 48px; padding: 0 8px; display: inline-flex; align-items: center; justify-content: center; font-size: calc(14px * var(--fs, 1)); font-weight: 700; color: var(--accentInk); border-radius: 20px; white-space: nowrap; }
+  .ia.off { color: var(--text4); pointer-events: none; }
+  .ia.bad { color: var(--bad); }
+  /* layout A: pills on line 1, hint full width on line 2 */
+  .pq.A { padding: 8px 8px 8px 10px; }
+  .pq-1 { display: flex; align-items: center; gap: 6px; font-size: calc(13px * var(--fs, 1)); line-height: calc(18px * var(--fs, 1)); font-weight: 600; color: var(--text); }
+  .pq-1 svg { color: var(--text3); }
+  .pq-1 .qt { flex: 1; min-width: 0; }
+  .pq-h { margin-top: 4px; font-size: calc(12px * var(--fs, 1)); line-height: calc(16px * var(--fs, 1)); color: var(--text3); }
+  .pq-h b { color: var(--accentInk); font-weight: 700; white-space: nowrap; }
+  .pq-acts.top { gap: 6px; }
+  .pq-acts.bot { display: none; }
+  .lg .pq.A .pq-acts.top { display: none; }
+  .lg .pq.A .pq-acts.bot { display: flex; gap: 6px; justify-content: flex-end; margin-top: 8px; }
+  /* the title would wrap beside the pills: pills drop under the hint (here: 320 wide, question box) */
+  .narrow .pq.A.q .pq-acts.top { display: none; }
+  .narrow .pq.A.q .pq-acts.bot { display: flex; gap: 6px; justify-content: flex-end; margin-top: 8px; }
+  .pqp { min-width: 52px; height: 32px; padding: 0 12px; border-radius: 16px; background: var(--bg); border: 1px solid var(--glassBorder); color: var(--accentInk); display: inline-flex; align-items: center; justify-content: center; font-size: calc(13.5px * var(--fs, 1)); font-weight: 700; white-space: nowrap; }
+  .pqp.off { color: var(--text4); pointer-events: none; }
+  .pq-e { display: flex; align-items: center; gap: 6px; margin-top: 2px; font-size: calc(12.5px * var(--fs, 1)); line-height: calc(16px * var(--fs, 1)); color: var(--bad); }
+  .pq-e .ia { margin-left: auto; }
+  /* sending: the tile skeleton's sweep over the whole box, nothing tappable */
+  .shim { position: relative; overflow: hidden; }
+  .shim::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(110deg, transparent 30%, color-mix(in srgb, var(--glass) 80%, transparent) 50%, transparent 70%); background-size: 300% 100%; animation: sweep 1.6s linear infinite; }
+  /* tapped action: the tile skeleton's base and sweep on that one button */
+  .tapped { position: relative; overflow: hidden; background: color-mix(in srgb, var(--accentInk) 7%, var(--glass2)) !important; color: var(--text3) !important; pointer-events: none; }
+  .tapped::after { content: ""; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 30%, color-mix(in srgb, var(--glass) 80%, transparent) 50%, transparent 70%); background-size: 300% 100%; animation: sweep 1.6s linear infinite; }
+  .ia.tapped { border-radius: 20px; }
+  .ia.off, .o1-b.off, .seg-b.off { color: var(--text4); pointer-events: none; }
+  .qerr { display: flex; align-items: center; gap: 6px; margin-top: 6px; font-size: calc(12.5px * var(--fs, 1)); line-height: calc(16px * var(--fs, 1)); color: var(--bad); }
+  .qerr .ia { margin-left: auto; min-height: 32px; }
+  /* option 1: action bar inside an edged box (TintBox edge) */
+  .o1 { margin-top: 10px; border: 1px solid var(--cardLine); border-radius: 12px; overflow: hidden; }
+  .o1-top { padding: 10px 12px; }
+  .o1-h, .o2-h { display: flex; align-items: flex-start; gap: 6px; font-size: calc(13px * var(--fs, 1)); line-height: calc(18px * var(--fs, 1)); font-weight: 600; color: var(--text); }
+  .o1-h svg, .o2-h svg { color: var(--text3); margin-top: calc((18px * var(--fs, 1) - 14px) / 2); }
+  .o1-h .qt { flex: 1; min-width: 0; }
+  .o1-h .tix { flex: none; white-space: nowrap; color: var(--accentInk); font-weight: 700; }
+  .o1-s { padding-left: 0 !important; }
+  .o1-s, .o2-s { margin-top: 2px; padding-left: 20px; font-size: calc(12px * var(--fs, 1)); line-height: calc(16px * var(--fs, 1)); color: var(--text3); }
+  .o2-s b, .o3-s b { color: var(--accentInk); font-weight: 700; white-space: nowrap; }
+  .o1-bar { display: flex; border-top: 1px solid var(--cardLine); }
+  .o1-b { flex: 1; min-height: 44px; padding: 6px 8px; display: flex; align-items: center; justify-content: center; text-align: center; font-size: calc(14.5px * var(--fs, 1)); line-height: calc(18px * var(--fs, 1)); font-weight: 700; color: var(--accentInk); }
+  .o1-b + .o1-b { border-left: 1px solid var(--cardLine); }
+  /* option 1 sending: 18dp ring in the button's ink replaces the label; the label stays hidden so the size holds */
+  .o1-b.spin { position: relative; pointer-events: none; }
+  .o1-b.spin .lbl { visibility: hidden; }
+  .o1-b.spin .ring { position: absolute; left: 50%; top: 50%; width: 18px; height: 18px; margin: -9px 0 0 -9px; box-sizing: border-box; border-radius: 50%; border: 2px solid color-mix(in srgb, var(--accentInk) 22%, transparent); border-top-color: var(--accentInk); animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  /* 1a, 1b, 1c: borderless takes on the action bar */
+  .x1 { margin-top: 10px; }
+  .x1-h { display: flex; align-items: flex-start; gap: 6px; font-size: calc(13px * var(--fs, 1)); line-height: calc(18px * var(--fs, 1)); font-weight: 600; color: var(--text); }
+  .x1-h svg { flex: none; color: var(--text3); margin-top: calc((18px * var(--fs, 1) - 14px) / 2); }
+  .x1-h .qt { flex: 1; min-width: 0; }
+  .x1-h .tix { flex: none; white-space: nowrap; color: var(--accentInk); font-weight: 700; }
+  .x1-s { margin-top: 2px; font-size: calc(12px * var(--fs, 1)); line-height: calc(16px * var(--fs, 1)); color: var(--text3); }
+  .x1-acts { display: flex; gap: 8px; margin-top: 10px; }
+  .qb { flex: 1; min-height: 44px; padding: 6px 10px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; text-align: center; font-size: calc(14.5px * var(--fs, 1)); line-height: calc(18px * var(--fs, 1)); font-weight: 700; color: var(--accentInk); }
+  .qb.off { color: var(--text4); pointer-events: none; }
+  .qb.spin { position: relative; pointer-events: none; }
+  .qb.spin .lbl { visibility: hidden; }
+  .qb.spin .ring { position: absolute; left: 50%; top: 50%; width: 18px; height: 18px; margin: -9px 0 0 -9px; box-sizing: border-box; border-radius: 50%; border: 2px solid color-mix(in srgb, var(--accentInk) 22%, transparent); border-top-color: var(--accentInk); animation: spin .8s linear infinite; }
+  /* 1a tinted fill: glass2 box, tonal pills */
+  .x1.a { background: var(--glass2); border-radius: 14px; padding: 12px; }
+  .x1.a .qb { border-radius: 22px; background: color-mix(in srgb, var(--accent) 16%, var(--glass2)); }
+  /* 1b open: hairline above only, tonal full-width buttons */
+  .x1.b { margin-top: 12px; }
+  .x1.b .qb { border-radius: 22px; background: var(--glass2); }
+  /* 1c fill with bar: glass2 box, darker band, buttons are the box fill showing through */
+  .x1.c { background: var(--glass2); border-radius: 14px; overflow: hidden; }
+  .x1.c .x1-top { padding: 12px 12px 10px; }
+  .x1.c .x1-acts { margin-top: 0; padding: 6px; background: color-mix(in srgb, var(--text) 7%, var(--glass2)); gap: 6px; }
+  .x1.c .qb { border-radius: 9px; background: var(--glass2); }
+  .x1 .qerr { margin-top: 6px; }
+  /* 1b compact: 32dp tonal pills at the end of the hint, own end-aligned row at 320dp or above 1.3x; 48dp touch through invisible padding */
+  .x1-row { display: flex; align-items: center; gap: 10px; margin-top: 2px; }
+  .x1-row .x1-s { margin-top: 0; }
+  .x1-row .x1-s { flex: 1; min-width: 0; }
+  .x1 .x1-acts.qp { flex: none; margin-top: 0; gap: 0; margin-right: -12px; }
+  .x1 .x1-acts.qp.bot { display: none; }
+  .lg .x1 .x1-acts.qp.top, .narrow .x1 .x1-acts.qp.top { display: none; }
+  .lg .x1 .x1-acts.qp.bot, .narrow .x1 .x1-acts.qp.bot { display: flex; justify-content: flex-end; margin-top: 4px; }
+  .x1.b .qb.p { flex: none; position: relative; min-height: 32px; padding: 6px 12px; border-radius: 16px; background: none; border: 0; font-size: calc(13.5px * var(--fs, 1)); line-height: calc(18px * var(--fs, 1)); white-space: nowrap; }
+  .x1.b .qb.p::before { content: ""; position: absolute; inset: -8px -4px; }
+  /* PageMessage (app has no snackbars): a line laid into the page under the top bar, glass + glassBorder, radius 14 */
+  .pmsg { margin: 6px 16px 0; display: flex; align-items: center; gap: 10px; padding: 11px 10px 11px 14px; border-radius: 14px; background: var(--glass); border: 1px solid var(--glassBorder); font-size: 14px; line-height: 19px; color: var(--text); }
+  .pmsg span { flex: 1; min-width: 0; }
+  .pmsg svg { flex: none; color: var(--text3); }
+  .pmsg svg:first-child { color: var(--accentInk); }
+  .mini > .pmsg { margin: 0 0 12px; }
+  .pills { display: flex; gap: 8px; margin: 0 !important; }
+  /* finished crew page */
+  .phone > .pmsg { margin: 0 16px 6px; }
+  .fp-sub { margin-top: 2px; font-size: 13px; line-height: 18px; color: var(--text3); }
+  .fp-chiprow { margin-top: 12px; }
+  .fp-res { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .fp-res .res { margin: 0; }
+  .fp-clear { margin-top: 16px; border: 1px dashed var(--glassBorder); border-radius: 14px; padding: 14px 16px; display: flex; gap: 10px; align-items: flex-start; font-size: 13px; line-height: 18px; color: var(--text3); }
+  .fp-clear svg { flex: none; margin-top: 1px; color: var(--text4); }
+  .fp-clear b { display: block; font-weight: 600; color: var(--text2); margin-bottom: 2px; }
+  .nar .hero-h { font-size: 21px; line-height: 25px; }
+  /* Your app, compact options */
+  .ya { display: flex; align-items: center; gap: 12px; }
+  .ya .col { flex: 1; min-width: 0; }
+  .ya .nm { font-size: 15px; line-height: 19px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ya .sb { margin-top: 2px; font-size: 13px; line-height: 17px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ya .chev { flex: none; color: var(--text4); display: grid; place-items: center; }
+  .avs { display: flex; align-items: center; margin-top: 10px; gap: 8px; }
+  .avs .stk { display: flex; flex: none; }
+  .avs .a { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 700; background: var(--tile); color: var(--tileInk); box-shadow: 0 0 0 2px var(--bg); }
+  .avs .a + .a { margin-left: -7px; }
+  .avs .a.more { background: var(--glass2); color: var(--text2); font-size: 10.5px; width: 30px; border-radius: 12px; }
+  .avs .t { font-size: 13px; line-height: 17px; font-weight: 600; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .yc-n { flex: none; font-size: 17px; line-height: 20px; font-weight: 700; font-family: 'IBM Plex Mono', monospace; }
+  .yc-bar { position: relative; height: 4px; border-radius: 2px; background: var(--track); margin-top: 12px; }
+  .yc-bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 2px; }
+  .yc-bar b { position: absolute; top: -3px; width: 2px; height: 10px; border-radius: 1px; background: var(--text3); }
+  .yc-act { display: flex; justify-content: flex-end; margin-top: 4px; margin-right: -12px; }
+  /* finished Apps card: icon grid with tiny state marks, no taps */
+  .ag-sum { font-size: 14px; line-height: 19px; font-weight: 600; color: var(--text); }
+  .ag { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+  .ag .i { position: relative; width: 36px; height: 36px; flex: none; }
+  .ag .i.left > :first-child { opacity: .4; }
+  .ag .dot { position: absolute; right: -3px; bottom: -3px; width: 12px; height: 12px; border-radius: 50%; background: var(--warn); box-shadow: 0 0 0 2px var(--bg); }
+  .ag-leg { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 12px; font-size: 12px; line-height: 16px; color: var(--text4); }
+  .ag-leg span { display: inline-flex; align-items: center; gap: 6px; }
+  .ag-leg i { width: 8px; height: 8px; border-radius: 50%; background: var(--warn); display: inline-block; }
+  .ag-leg em { width: 12px; height: 12px; border-radius: 4px; background: var(--text4); opacity: .4; display: inline-block; }
+  /* option 2: SegmentedTabs track for Yes | No, a compact Primary-coloured pill for Claim */
+  .o2 { margin-top: 10px; background: var(--band); border-radius: 10px; padding: 10px 10px 10px 12px; }
+  .o2-row { display: flex; align-items: center; gap: 10px; }
+  .o2-col { flex: 1; min-width: 0; }
+  .o2-ctrl { flex: none; display: flex; }
+  .o2-ctrl.bot { display: none; }
+  .lg .o2-ctrl.top, .narrow .o2-ctrl.top { display: none; }
+  .lg .o2-ctrl.bot, .narrow .o2-ctrl.bot { display: flex; justify-content: flex-end; margin-top: 8px; }
+  .seg { display: inline-flex; gap: 2px; padding: 3px; background: var(--card); border: 1px solid var(--cardLine); border-radius: 22px; }
+  .seg-b { min-width: 50px; min-height: 32px; padding: 0 12px; border-radius: 16px; display: inline-flex; align-items: center; justify-content: center; font-size: calc(14px * var(--fs, 1)); font-weight: 600; color: var(--text); }
+  .fpill { min-height: 36px; padding: 0 16px; border-radius: 18px; background: var(--primary); color: var(--onPrimary); display: inline-flex; align-items: center; justify-content: center; font-size: calc(14px * var(--fs, 1)); font-weight: 700; white-space: nowrap; }
+  /* option 3: a footer line of the tile, hairline above, InlineAction at the end */
+  .o3 { margin: 12px -16px 0; padding: 6px 4px 0 16px; border-top: 1px solid var(--cardLine); }
+  .o3 + .o3 { margin-top: 6px; }
+  .o3-row { display: flex; align-items: center; gap: 8px; min-height: 44px; }
+  .o3-row > svg { color: var(--text2); }
+  .o3-col { flex: 1; min-width: 0; }
+  .o3-t { font-size: calc(13px * var(--fs, 1)); line-height: calc(17px * var(--fs, 1)); font-weight: 500; color: var(--text2); }
+  .o3-s { font-size: calc(12px * var(--fs, 1)); line-height: calc(16px * var(--fs, 1)); color: var(--text3); }
+  .o3-acts { display: flex; flex: none; }
+  .o3-acts.bot { display: none; }
+  .lg .o3-acts.top, .narrow .o3-acts.top { display: none; }
+  .lg .o3-acts.bot, .narrow .o3-acts.bot { display: flex; justify-content: flex-end; }
+  .o3 .qerr { padding-left: 23px; padding-right: 12px; margin-top: 0; }
+  /* 4: ChoiceChip (new): outlined, StatusChip shape at button size */
+  .altq { margin-top: 10px; }
+  .altq-t .qt, .q8 .qt { flex: 1; min-width: 0; }
+  .altq-t { display: flex; align-items: flex-start; gap: 6px; font-size: calc(13px * var(--fs, 1)); line-height: calc(18px * var(--fs, 1)); font-weight: 600; color: var(--text); }
+  .altq-t svg { color: var(--text3); margin-top: calc((18px * var(--fs, 1) - 14px) / 2); }
+  .altq-s { margin-top: 2px; padding-left: 20px; font-size: calc(12px * var(--fs, 1)); line-height: calc(16px * var(--fs, 1)); color: var(--text3); }
+  .tagx { display: inline-flex; align-items: center; padding: 1px 8px; border-radius: 99px; background: var(--tile); color: var(--accentInk); font-size: calc(11.5px * var(--fs, 1)); line-height: calc(16px * var(--fs, 1)); font-weight: 700; white-space: nowrap; }
+  .ccrow { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; padding-left: 20px; }
+  .cc { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 14px; border-radius: 18px; border: 1px solid var(--glassBorderStrong); background: var(--bg); color: var(--text); font-size: calc(13.5px * var(--fs, 1)); font-weight: 600; white-space: nowrap; }
+  .cc svg { color: var(--accentInk); }
+  .cc.tonal { border-color: transparent; background: var(--tile); color: var(--accentInk); }
+  .cc.off { color: var(--text4); border-color: var(--glassBorder); pointer-events: none; }
+  .cc.off svg { color: var(--text4); }
+  .altq .qerr { padding-left: 20px; }
+  /* 5: TileStrip (new), fused to the card's bottom edge, with RoundIconButton (new) */
+  .card.clip { overflow: hidden; }
+  .strip5 { margin: 14px -16px -16px; padding: 10px 12px 10px 16px; background: var(--tile); }
+  .s5row { display: flex; align-items: center; gap: 10px; }
+  .s5row > svg { color: var(--tileInk); }
+  .s5col { flex: 1; min-width: 0; }
+  .s5t { font-size: calc(13px * var(--fs, 1)); line-height: calc(18px * var(--fs, 1)); font-weight: 600; color: var(--text); }
+  .s5s { font-size: calc(12px * var(--fs, 1)); line-height: calc(16px * var(--fs, 1)); color: var(--text2); }
+  .s5s b { color: var(--accentInk); white-space: nowrap; }
+  .strip5 .qerr { padding-left: 26px; }
+  .rbs { display: flex; gap: 8px; flex: none; align-items: center; }
+  .rb { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; flex: none; background: var(--bg); border: 1px solid var(--cardLine); color: var(--accentInk); }
+  .rb.ok { color: var(--ok); }
+  .rb.fill { background: var(--primary); color: var(--onPrimary); border-color: transparent; }
+  .rb.off { color: var(--text4); pointer-events: none; }
+  .rbwrap { position: relative; display: inline-flex; }
+  .rbbadge { position: absolute; top: -5px; right: -8px; min-width: 22px; height: 16px; padding: 0 5px; border-radius: 8px; background: var(--badgeFill); color: var(--onAccent); font: 700 10px/16px "PlexApp", "IBM Plex Mono", monospace; text-align: center; border: 1.5px solid var(--bg); }
+  /* 6: attention chip opens a PickerSheet */
+  .behind { position: relative; padding: 14px 16px 0; height: 150px; overflow: hidden; }
+  .behind::after { content: ""; position: absolute; inset: 0; background: var(--scrim); }
+  .sheet { background: var(--sheet); border-radius: 22px 22px 0 0; padding: 8px 16px 20px; margin-top: -1px; position: relative; }
+  .handle { width: 38px; height: 4px; border-radius: 2px; background: var(--glassBorderStrong); margin: 0 auto 14px; }
+  .sh-t { font-size: calc(17px * var(--fs, 1)); line-height: calc(22px * var(--fs, 1)); font-weight: 700; }
+  .sh-s { margin-top: 4px; font-size: calc(13px * var(--fs, 1)); line-height: calc(18px * var(--fs, 1)); color: var(--text3); }
+  .sh-row { display: flex; align-items: center; gap: 14px; min-height: 64px; padding: 10px 12px; margin-top: 8px; border-radius: 13px; border: 1px solid var(--cardLine); }
+  .sh-row .col { flex: 1; min-width: 0; }
+  .sh-row .t { font-size: calc(16px * var(--fs, 1)); line-height: calc(19px * var(--fs, 1)); font-weight: 600; }
+  .sh-row .s { margin-top: 2px; font-size: calc(12.5px * var(--fs, 1)); line-height: calc(15px * var(--fs, 1)); color: var(--text3); }
+  .sh-row.off .t, .sh-row.off .s { color: var(--text4); }
+  .sh-row.off { pointer-events: none; }
+  .sheet .qerr { margin-top: 10px; }
+  /* 7: one ask card on top of the list (RecordAskCard, new) */
+  .dot7 { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accentInk); margin-left: 7px; vertical-align: middle; }
+  .ask-q { margin-top: 12px; font-size: calc(16px * var(--fs, 1)); line-height: calc(20px * var(--fs, 1)); font-weight: 600; }
+  .ask-s { margin-top: 2px; font-size: calc(13px * var(--fs, 1)); line-height: calc(18px * var(--fs, 1)); color: var(--text3); }
+  .ask-s b { color: var(--accentInk); white-space: nowrap; }
+  .ask-b { display: flex; gap: 8px; margin-top: 12px; }
+  .ask-b .sbtn { flex: 1; font-size: calc(15px * var(--fs, 1)); }
+  .sbtn.off, .pbtn.off { opacity: .45; pointer-events: none; }
+  .pbtn { font-size: calc(15px * var(--fs, 1)); }
+  /* 8: question line above the footer, RoundIconButtons at the footer's end */
+  .q8 { margin-top: 10px; display: flex; align-items: flex-start; gap: 6px; font-size: calc(13px * var(--fs, 1)); line-height: calc(18px * var(--fs, 1)); color: var(--text2); font-weight: 500; }
+  .q8 svg { color: var(--text3); margin-top: calc((18px * var(--fs, 1) - 14px) / 2); }
+  /* results */
+  .res { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 10px; }
+  .resx { display: inline-flex; align-items: center; font-size: calc(12.5px * var(--fs, 1)); line-height: calc(16px * var(--fs, 1)); color: var(--text3); font-weight: 600; }
+  /* details clear, option 2: a thin bar on the tile's bottom edge */
+  .edged { position: relative; overflow: hidden; }
+  .edgebar { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--track); }
+  .edgebar i { display: block; height: 100%; background: var(--accent); }
+  .edgebar i.warn { background: var(--warn); }
+  .tsub { margin-top: 2px; font-size: 12.5px; line-height: 17px; color: var(--text3); }
+  .when { font-size: 12.5px; line-height: 16px; color: #46606F; margin: 0 4px; max-width: 404px; }
+  .when b { color: #1B2B36; font-weight: 700; }
+  .tabbar { position: sticky; top: 0; z-index: 5; display: flex; gap: 8px; padding: 14px 28px; background: #D9E0E5; border-bottom: 1px solid #C3CDD4; }
+  .tabbar button { font: 600 15px/20px "BarlowApp", "Barlow", sans-serif; padding: 9px 18px; border-radius: 20px; border: 1px solid #B3C0C9; background: #F4F7F9; color: #2D4A5F; cursor: pointer; }
+  .tabbar button.on { background: #2D4A5F; color: #fff; border-color: #2D4A5F; }
+  .tabbar { flex-wrap: wrap; }
+  .cp-row { display: flex; gap: 200px; align-items: flex-start; padding: 28px 28px 60px; }
+  .cp-ph { position: relative; display: flex; flex-direction: column; gap: 10px; }
+  .cp-ph .lbl { font-size: 15px; font-weight: 700; color: #2D4A5F; }
+  .cp-grid { display: flex; flex-wrap: wrap; gap: 40px 60px; align-items: flex-start; padding: 28px 28px 60px; }
+  .cp-sec { width: 100%; font-size: 17px; font-weight: 700; color: #2D4A5F; margin-bottom: -20px; }
+  /* who tested it */
+  .wt-sum { font-size: 15px; line-height: 20px; font-weight: 600; color: var(--text); }
+  .wt-keep { margin-top: 4px; font-size: 12.5px; line-height: 17px; color: var(--text3); display: flex; align-items: center; gap: 5px; }
+  .wt-list { padding: 4px 16px; }
+  .wt-row { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px 0; }
+  .wt-row + .wt-row { border-top: 1px solid var(--cardLine); }
+  .wt-row .col { flex: 1; min-width: 0; }
+  .wt-row .nm { font-size: 15px; line-height: 19px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .wt-row .ln { margin-top: 1px; font-size: 12.5px; line-height: 17px; display: flex; align-items: center; gap: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .wt-row .chev { color: var(--text4); flex: none; display: grid; }
+  .wt-head { display: flex; align-items: center; gap: 12px; }
+  .wt-head .av { width: 44px; height: 44px; font-size: 17px; }
+  .wt-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px 6px; margin-top: 4px; }
+  .wt-grid .pc .c { width: 100%; height: auto; aspect-ratio: 40 / 53; }
+  .wt-leg { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 14px; font-size: 12px; line-height: 16px; color: var(--text3); }
+  .wt-leg span { display: inline-flex; align-items: center; gap: 6px; }
+  .pc .c.opened { background: var(--glass2); border: 1px solid var(--cardLine); color: var(--ok); }
+  .wt-leg i { width: 11px; height: 14px; border-radius: 3px; display: inline-block; }
+  .wt-r2 { display: flex; align-items: center; gap: 12px; padding: 10px 0; }
+  .wt-r2 + .wt-r2 { border-top: 1px solid var(--cardLine); }
+  .wt-r2 .col { flex: 1; min-width: 0; }
+  .wt-r2 .l1 { display: flex; align-items: baseline; gap: 8px; }
+  .wt-r2 .nm { flex: 1; min-width: 0; font-size: 15px; line-height: 19px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .wt-r2 .wst { flex: none; font-size: 12.5px; line-height: 16px; font-weight: 600; white-space: nowrap; }
+  .wt-r2 .l2 { display: flex; align-items: center; gap: 10px; margin-top: 6px; min-height: 32px; }
+  .wt-strip { flex: 1; min-width: 0; display: flex; gap: 2px; }
+  .wt-strip i, .wt-leg2 i { flex: 1 1 0; max-width: 8px; height: 8px; border-radius: 2px; background: var(--ok); box-sizing: border-box; }
+  .wt-strip i.m, .wt-leg2 i.m { background: var(--bad); }
+  .wt-strip i.r, .wt-leg2 i.r { background: var(--warn); }
+  .wt-strip i.g, .wt-leg2 i.g { background: none; border: 1px dashed var(--glassBorderStrong); }
+  .wt-ths { flex: none; display: flex; gap: 4px; margin-left: auto; }
+  .wt-th { width: 24px; height: 32px; border-radius: 5px; position: relative; overflow: hidden; background: var(--sheet); border: 1px solid var(--glassBorder); box-sizing: border-box; }
+  .wt-th.hand { border: 1.5px solid var(--warn); }
+  .wt-th.none { background: none; border: 0; }
+  .wt-th .top { position: absolute; left: 0; right: 0; top: 0; height: 8px; background: linear-gradient(90deg,#3EC3E0,#2A8FB8); }
+  .wt-th .ln { position: absolute; left: 4px; right: 4px; top: 12px; height: 15px; background: repeating-linear-gradient(var(--track) 0 2px, transparent 2px 5px); }
+  .wt-leg2 { display: flex; flex-wrap: wrap; gap: 6px 14px; padding-top: 12px; font-size: 12px; line-height: 16px; color: var(--text3); }
+  .wt-leg2 span { display: inline-flex; align-items: center; gap: 6px; }
+  .wt-leg2 i { width: 8px; flex: none; display: inline-block; }
+  .wt-view { background: #000 !important; }
+  .wv-bar { display: flex; align-items: center; gap: 8px; padding: 6px 16px 6px 8px; color: #fff; }
+  .wv-x { width: 48px; height: 48px; display: grid; place-items: center; }
+  .wv-bar .t { font-size: 17px; line-height: 22px; font-weight: 700; } .wv-bar .s { font-size: 13px; line-height: 17px; color: #B8C0C7; }
+  .wv-pic { margin: 24px auto 0; width: 300px; height: 600px; border-radius: 18px; position: relative; overflow: hidden; background: #F7FCFF; }
+  .wv-pic .top { position: absolute; left: 0; right: 0; top: 0; height: 120px; background: linear-gradient(90deg,#3EC3E0,#2A8FB8); }
+  .wv-pic .ln { position: absolute; left: 24px; right: 24px; top: 150px; height: 400px; background: repeating-linear-gradient(#DCE8EF 0 14px, transparent 14px 34px); }
+
+  .to-sec { padding: 30px 28px 10px; border-bottom: 1px solid #C3CDD4; }
+  .to-h { display: flex; align-items: center; gap: 16px; margin-bottom: 18px; }
+  .to-n { font-size: 64px; line-height: 64px; font-weight: 700; color: #2D4A5F; }
+  .to-t { font-size: 22px; font-weight: 700; color: #2D4A5F; } .to-t small { display: block; font-size: 14px; font-weight: 500; color: #46606F; margin-top: 2px; }
+  .to-row { display: flex; flex-wrap: wrap; gap: 30px; align-items: flex-start; }
+  .to-f { display: flex; flex-direction: column; gap: 8px; } .to-f .lbl { font-size: 14px; font-weight: 700; color: #34505F; }
+  .fs-nm { font-size: calc(15px * var(--fs, 1)); line-height: calc(19px * var(--fs, 1)); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .fs-sm { font-size: calc(12.5px * var(--fs, 1)); line-height: calc(16px * var(--fs, 1)); }
+  .tr { display: flex; align-items: center; gap: 12px; padding: 10px 0; }
+  .tr + .tr { border-top: 1px solid var(--cardLine); }
+  .tr .col { flex: 1; min-width: 0; }
+  .tr .l1 { display: flex; align-items: baseline; gap: 8px; } .tr .l1 .fs-nm { flex: 1; }
+  .tr .l1 .fs-sm { flex: none; font-weight: 600; white-space: nowrap; }
+  .lg .tr .l1, .narrow .tr .l1.wrap { flex-direction: column; align-items: flex-start; gap: 1px; }
+  .lg .tr .l1 .fs-nm { width: 100%; }
+  .av.fs { width: calc(36px * var(--fs, 1)); height: calc(36px * var(--fs, 1)); font-size: calc(15px * var(--fs, 1)); }
+  /* 1 current */
+  .o1-l2 { display: flex; align-items: center; gap: 10px; margin-top: 6px; min-height: 32px; flex-wrap: wrap; }
+  /* 2 cards */
+  .tc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .tc { background: var(--bg); border: 1px solid var(--cardLine); border-radius: 14px; overflow: hidden; }
+  .tc .pic { height: 96px; position: relative; background: var(--glass2); display: grid; place-items: center; color: var(--text4); }
+  .tc .pic .top { position: absolute; left: 0; right: 0; top: 0; height: 28px; background: linear-gradient(90deg,#3EC3E0,#2A8FB8); }
+  .tc .pic .ln { position: absolute; left: 12px; right: 12px; top: 38px; height: 50px; background: repeating-linear-gradient(var(--track) 0 4px, transparent 4px 10px); }
+  .tc .pic.has { background: var(--sheet); }
+  .tc .pic.hand { box-shadow: inset 0 0 0 2px var(--warn); }
+  .tc .pic .cnt { position: absolute; right: 6px; bottom: 6px; background: rgba(0,0,0,.55); color: #fff; font-size: calc(11px * var(--fs, 1)); font-weight: 700; padding: 1px 7px; border-radius: 9px; }
+  .tc .pic .none { font-size: calc(12px * var(--fs, 1)); display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .tc .bd { padding: 8px 10px 10px; } .tc .bd .fs-sm { margin-top: 2px; font-weight: 600; }
+  .tc.faded .pic { opacity: .55; }
+  /* 3 ring */
+  .ring { flex: none; width: calc(44px * var(--fs, 1)); height: calc(44px * var(--fs, 1)); border-radius: 50%; display: grid; place-items: center; -webkit-mask: radial-gradient(circle, transparent 0, transparent 0); }
+  .ringw { position: relative; flex: none; width: calc(44px * var(--fs, 1)); height: calc(44px * var(--fs, 1)); }
+  .ringw .rg { position: absolute; inset: 0; border-radius: 50%; -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px)); mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px)); }
+  .ringw .av { position: absolute; inset: 6px; width: auto; height: auto; font-size: calc(14px * var(--fs, 1)); }
+  .tr3c { padding: 0 14px; } .tr3c .tr { padding: 10px 0; }
+  .stack { flex: none; display: flex; align-items: center; }
+  .stack .wt-th { width: calc(22px * var(--fs, 1)); height: calc(29px * var(--fs, 1)); box-shadow: 0 0 0 2px var(--bg); }
+  .stack .wt-th + .wt-th { margin-left: -10px; }
+  /* 4 two-line */
+  .pchip { flex: none; display: inline-flex; align-items: center; gap: 5px; padding: 0 10px; min-height: calc(30px * var(--fs, 1)); border-radius: 15px; background: var(--glass2); color: var(--accentInk); font-size: calc(12.5px * var(--fs, 1)); font-weight: 700; white-space: nowrap; }
+  .t4-l2 { margin-top: 2px; color: var(--text3); }
+  .lg .tr4, .narrow .tr4 { flex-wrap: wrap; row-gap: 8px; }
+  .lg .tr4 .col, .narrow .tr4 .col { flex: 1 1 calc(100% - 60px * var(--fs, 1)); }
+  .lg .tr4 .pchip, .narrow .tr4 .pchip { margin-left: calc(48px * var(--fs, 1)); }
+  /* 5 dots */
+  .dots { display: grid; grid-template-columns: repeat(7, calc(8px * var(--fs, 1))); gap: 3px; flex: none; }
+  .dots i { width: calc(8px * var(--fs, 1)); height: calc(8px * var(--fs, 1)); border-radius: 50%; background: var(--ok); box-sizing: border-box; }
+  .dots i.m { background: var(--bad); } .dots i.r { background: var(--warn); } .dots i.g { background: none; border: 1px dashed var(--glassBorderStrong); }
+  .t5-l2 { display: flex; align-items: center; gap: 12px; margin-top: 6px; }
+  .t5-l2 .wt-ths { margin-left: auto; }
+  .t5-l2 .wt-th, .o1-l2 .wt-th { width: calc(24px * var(--fs, 1)); height: calc(32px * var(--fs, 1)); }
+  .cp-tag { position: absolute; left: calc(100% + 14px); white-space: nowrap; font-size: 13px; font-weight: 700; color: #8A5A12; background: #FBEFD9; border: 1px solid #E7C88F; border-radius: 10px; padding: 3px 9px; }
+  .panel-tab { display: none; flex-direction: column; gap: 46px; }
+  .panel-tab.on { display: flex; }
+  .tnote { margin-top: 8px; font-size: calc(12px * var(--fs, 1)); line-height: calc(17px * var(--fs, 1)); }
+  .foot { margin-top: 12px; display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .foot .fn { font-size: calc(13px * var(--fs, 1)); line-height: calc(18px * var(--fs, 1)); color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+
+  /* app art (stand-ins for real Play icons; artwork, not palette) */
+  .ai { display: grid; place-items: center; flex: none; overflow: hidden; box-shadow: inset 0 0 0 1px var(--ring); font-weight: 700; }
+  .nt { background: hsl(var(--h) 45% 89%); color: hsl(var(--h) 50% 32%); box-shadow: none; } /* TtTokens.nameTile */
+  .dark .nt { background: hsl(var(--h) 30% 18%); color: hsl(var(--h) 55% 76%); }
+
+  /* CrewHero */
+  .hero-h { font-size: 23px; line-height: 27px; font-weight: 700; }
+  .hero-l { font-size: 14px; line-height: 20px; color: var(--text2); }
+  .meter { display: flex; gap: 4px; }
+  .meter i { flex: 1; height: 7px; border-radius: 4px; background: var(--track); }
+  .meter i.ok { background: var(--ok); } .meter i.warn { background: var(--warn); } .meter i.bad { background: var(--bad); }
+  .meter i.acc { background: var(--accent); } .meter i.now { background: color-mix(in srgb, var(--accent) 45%, transparent); }
+  .ml { display: flex; justify-content: space-between; padding-top: 6px; font-size: 12.5px; line-height: 16px; color: var(--text4); }
+  .tint { border: 1px solid var(--cardLine); border-radius: 10px; padding: 7px 12px; font-size: 13px; line-height: 18px; color: var(--text3); }
+  .stats { display: flex; gap: 8px; }
+  .st { flex: 1; border: 1px solid var(--cardLine); border-radius: 10px; padding: 10px 12px; min-width: 0; }
+  .sv { font-size: 22px; line-height: 28px; font-weight: 700; font-feature-settings: "tnum"; }
+  .sl { font-size: 12.5px; line-height: 15px; color: var(--text4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pbtn { height: 52px; border-radius: 26px; background: var(--primary); color: var(--onPrimary); display: grid; place-items: center; font-size: 15px; font-weight: 700; }
+  .sbtn { height: 52px; border-radius: 26px; background: var(--glass2); color: var(--text); display: grid; place-items: center; font-size: 15px; font-weight: 700; }
+  .head { display: flex; align-items: center; gap: 5px; font-size: 16px; line-height: 19px; font-weight: 700; padding: 20px 0 10px; }
+  .note { text-align: center; padding-top: 10px; font-size: 12px; line-height: 17px; color: var(--text4); }
+
+  /* your app / app tile heading */
+  .ah { display: flex; align-items: center; gap: 12px; }
+  .ah .col { flex: 1; min-width: 0; }
+  .an { font-size: 16px; line-height: 19px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ap { margin-top: 2px; font-size: 12px; line-height: 14px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .band { background: var(--band); border-radius: 10px; min-height: 44px; padding: 4px 12px 4px 10px; display: flex; align-items: center; gap: 6px; font-size: 13px; line-height: 18px; }
+  .band .end { margin-left: auto; font-weight: 700; color: var(--accentInk); font-size: 14px; }
+  .fb { display: flex; align-items: center; gap: 7px; font-size: 12px; line-height: 17px; color: var(--text2); padding: 8px 0 0 2px; }
+
+  /* testers */
+  .tr { display: flex; align-items: center; gap: 12px; min-height: 40px; }
+  .av { width: 36px; height: 36px; border-radius: 50%; background: var(--tile); color: var(--tileInk); display: grid; place-items: center; font-size: 15px; font-weight: 600; flex: none; }
+  .tr .col { flex: 1; min-width: 0; }
+  .tr .t { font-size: 15px; line-height: 19px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tr .s { margin-top: 1px; font-size: 12.5px; line-height: 14px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* night cells */
+  .nights { display: flex; gap: 3px; }
+  .nc { flex: 1; aspect-ratio: 1; border-radius: 4px; display: grid; place-items: center; border: 1px solid transparent; }
+  .nc.k { background: var(--ok); color: var(--inkOnOk); }
+  .nc.s { background: linear-gradient(to top, var(--warn) 50%, var(--warnBg) 50%); border: 1.5px solid var(--warn); }
+  .nc.m { background: var(--badBg); border: 1.5px solid var(--bad); color: var(--bad); }
+  .nc.l { background: var(--glass2); border-color: var(--glassBorder); color: var(--text4); }
+  .nc.r { background: var(--warnBg); border-color: var(--warnBorder); color: var(--warn); }
+  .nc.g { border: 1px dashed var(--glassBorder); }
+  .nnum { display: flex; gap: 3px; margin-top: 3px; }
+  .nnum span { flex: 1; text-align: center; font-size: 9.5px; line-height: 12px; color: var(--text4); font-feature-settings: "tnum"; }
+  .leg { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 10px; font-size: 12.5px; line-height: 16px; color: var(--text3); }
+  .leg span { display: inline-flex; align-items: center; gap: 5px; }
+  .leg .nc { flex: none; width: 13px; height: 13px; border-radius: 3px; }
+
+  /* picture cells */
+  .pics { display: flex; gap: 6px; overflow: hidden; }
+  .pc { display: flex; flex-direction: column; align-items: center; flex: none; }
+  .pc .c { width: 40px; height: 53px; border-radius: 8px; position: relative; overflow: hidden; display: grid; place-items: center; }
+  .pc .c.pic { background: var(--sheet); border: 1px solid var(--glassBorder); }
+  .pc .c.pic .top { position: absolute; left: 0; right: 0; top: 0; height: 13px; }
+  .pc .c.pic .ln { position: absolute; left: 6px; right: 6px; top: 19px; height: 26px; background: repeating-linear-gradient(var(--track) 0 3px, transparent 3px 7px); }
+  .pc .c.hand { border: 1.5px solid var(--warn); }
+  .pc .c.gone { background: var(--glass2); border: 1px dashed var(--glassBorderStrong); color: var(--text4); }
+  .pc .c.miss { background: var(--badBg); border: 1.5px solid var(--badBorder); color: var(--badBorder); }
+  .pc .c.miss svg { color: var(--bad); }
+  .pc .c.off { background: var(--glass2); border: 1.5px solid var(--glassBorder); }
+  .pics .pc { flex: 1 1 0; min-width: 0; max-width: 46px; } .pics .pc .c { width: 100%; height: auto; aspect-ratio: 40 / 53; }
+  .pc .d { padding-top: 2px; font-size: 11px; line-height: 14px; color: var(--text4); }
+
+  /* TileRow (36 tile) */
+  .rowt { display: flex; align-items: center; gap: 14px; min-height: 40px; }
+  .t36 { width: 36px; height: 36px; border-radius: 11px; background: var(--tile); color: var(--tileInk); display: grid; place-items: center; flex: none; }
+  .t36.ok { background: var(--okBg); color: var(--ok); } .t36.warn { background: var(--warnBg); color: var(--warn); } .t36.bad { background: var(--badBg); color: var(--bad); }
+  .rowt .col { flex: 1; min-width: 0; }
+  .rowt .t { font-size: 16px; line-height: 19px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rowt .s { margin-top: 2px; font-size: 12.5px; line-height: 14px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rowt .v { font-size: 16px; line-height: 19px; font-weight: 700; white-space: nowrap; font-feature-settings: "tnum"; }
+
+  /* receipt (option C) */
+  .rc { position: relative; }
+  .rc .cut { position: relative; height: 0; border-top: 1.5px dashed var(--glassBorder); margin: 0 -16px; }
+  .rc .cut::before, .rc .cut::after { content: ""; position: absolute; top: -9px; width: 16px; height: 16px; border-radius: 50%; background: var(--bg); border: 1px solid var(--cardLine); }
+  .rc .cut::before { left: -9px; clip-path: inset(0 0 0 50%); } .rc .cut::after { right: -9px; clip-path: inset(0 50% 0 0); }
+  .kv { display: flex; align-items: center; min-height: 32px; font-size: 14px; color: var(--text3); }
+  .kv .v { margin-left: auto; font: 600 14px/18px "PlexApp", "IBM Plex Mono", monospace; color: var(--text); }
+  .kv .v.bad { color: var(--bad); } .kv .v.ok { color: var(--ok); } .kv .v.warn { color: var(--warn); }
+  .tot { display: flex; align-items: center; gap: 10px; }
+  .tot .k { font-size: 15px; font-weight: 700; flex: 1; }
+  .tot .v { font: 700 20px/24px "PlexApp", "IBM Plex Mono", monospace; }
+
+  /* robot state */
+  .robot { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 80px 28px 0; }
+  .robot .rt { font-size: 20px; line-height: 25px; font-weight: 600; margin-top: 16px; }
+  .robot .rb { font-size: 14px; line-height: 20px; color: var(--text3); margin-top: 6px; max-width: 300px; width: auto; height: auto; border-radius: 0; display: block; background: none; border: 0; }
+  .robot .pbtn, .robot .sbtn { width: 220px; margin-top: 20px; }
+
+  /* Skeleton: Status.upcoming (glass2) + 7% accentInk, one sweep of glass */
+  .sk { background: color-mix(in srgb, var(--accentInk) 7%, var(--glass2)); border-radius: 6px; position: relative; overflow: hidden; flex: none; }
+  .sk::after { content: ""; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 30%, color-mix(in srgb, var(--glass) 80%, transparent) 50%, transparent 70%); background-size: 300% 100%; animation: sweep 1.6s linear infinite; }
+  @keyframes sweep { from { background-position: 150% 0; } to { background-position: -150% 0; } }
+
+  /* component sheet */
+  .cs { display: flex; flex-wrap: wrap; gap: 10px 10px; align-items: center; }
+  .cs .it { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 11px; color: var(--text4); text-align: center; }
+</style>
+</head>
+<body>
+<div class="tabbar"><b style="font-size:17px;color:#2D4A5F;padding:8px 0">Who tested Bluefy: tester row options</b></div>
+<div class="doc" id="doc"></div>
+<script>
+/* ---------- icons: Lucide, as the app uses; back is Material arrow_back_ios_new ---------- */
+const L = {
+  circleCheck: '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
+  alert: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+  logOut: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/>',
+  userX: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="17" x2="22" y1="8" y2="13"/><line x1="22" x2="17" y1="8" y2="13"/>',
+  moved: '<path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/>',
+  ban: '<circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/>',
+  star: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+  clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  ticket: '<path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/>',
+  imageOff: '<line x1="2" x2="22" y1="2" y2="22"/><path d="M10.41 10.41a2 2 0 1 1-2.83-2.83"/><line x1="13.5" x2="6" y1="13.5" y2="21"/><line x1="18" x2="21" y1="12" y2="15"/><path d="M3.59 3.59A1.99 1.99 0 0 0 3 5v14a2 2 0 0 0 2 2h14c.55 0 1.052-.22 1.41-.59"/><path d="M21 15V5a2 2 0 0 0-2-2H9"/>',
+  flag: '<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/>',
+  moon: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  minus: '<path d="M5 12h14"/>',
+  info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+  msg: '<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>',
+  calCheck: '<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="m9 16 2 2 4-4"/>',
+  lock: '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  wifiOff: '<path d="M12 20h.01"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/><path d="M5 12.859a10 10 0 0 1 5.17-2.69"/><path d="M19 12.859a10 10 0 0 0-2.007-1.523"/><path d="M2 8.82a15 15 0 0 1 4.177-2.643"/><path d="M22 8.82a15 15 0 0 0-11.288-3.764"/><path d="m2 2 20 20"/>',
+  cal: '<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>',
+  msq: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  grid: '<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>',
+  user: '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  plus: '<path d="M5 12h14"/><path d="M12 5v14"/>',
+  chevR: '<path d="m9 18 6-6-6-6"/>',
+  hourglass: '<path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>',
+  rocket: '<path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/>',
+};
+const ic = (n, s = 16, w = 2) => `<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${L[n]}</svg>`;
+const inl = (n, s = 13, w = 2.2) => `<span class="inl">${ic(n, s, w)}</span>`;
+const BACK = `<svg width="22" height="22" viewBox="0 0 24 24" style="fill:currentColor"><path d="M17.77 3.77 16 2 6 12l10 10 1.77-1.77L9.54 12z"/></svg>`;
+
+/* ---------- app art: stand-ins for Play icons (other companies' marks, not palette) ---------- */
+const MINE = { n: 'Bluefy: BT Keyboard & Mouse', p: 'com.eazyverse.bluefy', art: 'bluefy' };
+const LONG = { n: 'Cherish: Remember People, Birthdays and Gift Ideas Planner', p: 'app.cherish.people', art: 'cherish' };
+const OTH = [
+  { n: 'Astra Match', p: 'com.shahadat.astramatch', art: 'astra' },
+  { n: 'Baka Run', p: 'com.markuljdev.bakarun', art: 'baka' },
+  { n: 'Cherish: Remember People', p: 'app.cherish.people', art: 'cherish' },
+  { n: 'EditMe: Photo Editor & Presets', p: 'com.editme.photo', art: 'editme' },
+  { n: 'Auto Silent: Volume Scheduler', p: 'com.eazyverse.soundscheduler', art: 'silent' },
+  { n: 'Music Player', p: 'com.tunes.player', art: 'music' },
+  { n: 'Focus Flow', p: 'com.example.focusflow', h: 160 },
+  { n: 'Habit Hen', p: 'com.hen.habit', h: 30 },
+  { n: 'Quiz Quest', p: 'com.quest.quiz', h: 90 },
+  { n: 'Sleep Sound', p: 'com.sleep.sound', h: 240 },
+  { n: 'Lumen Notes', p: 'com.lumen.notes', h: 55 },
+  { n: 'Petal', p: 'com.petal.app', h: 320 },
+  { n: 'Coin Keeper', p: 'com.coin.keeper', h: 130 },
+  { n: 'Metro Map', p: 'com.metro.map', h: 200 },
+];
+function art(a, s, style = '') {
+  const base = `width:${s}px;height:${s}px;border-radius:${Math.round(s * 0.3)}px;${style}`;
+  const g = Math.round(s * 0.62);
+  const sv = (body) => `<svg width="${g}" height="${g}" viewBox="0 0 24 24">${body}</svg>`;
+  switch (a.art) {
+    case 'bluefy': return `<span class="ai" style="${base}background:linear-gradient(160deg,#EEF6FB,#D3E7F3)">${sv('<ellipse cx="12" cy="13.5" rx="7" ry="9" style="fill:#45C3E2"/><rect x="11.2" y="3.5" width="1.6" height="7" rx=".8" style="fill:#1E2B36"/>')}</span>`;
+    case 'astra': return `<span class="ai" style="${base}background:radial-gradient(circle at 30% 30%,#7A52E8,#2A1670)">${sv('<polygon points="8 3 9.6 6.6 13.5 7 10.6 9.6 11.4 13.4 8 11.4 4.6 13.4 5.4 9.6 2.5 7 6.4 6.6" style="fill:#FFC83D"/><rect x="12" y="11" width="8" height="8" rx="2" transform="rotate(45 16 15)" style="fill:#4FC3F7"/>')}</span>`;
+    case 'baka': return `<span class="ai" style="${base}background:linear-gradient(170deg,#3A2F86,#7B4BC8);color:#FFD84A;font-size:${Math.max(5, s * 0.24)}px;line-height:1;letter-spacing:-.2px">BAKA</span>`;
+    case 'cherish': return `<span class="ai" style="${base}background:#0EA5E9">${sv('<circle cx="8.5" cy="12" r="4.5" style="fill:none;stroke:#fff;stroke-width:2.4"/><circle cx="15.5" cy="12" r="4.5" style="fill:none;stroke:#fff;stroke-width:2.4"/>')}</span>`;
+    case 'editme': return `<span class="ai" style="${base}background:linear-gradient(135deg,#8A2BE2,#E8459A);color:#fff;font-size:${s * 0.55}px">E</span>`;
+    case 'silent': return `<span class="ai" style="${base}background:#F3F4F6">${sv('<circle cx="11" cy="12" r="8" style="fill:none;stroke:#2B3A4A;stroke-width:2"/><path d="M11 7v5h3" style="fill:none;stroke:#2B3A4A;stroke-width:2;stroke-linecap:round"/>')}</span>`;
+    case 'music': return `<span class="ai" style="${base}background:#1F1F1F">${sv('<path d="M5 10v4M8.5 7v10M12 9v6M15.5 6v12M19 10v4" style="stroke:#F5B400;stroke-width:2;stroke-linecap:round"/>')}</span>`;
+    default: return `<span class="ai nt" style="${base}--h:${a.h};font-size:${Math.round(s * 0.45)}px">${a.n[0]}</span>`;
+  }
+}
+const sk = (w, h, r = 6, extra = '') => `<span class="sk" style="display:block;width:${w};height:${h}px;border-radius:${r}px;${extra}"></span>`;
+
+/* ---------- shared bits ---------- */
+const chip = (t, tone, icon) => `<span class="chip ${tone}">${icon ? ic(icon, 13, 2.4) : ''}${t}</span>`;
+const meter = (n, f) => `<div class="meter">${Array.from({ length: n }, (_, i) => `<i class="${f(i)}"></i>`).join('')}</div>`;
+const ml = (a, b) => `<div class="ml"><span>${a}</span><span>${b}</span></div>`;
+const stats = (arr) => `<div class="stats">${arr.map(([v, l, t]) => `<div class="st"><div class="sv ${t ? 'i-' + t : ''}">${v}</div><div class="sl">${l}</div></div>`).join('')}</div>`;
+const head = (t, n) => `<div class="head">${t}${n != null ? `<span class="cb">${n}</span>` : ''}</div>`;
+const sp = (h) => `<div style="height:${h}px"></div>`;
+
+function phonePage(theme, title, body, o = {}) {
+  const mem = o.members === false ? '' : `<span class="memb">${ic('users', 16)}15</span>`;
+  return `<div class="phone ${theme}${o.fix ? ' fix' : ''}${o.w && o.w <= 340 ? ' narrow' : ''}" style="${o.w ? `width:${o.w}px;` : ''}"><div class="sbar"></div>
+    <div class="pbar"><span class="back">${BACK}</span><span class="pt">${title}</span>${mem}</div>${o.msg || ''}
+    <div class="scroll">${body}</div></div>`;
+}
+const PMSG = `<div class="pmsg">${ic('info', 17)}<span>Couldn't send. Try again.</span>${ic('x', 16)}</div>`;
+function phoneTab(theme, body, msg) {
+  const tabs = ['Open', 'Lobby', 'Run', 'Record'].map((t) => `<span class="${t === 'Record' ? 'on' : ''}">${t}</span>`).join('');
+  const dock = `<div class="dock">
+    <div class="d"><span class="pill">${ic('msq', 22)}</span>Circle</div>
+    <div class="d on"><span class="pill">${ic('users', 22)}</span>Crew</div>
+    <span class="plus">${ic('plus', 24, 2.4)}</span>
+    <div class="d"><span class="pill">${ic('grid', 22)}</span>My apps</div>
+    <div class="d"><span class="pill">${ic('user', 22)}</span>You</div></div>`;
+  return `<div class="phone fix ${theme}"><div class="sbar"></div><div class="tabs">${tabs}</div>${msg || ''}
+    <div class="scroll" style="padding-top:12px">${body}</div>${dock}</div>`;
+}
+const mini = (theme, body, o = {}) => `<div class="mini ${theme}${o.fs > 1.3 ? ' lg' : ''}${(o.w || 412) / (o.fs || 1) <= 340 ? ' narrow' : ''}" style="${o.w ? `width:${o.w}px;` : ''}${o.fs ? `--fs:${o.fs};` : ''}">${body}</div>`;
+const cap = (t) => `<div class="cap">${t}</div>`;
+const frame = (label, html, recd) => `<div class="state"><div class="lbl">${label}${recd ? '<span class="rec">Recommended</span>' : ''}</div>${html}</div>`;
+const both = (label, fn, when) => `<div class="pair"><div class="lbl">${label}</div>${fn('light')}${fn('dark')}${when ? `<div class="when"><b>Shows when:</b> ${when}</div>` : ''}</div>`;
+
+/* ---------- 1. Record list tile (CrewRecordRow, CrewListRow anatomy) ---------- */
+const TILES = {
+  counts:    { q: 'ask', name: 'Crew 04', dt: 'Oct 6 to 19', hl: 'Finished with 13 testers', tone: 'ok' },
+  under:     { name: 'Crew 01', dt: 'Aug 18 to 31', hl: 'Finished with 10 testers', tone: 'warn', q: 'ask' },
+  left:      { name: 'Crew 02', dt: 'Sep 8 to 21', hl: 'You left on day 6', tone: 'quiet' },
+  removed:   { name: 'Crew 03', dt: 'Sep 22 to Oct 5', hl: 'Taken out on day 4', tone: 'bad' },
+  moved:     { name: 'Crew 05', dt: 'Oct 13 to 26', hl: 'Moved to Crew 06', tone: 'acc' },
+  cancelled: { name: 'Crew 08', dt: 'Nov 2', hl: 'Crew cancelled', tone: 'quiet' },
+  perfect:   { q: 'ask', claim: 'can', name: 'Crew 06', dt: 'Oct 20 to Nov 2', hl: 'Finished with 14 testers', tone: 'ok' },
+  details:   { q: 'ask', clear: 2, name: 'Crew 07', dt: 'Nov 3 to 16', hl: 'Finished with 13 testers', tone: 'ok' },
+  lastday:   { q: 'ask', clear: 0, name: 'Crew 07', dt: 'Nov 3 to 16', hl: 'Finished with 13 testers', tone: 'ok' },
+  pruned:    { name: 'Crew 04', dt: 'Oct 6 to 19', hl: 'Finished with 13 testers', tone: 'ok' },
+};
+const OPT = '1b'; /* action bar, borderless open take */
+const QTXT = {
+  q: { icon: 'rocket', title: 'Got production access?', hint: 'Answer once Google replies to your apply.', reward: '+10 tix', acts: ['Yes', 'No'] },
+  c: { icon: 'star', title: 'Perfect run', hint: 'You kept all 14 nights.', reward: '', acts: ['Claim 100 tix'] },
+};
+/* state: null (ready) | 'busy' (first action tapped and sending) | 'error' (it failed, buttons are back) */
+function qOpt(kind, state, opt = OPT) {
+  if (opt >= 4) return alt4(kind, state);
+  const K = QTXT[kind];
+  const busy = state === 'busy';
+  const cls = (i) => (busy ? (i === 0 ? ' tapped' : ' off') : '');
+  const err = state === 'error' ? `<div class="qerr">${ic('x', 13, 2.6)}<span>Didn't send</span><span class="ia bad">Try again</span></div>` : '';
+  if (typeof opt === 'string') {
+    const v = opt.slice(1);
+    if (v === 'b') {
+      const pills = K.acts.map((a, i) => busy && i === 0 ? `<span class="qb p spin"><span class="lbl">${a}</span><i class="ring"></i></span>` : `<span class="qb p${busy ? ' off' : ''}">${a}</span>`).join('');
+      return `<div class="x1 b">
+        <div class="x1-h">${ic(K.icon, 14)}<span class="qt">${K.title}</span>${K.reward ? `<span class="tix">${K.reward}</span>` : ''}</div>
+        <div class="x1-row"><div class="x1-s">${K.hint}</div><span class="x1-acts qp top">${pills}</span></div>${err}
+        <span class="x1-acts qp bot">${pills}</span></div>`;
+    }
+    const btns = K.acts.map((a, i) => busy && i === 0 ? `<span class="qb spin"><span class="lbl">${a}</span><i class="ring"></i></span>` : `<span class="qb${busy ? ' off' : ''}">${a}</span>`).join('');
+    return `<div class="x1 ${v}"><div class="x1-top">
+        <div class="x1-h">${ic(K.icon, 14)}<span class="qt">${K.title}</span>${K.reward ? `<span class="tix">${K.reward}</span>` : ''}</div>
+        <div class="x1-s">${K.hint}</div>${err}</div>
+      <div class="x1-acts">${btns}</div></div>`;
+  }
+  if (opt === 1) {
+    return `<div class="o1"><div class="o1-top">
+        <div class="o1-h">${ic(K.icon, 14)}<span class="qt">${K.title}</span>${K.reward ? `<span class="tix">${K.reward}</span>` : ''}</div>
+        <div class="o1-s">${K.hint}</div>${err}</div>
+      <div class="o1-bar">${K.acts.map((a, i) => busy && i === 0 ? `<span class="o1-b spin"><span class="lbl">${a}</span><i class="ring"></i></span>` : `<span class="o1-b${cls(i)}">${a}</span>`).join('')}</div></div>`;
+  }
+  if (opt === 2) {
+    const ctrl = kind === 'q'
+      ? `<span class="seg">${K.acts.map((a, i) => `<span class="seg-b${cls(i)}">${a}</span>`).join('')}</span>`
+      : `<span class="fpill${cls(0)}">${K.acts[0]}</span>`;
+    return `<div class="o2"><div class="o2-row"><div class="o2-col">
+        <div class="o2-h">${ic(K.icon, 14)}<span>${K.title}</span></div>
+        <div class="o2-s">${K.hint}${K.reward ? ` <b>${K.reward}</b>` : ''}</div></div>
+        <span class="o2-ctrl top">${ctrl}</span></div>${err}<span class="o2-ctrl bot">${ctrl}</span></div>`;
+  }
+  const acts = K.acts.map((a, i) => `<span class="ia${cls(i)}">${a}</span>`).join('');
+  return `<div class="o3"><div class="o3-row">${ic(K.icon, 15)}<div class="o3-col">
+      <div class="o3-t">${K.title}</div><div class="o3-s">${K.hint}${K.reward ? ` <b>${K.reward}</b>` : ''}</div></div>
+      <span class="o3-acts top">${acts}</span></div><span class="o3-acts bot">${acts}</span>${err}</div>`;
+}
+function result(kind) {
+  switch (kind) {
+    case 'granted': return `<div class="res">${chip('Production access', 'ok', 'circleCheck')}<span class="resx">${inl('ticket')}+10 tix</span></div>`;
+    case 'notyet': return `<div class="res">${chip('No production access yet', 'quiet', 'hourglass')}<span class="resx">${inl('ticket')}+10 tix</span></div>`;
+    case 'notanswered': return `<div class="res">${chip('Not answered', 'quiet', 'clock')}</div>`;
+    case 'claimed': return `<div class="res">${chip('100 tix claimed', 'quiet', 'ticket')}</div>`;
+    default: return '';
+  }
+}
+/* o2: { app, q, claim, clear, clearStyle: 'chip' | 'edge', layout } */
+function recordTile(k, o2 = {}) {
+  const o = TILES[k];
+  const app = o2.app || MINE;
+  const pick = (key) => (key in o2 ? o2[key] : o[key]);
+  const q = pick('q');
+  const claim = pick('claim');
+  const clear = pick('clear');
+  const cs = o2.clearStyle || 'chip';
+  const opt = o2.opt || OPT;
+  const isAct = (st) => ['ask', 'can', 'busy', 'error'].includes(st);
+  const act = (kind, st) => qOpt(kind, st === 'busy' || st === 'error' ? st : null, opt);
+  const mid = (kind, st) => (isAct(st) ? (opt === 3 ? '' : act(kind, st)) : result(st));
+  const end = (kind, st) => (isAct(st) && opt === 3 ? act(kind, st) : '');
+  const has = clear !== undefined && clear !== null;
+  const clearTxt = clear === 0 ? 'Details clear tonight' : `Details clear in ${clear} days`;
+  const dt = has && cs === 'edge'
+    ? `<span class="dt ${clear === 0 ? 'i-warn' : ''}" style="white-space:normal;text-align:right;max-width:55%">${clearTxt}</span>`
+    : `<span class="dt">${o.dt}</span>`;
+  const chipRow = has && cs === 'chip' ? `<div style="margin-top:10px">${chip(clearTxt, clear === 0 ? 'warn' : 'quiet', 'clock')}</div>` : '';
+  const edge = has && cs === 'edge' ? `<span class="edgebar"><i class="${clear === 0 ? 'warn' : ''}" style="width:${clear === 0 ? 12 : Math.round((clear / 3) * 100)}%"></i></span>` : '';
+  return `<div class="card p16${edge ? ' edged' : ''}">
+    <div class="th"><span class="nm">${o.name}</span>${dt}</div>
+    <div class="stand" style="margin-top:10px"><span class="hl i-${o.tone}">${o.hl}</span></div>
+    <div class="foot">${art(app, 28)}<span class="fn">${app.n}</span></div>
+    ${chipRow}${mid('c', claim)}${mid('q', q)}${end('c', claim)}${end('q', q)}${edge}
+  </div>`;
+}
+const OPT_NAME = { 1: 'Option 1: action bar', 2: 'Option 2: segmented Yes | No', 3: 'Option 3: tile footer actions' };
+const OPT_WHEN = {
+  1: 'question and hint on top, then a full-width bar of equal buttons split by a hairline, like a dialog. Claim is one full-width button.',
+  2: 'question and hint on the left, a SegmentedTabs-style Yes | No on the right. Claim is one filled pill.',
+  3: 'no inner box. A hairline, then a footer line with InlineAction buttons at the end, like the Write row on CrewRunAppTile.',
+};
+const optCol = (n) => `<div class="pair"><div class="lbl">${OPT_NAME[n]}${n === OPT ? '<span class="rec">Recommended</span>' : ''}</div>
+  ${mini('light', cap('Ready') + recordTile('perfect', { opt: n }))}
+  ${mini('dark', cap('Ready') + recordTile('perfect', { opt: n }))}
+  ${mini('light', cap('Sending: only the tapped button shimmers') + recordTile('perfect', { opt: n, claim: 'busy', q: 'busy' }))}
+  ${mini('dark', cap("Didn't send: buttons are back, red line with Try again") + recordTile('perfect', { opt: n, claim: 'error', q: 'error' }))}
+  <div class="when"><b>How it works:</b> ${OPT_WHEN[n]}</div></div>`;
+const proofCol = (label, o, st) => both(label, (t) => mini(t, sp(12) + recordTile('perfect', { claim: st || 'can', q: st || 'ask' }), o), 'overflow check for the recommended option. Actions drop under the text, at the end, when the text would wrap beside them or the font is above 1.3x.');
+/* ---------- More options 4 to 8 ---------- */
+/* option 4, ChoiceChips: the part that sits under the headline */
+function alt4(kind, st) {
+  const busy = st === 'busy';
+  const cls = (i) => (busy ? (i === 0 ? ' tapped' : ' off') : '');
+  const err = st === 'error' ? `<div class="qerr">${ic('x', 13, 2.6)}<span>Didn't send</span><span class="ia bad">Try again</span></div>` : '';
+  return kind === 'q'
+    ? `<div class="altq"><div class="altq-t">${ic('rocket', 14)}<span class="qt">Got production access? <span class="tagx">+10 tix</span></span></div>
+       <div class="altq-s">Answer once Google replies to your apply.</div>
+       <div class="ccrow"><span class="cc${cls(0)}">${ic('check', 15, 2.4)}Got access</span><span class="cc${cls(1)}">${ic('hourglass', 15)}Not yet</span></div>${err}</div>`
+    : `<div class="altq"><div class="altq-t">${ic('star', 14)}<span class="qt">Perfect run, you kept all 14 nights</span></div>
+       <div class="ccrow"><span class="cc tonal${cls(0)}">${ic('ticket', 15)}Claim 100</span></div>${err}</div>`;
+}
+const QERR = () => `<div class="qerr">${ic('x', 13, 2.6)}<span>Didn't send</span><span class="ia bad">Try again</span></div>`;
+/* kind 'q' (production question, on a 12+ tile) or 'c' (perfect run claim); st null | 'busy' | 'error' | 'done' */
+function altTile(n, kind, st, o2 = {}) {
+  const o = kind === 'q' ? TILES.counts : TILES.perfect;
+  const done = st === 'done';
+  const busy = st === 'busy';
+  const cls = (i) => (busy ? (i === 0 ? ' tapped' : ' off') : '');
+  const err = st === 'error' ? QERR() : '';
+  let mid = '';
+  let above = '';
+  let footR = '';
+  let afterFoot = '';
+  let clip = false;
+  const dot = n === 7 && !done && !o2.noDot;
+  if (done) {
+    mid = result(kind === 'q' ? 'granted' : 'claimed');
+  } else if (n === 4) {
+    mid = kind === 'q'
+      ? `<div class="altq"><div class="altq-t">${ic('rocket', 14)}<span class="qt">Got production access? <span class="tagx">+10 tix</span></span></div>
+         <div class="altq-s">Answer once Google replies to your apply.</div>
+         <div class="ccrow"><span class="cc${cls(0)}">${ic('check', 15, 2.4)}Got access</span><span class="cc${cls(1)}">${ic('hourglass', 15)}Not yet</span></div>${err}</div>`
+      : `<div class="altq"><div class="altq-t">${ic('star', 14)}<span class="qt">Perfect run, you kept all 14 nights</span></div>
+         <div class="ccrow"><span class="cc tonal${cls(0)}">${ic('ticket', 15)}Claim 100</span></div>${err}</div>`;
+  } else if (n === 5) {
+    clip = true;
+    afterFoot = kind === 'q'
+      ? `<div class="strip5"><div class="s5row">${ic('rocket', 16)}<div class="s5col"><div class="s5t">Got production access?</div><div class="s5s">Answer once Google replies. <b>+10 tix</b></div></div>
+         <span class="rbs"><span class="rb ok${cls(0)}" title="Yes">${ic('check', 18, 2.6)}</span><span class="rb${cls(1)}" title="Not yet">${ic('x', 18, 2.6)}</span></span></div>${err}</div>`
+      : `<div class="strip5"><div class="s5row">${ic('star', 16)}<div class="s5col"><div class="s5t">Perfect run</div><div class="s5s">You kept all 14 nights. <b>100 tix</b></div></div>
+         <span class="rbs"><span class="rb fill${cls(0)}" title="Claim 100 tix">${ic('ticket', 18)}</span></span></div>${err}</div>`;
+  } else if (n === 6) {
+    mid = kind === 'q'
+      ? `<div style="margin-top:10px"><span class="chip acc">${ic('rocket', 13, 2.4)}1 question, +10 tix${ic('chevR', 13, 2.4)}</span></div>`
+      : `<div style="margin-top:10px"><span class="chip acc${cls(0)}">${ic('ticket', 13, 2.4)}Claim 100 tix${ic('chevR', 13, 2.4)}</span></div>${err}`;
+  } else if (n === 8) {
+    above = kind === 'q'
+      ? `<div class="q8">${ic('rocket', 14)}<span class="qt">Got production access? <span class="tagx">+10 tix</span></span></div>`
+      : `<div class="q8">${ic('star', 14)}<span class="qt">Perfect run, claim your tix</span></div>`;
+    footR = kind === 'q'
+      ? `<span class="rb ok${cls(0)}" title="Yes">${ic('check', 18, 2.6)}</span><span class="rb${cls(1)}" title="Not yet">${ic('x', 18, 2.6)}</span>`
+      : `<span class="rbwrap"><span class="rb fill${cls(0)}" title="Claim 100 tix">${ic('ticket', 18)}</span><span class="rbbadge">100</span></span>`;
+    afterFoot = err;
+  }
+  return `<div class="card p16${clip ? ' clip' : ''}">
+    <div class="th"><span class="nm">${o.name}${dot ? '<span class="dot7"></span>' : ''}</span><span class="dt">${o.dt}</span></div>
+    <div class="stand" style="margin-top:10px"><span class="hl i-${o.tone}">${o.hl}</span></div>${mid}${above}
+    <div class="foot">${art(MINE, 28)}<span class="fn" style="flex:1">${MINE.n}</span>${footR ? `<span class="rbs">${footR}</span>` : ''}</div>${afterFoot}
+  </div>`;
+}
+const twoTiles = (n, st) => altTile(n, 'q', st) + sp(8) + altTile(n, 'c', st);
+function sheetFrame(theme, st, o = {}) {
+  const busy = st === 'busy';
+  const cls = (i) => (busy ? (i === 0 ? ' tapped' : ' off') : '');
+  const w = o.w || 412;
+  const lg = o.fs > 1.3 ? ' lg' : '';
+  return `<div class="mini ${theme}${lg}" style="padding:0;overflow:hidden;width:${w}px;${o.fs ? `--fs:${o.fs};` : ''}">
+    <div class="behind">${altTile(6, 'q', null)}</div>
+    <div class="sheet"><div class="handle"></div>
+      <div class="sh-t">Got production access?</div>
+      <div class="sh-s">Crew 07, Bluefy. Answer once Google replies to your apply. Either answer gives 10 tix.</div>
+      <div class="sh-row${cls(0)}"><span class="t36 ok">${ic('check', 19, 2.4)}</span><div class="col"><div class="t">Yes, I got access</div><div class="s">Google approved production</div></div></div>
+      <div class="sh-row${cls(1)}"><span class="t36">${ic('hourglass', 19)}</span><div class="col"><div class="t">Not yet</div><div class="s">Still waiting, or it was refused</div></div></div>
+      ${st === 'error' ? QERR() : ''}
+    </div></div>`;
+}
+function askCard(kind, st) {
+  const busy = st === 'busy';
+  const cls = (i) => (busy ? (i === 0 ? ' tapped' : ' off') : '');
+  const err = st === 'error' ? QERR() : '';
+  if (kind === 'c') {
+    return `<div class="card p16">
+      <div class="th">${chip('1 claim', 'acc', 'ticket')}</div>
+      <div class="ah" style="margin-top:12px">${art(MINE, 44)}<div class="col"><div class="an">Crew 06</div><div class="ap">${MINE.n}</div></div></div>
+      <div class="ask-q">Perfect run</div><div class="ask-s">You kept all 14 nights. <b>100 tix</b></div>
+      <div style="margin-top:12px"><div class="pbtn${cls(0)}">Claim 100 tix</div></div>${err}
+    </div>`;
+  }
+  return `<div class="card p16">
+    <div class="th">${chip('2 crews to answer', 'acc', 'rocket')}<span class="dt" style="margin-left:auto">1 of 2</span></div>
+    <div class="ah" style="margin-top:12px">${art(MINE, 44)}<div class="col"><div class="an">Crew 07</div><div class="ap">${MINE.n}</div></div></div>
+    <div class="ask-q">Got production access?</div>
+    <div class="ask-s">Answer once Google replies to your apply. <b>+10 tix</b></div>
+    <div class="ask-b"><span class="sbtn${cls(0)}">Yes</span><span class="sbtn${cls(1)}">No</span></div>${err}
+    <div style="display:flex;justify-content:flex-end;margin-top:4px"><span class="ia">Skip for now</span></div>
+  </div>`;
+}
+const list7 = (kind, st) => (st === 'done' ? '' : askCard(kind, st) + sp(16)) + altTile(7, 'q', st) + sp(8) + altTile(7, 'c', st);
+const ALT_NAME = { 4: 'Option 4: choice chips', 5: 'Option 5: attached strip', 6: 'Option 6: opens a sheet', 7: 'Option 7: one card on top', 8: 'Option 8: round buttons in the footer' };
+const ALT_REC = 4;
+const ALT_WHEN = {
+  4: 'two outlined ChoiceChips with plain answers, Got access and Not yet. Claim is one tonal chip. New: ChoiceChip.',
+  5: 'a tinted strip fused to the bottom of the card, with RoundIconButtons for yes and not yet. New: TileStrip, RoundIconButton.',
+  6: 'the tile only gets an attention StatusChip. Tapping it opens a PickerSheet with two big rows. Claim works straight from its chip.',
+  7: 'no buttons on tiles, only a dot. One card above the list walks through every open question or claim. New: RecordAskCard.',
+  8: 'one question line above the footer, RoundIconButtons at the end of the app row. Claim is a ticket button with a CountBadge.',
+};
+function altCol(n) {
+  let frames;
+  if (n === 6) {
+    frames = mini('light', cap('Tile, default') + twoTiles(6, null))
+      + mini('dark', cap('Tile, default') + twoTiles(6, null))
+      + mini('light', cap('Claim chip sending, then failed') + altTile(6, 'c', 'busy') + sp(8) + altTile(6, 'c', 'error'))
+      + cap('Sheet, default') + sheetFrame('light', null)
+      + cap('Sheet, default, dark') + sheetFrame('dark', null)
+      + cap('Sheet, sending: only the tapped row shimmers') + sheetFrame('light', 'busy')
+      + cap("Sheet, didn't send") + sheetFrame('dark', 'error')
+      + mini('light', cap('Answered and claimed') + twoTiles(6, 'done'))
+      + mini('light', cap('320 wide') + twoTiles(6, null), { w: 320 })
+      + cap('Sheet, 320 wide, font 1.5x') + sheetFrame('dark', null, { w: 320, fs: 1.5 });
+  } else if (n === 7) {
+    frames = mini('light', cap('Default: question card') + list7('q', null))
+      + mini('dark', cap('Default: claim card') + askCard('c', null) + sp(16) + altTile(7, 'c', null))
+      + mini('light', cap('Sending: only the tapped button shimmers') + askCard('q', 'busy') + sp(16) + askCard('c', 'busy'))
+      + mini('dark', cap("Didn't send") + askCard('q', 'error'))
+      + mini('light', cap('Answered and claimed: the card is gone') + list7('q', 'done'))
+      + mini('light', cap('320 wide') + askCard('q', null), { w: 320 })
+      + mini('dark', cap('320 wide, font 1.5x') + askCard('q', null), { w: 320, fs: 1.5 });
+  } else {
+    frames = mini('light', cap('Default') + twoTiles(n, null))
+      + mini('dark', cap('Default') + twoTiles(n, null))
+      + mini('light', cap('Sending: only the tapped control shimmers') + twoTiles(n, 'busy'))
+      + mini('dark', cap("Didn't send") + twoTiles(n, 'error'))
+      + mini('light', cap('Answered and claimed') + twoTiles(n, 'done'))
+      + mini('light', cap('320 wide') + twoTiles(n, null), { w: 320 })
+      + mini('dark', cap('320 wide, font 1.5x') + twoTiles(n, null), { w: 320, fs: 1.5 });
+  }
+  return `<div class="pair"><div class="lbl">${ALT_NAME[n]}${n === ALT_REC ? '<span class="rec">Recommended</span>' : ''}</div>${frames}<div class="when"><b>How it works:</b> ${ALT_WHEN[n]}</div></div>`;
+}
+function tileLoading() {
+  return `<div class="card p16">
+    <div style="display:flex;justify-content:space-between">${sk('78px', 23)}${sk('70px', 17)}</div>
+    <div style="margin-top:10px">${sk('50%', 20)}</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-top:12px">${sk('28px', 28, 8)}${sk('130px', 18)}</div>
+  </div>`;
+}
+function robotSvg(prop) {
+  const props = {
+    cal: `<g transform="translate(88 70)" style="color:var(--tileInk)"><rect x="0" y="0" width="30" height="30" rx="8" style="fill:var(--bg);stroke:var(--tileInk);stroke-width:2.5"/><svg x="5" y="5" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">${L.calCheck}</svg></g>`,
+    lock: `<g transform="translate(88 70)" style="color:var(--tileInk)"><rect x="0" y="0" width="30" height="30" rx="8" style="fill:var(--bg);stroke:var(--tileInk);stroke-width:2.5"/><svg x="5" y="5" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">${L.lock}</svg></g>`,
+    off: `<g transform="translate(88 70)" style="color:var(--tileInk)"><rect x="0" y="0" width="30" height="30" rx="8" style="fill:var(--bg);stroke:var(--tileInk);stroke-width:2.5"/><svg x="5" y="5" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">${L.wifiOff}</svg></g>`,
+  };
+  return `<svg width="132" height="120" viewBox="0 0 132 120">
+    <line x1="60" y1="10" x2="60" y2="26" style="stroke:var(--tileInk);stroke-width:3"/><circle cx="60" cy="9" r="5" style="fill:var(--warn)"/>
+    <rect x="26" y="26" width="68" height="52" rx="18" style="fill:var(--tile);stroke:var(--tileInk);stroke-width:3"/>
+    <rect x="36" y="38" width="48" height="28" rx="13" style="fill:var(--bg)"/>
+    <circle cx="50" cy="52" r="4" style="fill:var(--text)"/><circle cx="70" cy="52" r="4" style="fill:var(--text)"/>
+    <rect x="36" y="82" width="48" height="28" rx="10" style="fill:var(--tile);stroke:var(--tileInk);stroke-width:3"/>
+    ${props[prop]}</svg>`;
+}
+const robot = (prop, t, b, btn, secondary) => `<div class="robot">${robotSvg(prop)}<div class="rt">${t}</div><div class="rb">${b}</div>${btn ? `<div class="${secondary ? 'sbtn' : 'pbtn'}">${btn}</div>` : ''}</div>`;
+
+/* ---------- 2. View 1 blocks ---------- */
+const HERO = {
+  counts:    { c: ['14 nights done', 'ok', 'circleCheck'], h: 'Finished with 13 testers', l: '<b>13</b> of <b>14</b> testers opened your app every night. Google asks for 12.', m: [14, (i) => (i < 13 ? 'ok' : '')], ml: ['13 every night', '12 needed'] },
+  under:     { c: ['14 nights done', 'warn', 'alert'], h: 'Finished with 10 testers', l: '<b>10</b> of <b>14</b> testers opened your app every night. Google asks for 12.', m: [14, (i) => (i < 10 ? 'warn' : '')], ml: ['10 every night', '12 needed'], btn: 'Put it in a new crew' },
+  perfect:   { c: ['Perfect run', 'ok', 'star'], h: 'Finished with 14 testers', l: 'All <b>14</b> testers opened your app every night, and you kept all 14 nights.', m: [14, () => 'ok'], ml: ['14 every night', '12 needed'] },
+  left:      { c: ['You left on day 6', 'quiet', 'logOut'], h: 'Your app left with you', l: 'It was tested for 5 nights. Seats are kept once a run starts.', m: [14, (i) => (i < 5 ? 'acc' : i === 5 ? 'bad' : '')], ml: ['5 nights tested', '14 in the run'], btn: 'Put it in a new crew' },
+  removed:   { c: ['Taken out on day 4', 'bad', 'userX'], h: 'The team took your app out', l: 'You missed 3 nights in a row.', m: [14, (i) => (i < 1 ? 'acc' : i < 4 ? 'bad' : '')], ml: ['1 night kept', '14 in the run'], btn: 'Put it in a new crew' },
+  moved:     { c: ['Moved on day 2', 'acc', 'moved'], h: 'Your app moved to Crew 06', l: 'Its nights carry on there, so this crew has no result for it.', sbtn: 'Open Crew 06' },
+  cancelled: { c: ['Cancelled', 'quiet', 'ban'], h: "This crew didn't start", l: 'It never filled up, so your 100 tix came back.' },
+};
+function hero(k, hint = 'date') {
+  const o = HERO[k];
+  const hintTxt = hint === 'date' ? `${inl('clock')}Details and pictures clear on Fri, Nov 20` : hint === 'tonight' ? `<span class="i-warn">${inl('clock')}Details and pictures clear tonight</span>` : '';
+  return `<div class="card p16">
+    ${chip(...o.c)}${sp(10)}
+    <div class="hero-h">${o.h}</div>${sp(4)}
+    <div class="hero-l">${o.l}</div>
+    ${o.m ? sp(14) + meter(...o.m) + ml(...o.ml) : ''}
+    ${hintTxt && !['cancelled', 'moved'].includes(k) ? sp(12) + `<div class="tint">${hintTxt}</div>` : ''}
+    ${o.btn ? sp(14) + `<div class="pbtn">${o.btn}</div>` : ''}
+    ${o.sbtn ? sp(14) + `<div class="sbtn">${o.sbtn}</div>` : ''}
+  </div>`;
+}
+const YOURS = {
+  counts:  { c: ['13 testers', 'ok'], s: [['14', 'stayed'], ['13', 'every night', 'ok'], ['1', 'dropped out']] },
+  under:   { c: ['10 of 12 needed', 'warn'], s: [['12', 'stayed'], ['10', 'every night', 'warn'], ['2', 'dropped out']] },
+  perfect: { c: ['14 testers', 'ok'], s: [['14', 'stayed'], ['14', 'every night', 'ok'], ['0', 'dropped out']] },
+  left:    { c: ['Left', 'quiet'], s: [['5', 'nights tested'], ['14', 'testers'], ['0', 'every night']] },
+  removed: { c: ['Out', 'bad'], s: [['1', 'night tested'], ['14', 'testers'], ['0', 'every night']] },
+};
+function yourApp(k, app = MINE) {
+  const o = YOURS[k];
+  return `<div class="card p1416">
+    <div class="ah">${art(app, 52)}<div class="col"><div class="an">${app.n}</div><div class="ap">${app.p}</div></div>${chip(...o.c)}</div>
+    ${sp(14)}${stats(o.s)}
+  </div>`;
+}
+const TESTERS = [
+  ['Sofia Alvarez', 'Opened yours every night', ['Every night', 'ok']],
+  ['Kenji Sato', 'Opened yours every night', ['Every night', 'ok']],
+  ['Nadia Karim', 'Opened yours 12 of 14 nights', ['12 of 14', 'warn']],
+  ['Lucas Moreau', 'Left on day 5', ['Left', 'quiet']],
+  ['Daniel Okafor', 'Taken out on day 4', ['Out', 'bad']],
+  ['Zara Ahmed', 'Reported your app on night 3', ['Reported', 'warn']],
+];
+const testerRow = ([n, s, c]) => `<div class="tr"><span class="av">${n[0]}</span><div class="col"><div class="t">${n}</div><div class="s">${s}</div></div>${chip(...c)}</div>`;
+function testers(rows, btn = true) {
+  return `<div class="card p1416"><div class="gap10">${rows.map(testerRow).join('')}</div>${btn ? sp(14) + `<div class="sbtn">See all 14 testers</div>` : ''}</div>`;
+}
+const NIGHTS = {
+  mix:     { n: 'kkskmkkklkkrkk'.split(''), c: ['10 of 14 kept', 'quiet'], s: [['93%', 'on time'], ['170', 'opens done'], ['182', 'owed']] },
+  perfect: { n: 'kkkkkkkkkkkkkk'.split(''), c: ['Every night kept', 'ok', 'circleCheck'], s: [['100%', 'on time', 'ok'], ['182', 'opens done'], ['182', 'owed']] },
+  left:    { n: 'kkkkmggggggggg'.split(''), c: ['5 nights, then you left', 'quiet', 'logOut'], s: [['80%', 'on time'], ['52', 'opens done'], ['65', 'owed']] },
+  removed: { n: 'kmmmgggggggggg'.split(''), c: ['Taken out on day 4', 'bad', 'userX'], s: [['25%', 'on time', 'bad'], ['13', 'opens done'], ['52', 'owed']] },
+};
+const CELL_ICON = { k: ['check', 11, 3], m: ['x', 11, 3], l: ['moon', 10, 2.4], r: ['flag', 10, 2.4] };
+const cell = (t, extra = '') => `<span class="nc ${t}" ${extra}>${CELL_ICON[t] ? ic(...CELL_ICON[t]) : ''}</span>`;
+const LEG = { k: 'kept', s: 'short', m: 'missed', l: 'let off', r: 'reported', g: 'after you left' };
+function nightsCard(k) {
+  const o = NIGHTS[k];
+  const counts = {}; o.n.forEach((t) => (counts[t] = (counts[t] || 0) + 1));
+  const leg = Object.keys(LEG).filter((t) => counts[t]).map((t) => `<span><span class="nc ${t}" style="width:13px;height:13px"></span>${t === 'g' ? '' : counts[t] + ' '}${LEG[t]}</span>`).join('');
+  return `<div class="card p12">
+    ${chip(...o.c)}${sp(10)}
+    <div class="nights">${o.n.map((t) => cell(t)).join('')}</div>
+    <div class="nnum">${o.n.map((_, i) => `<span>${i + 1}</span>`).join('')}</div>
+    <div class="leg">${leg}</div>${sp(12)}
+    ${stats(o.s)}
+  </div>`;
+}
+const BANDS = {
+  all:     ['circleCheck', 'ok', 'Opened all 14 nights'],
+  some:    ['alert', 'warn', 'Opened 12 of 14 nights'],
+  reported:['flag', 'warn', 'You reported it on night 3'],
+  letoff:  ['moon', 'quiet', 'Let off 2 nights'],
+  left:    ['logOut', 'quiet', 'Left the crew on day 5'],
+  removed: ['userX', 'bad', 'Taken out on day 4'],
+};
+function appTile(app, b, fb) {
+  const [i, t, txt] = BANDS[b];
+  const fbl = fb === 'sent' ? `<div class="fb i-ok">${ic('msg', 14)}Private feedback sent</div>` : fb === 'none' ? `<div class="fb" style="color:var(--text3)">${ic('msg', 14)}No feedback sent</div>` : '';
+  return `<div class="card p14">
+    <div class="ah" style="gap:10px">${art(app, 44)}<div class="col"><div class="an">${app.n}</div><div class="ap">${app.p}</div></div></div>${sp(10)}
+    <div class="band i-${t === 'quiet' ? 'faint' : t}">${ic(i, 15)}<span>${txt}</span></div>${fbl}
+  </div>`;
+}
+function picCell(kind, d, a) {
+  const c = {
+    pic: `<span class="c pic"><span class="top" style="background:${a}"></span><span class="ln"></span></span>`,
+    hand: `<span class="c pic hand"><span class="top" style="background:${a}"></span><span class="ln"></span></span>`,
+    gone: `<span class="c gone">${ic('imageOff', 14)}</span>`,
+    miss: `<span class="c miss">${ic('x', 14, 2.6)}</span>`,
+    off: `<span class="c off"></span>`,
+  }[kind];
+  return `<div class="pc">${c}<span class="d">${d}</span></div>`;
+}
+const SHOT = 'linear-gradient(90deg,#3EC3E0,#2A8FB8)'; /* the screenshot's own pixels: Bluefy's colours */
+function pictures(k) {
+  if (k === 'gone') {
+    return `<div class="card p14">
+      <div style="display:flex;align-items:center;gap:8px">${chip('Pictures removed', 'quiet', 'imageOff')}<span style="margin-left:auto;font-size:12px;color:var(--text3)">Nov 20</span></div>${sp(12)}
+      <div class="pics">${[8, 9, 10, 11, 12, 13, 14].map((d) => picCell('gone', d)).join('')}</div>
+    </div>`;
+  }
+  const kinds = ['pic', 'pic', 'hand', 'pic', 'miss', 'pic', 'pic'];
+  return `<div class="card p14">
+    <div style="display:flex;align-items:center;gap:8px">${chip('Kept until Fri, Nov 20', 'quiet', 'clock')}<span style="margin-left:auto;font-size:12px;color:var(--text3)">14 testers</span></div>${sp(12)}
+    <div class="pics">${[8, 9, 10, 11, 12, 13, 14].map((d, i) => picCell(kinds[i], d, SHOT)).join('')}</div>${sp(14)}
+    <div class="sbtn">See every night</div>
+  </div>`;
+}
+const TIX = {
+  perfect:   ['ok', '100 tix for the seat', 'Every night kept', '+100', 'ok'],
+  none:      ['', '100 tix for the seat', 'Seats are kept once a run starts', 'None back', 'faint'],
+  cancelled: ['ok', '100 tix for the seat', "The crew didn't start", '+100', 'ok'],
+  removed:   ['', '100 tix for the seat', 'Taken out after the run began', 'None back', 'faint'],
+  moved:     ['', '100 tix for the seat', 'They went with your app to Crew 06', 'Moved', 'acc'],
+  free:      ['', 'Free seat', 'Placed by the TestTrack team', 'No tix', 'faint'],
+};
+function tix(k) {
+  const [tt, t, s, v, vt] = TIX[k];
+  return `<div class="card p1416"><div class="rowt"><span class="t36 ${tt}">${ic('ticket', 19)}</span><div class="col"><div class="t">${t}</div><div class="s">${s}</div></div><span class="v i-${vt}">${v}</span></div></div>`;
+}
+
+function view1Page() {
+  return hero('counts')
+    + head('Your app') + yourApp('counts')
+    + head('Testers', 14) + testers(TESTERS.slice(0, 4))
+    + head('Pictures') + pictures('present')
+    + head('Your nights') + nightsCard('mix')
+    + head('Apps', 14) + `<div class="gap8">${appTile(OTH[0], 'all', 'sent')}${appTile(OTH[1], 'reported')}${appTile(OTH[2], 'some', 'none')}</div>`
+    + head('Tix') + tix('none');
+}
+function view1Loading() {
+  return `<div class="card p16">${sk('150px', 24, 12)}${sp(12)}${sk('70%', 26)}${sp(8)}${sk('90%', 16)}${sp(16)}${sk('100%', 7, 4)}${sp(8)}<div style="display:flex;justify-content:space-between">${sk('90px', 12)}${sk('60px', 12)}</div>${sp(14)}${sk('100%', 34, 10)}</div>
+    <div class="head">${sk('80px', 18)}</div>
+    <div class="card p1416"><div style="display:flex;align-items:center;gap:12px">${sk('52px', 52, 16)}<div style="flex:1">${sk('70%', 17)}${sp(6)}${sk('50%', 12)}</div>${sk('60px', 24, 12)}</div>${sp(14)}<div class="stats">${[1, 2, 3].map(() => `<div class="st">${sk('30px', 22)}${sp(6)}${sk('70%', 11)}</div>`).join('')}</div></div>
+    <div class="head">${sk('80px', 18)}</div>
+    <div class="card p1416 gap10">${[1, 2, 3].map(() => `<div style="display:flex;align-items:center;gap:12px">${sk('36px', 36, 18)}<div style="flex:1">${sk('60%', 15)}${sp(5)}${sk('80%', 11)}</div>${sk('70px', 24, 12)}</div>`).join('')}</div>`;
+}
+
+/* ---------- 3. View 2 options ---------- */
+const V2 = {
+  counts: { h: 'counts', y: 'counts', ny: [['13', 'kept', 'ok'], ['0', 'short'], ['1', 'missed', 'bad']], ny2: [['0', 'let off'], ['0', 'reported'], ['97%', 'on time']], nc: ['13 of 14 kept', 'quiet'], tix: 'none',
+    b: [['users', 'ok', '13 of 14 every night', 'Google asks for 12'], ['calCheck', '', '13 of 14 nights kept', '1 missed, 97% on time'], ['flag', '', '0 reported, 0 let off', '176 of 182 opens done'], ['ticket', '', '100 tix for the seat', 'None back']],
+    kv: [['Run', 'Nov 3 to 16'], ['Nights kept', '13 of 14'], ['Short', '0'], ['Missed', '1', 'bad'], ['Let off', '0'], ['Reported', '0'], ['Opens done', '176 of 182'], ['On time', '97%'], ['Tix spent', '100'], ['Tix back', '0']],
+    tot: ['13 of 14', 'ok', ['Finished', 'ok']] },
+  under: { h: 'under', y: 'under', ny: [['14', 'kept', 'ok'], ['0', 'short'], ['0', 'missed']], ny2: [['0', 'let off'], ['0', 'reported'], ['100%', 'on time', 'ok']], nc: ['Every night kept', 'ok', 'circleCheck'], tix: 'perfect',
+    b: [['users', 'warn', '10 of 14 every night', 'Google asks for 12'], ['calCheck', 'ok', '14 of 14 nights kept', '0 missed, 100% on time'], ['flag', '', '0 reported, 0 let off', '182 of 182 opens done'], ['ticket', 'ok', '100 tix for the seat', '100 came back']],
+    kv: [['Run', 'Aug 18 to 31'], ['Nights kept', '14 of 14', 'ok'], ['Short', '0'], ['Missed', '0'], ['Let off', '0'], ['Reported', '0'], ['Opens done', '182 of 182'], ['On time', '100%'], ['Tix spent', '100'], ['Tix back', '100', 'ok']],
+    tot: ['10 of 14', 'warn', ['10 of 12 needed', 'warn']] },
+};
+const cleared = `<div class="note">${inl('info', 12)}Night lists and pictures cleared on Nov 20</div>`;
+function optA(k) {
+  const o = V2[k];
+  return hero(o.h, 'none')
+    + head('Your app') + yourApp(o.y)
+    + head('Your nights') + `<div class="card p12">${chip(...o.nc)}${sp(12)}${stats(o.ny)}${sp(8)}${stats(o.ny2)}</div>`
+    + head('Tix') + tix(o.tix)
+    + cleared;
+}
+function optB(k) {
+  const o = V2[k];
+  const c = k === 'under' ? chip('Finished with 10 testers', 'warn', 'alert') : chip('Finished with 13 testers', 'ok', 'circleCheck');
+  return `<div class="card p16">
+      <div class="ah">${art(MINE, 52)}<div class="col"><div class="an">${MINE.n}</div><div class="ap">${k === 'under' ? 'Crew 01, Aug 18 to 31' : 'Crew 07, Nov 3 to 16'}</div></div></div>${sp(14)}
+      ${c}${sp(14)}
+      <div class="gap10" style="display:flex;flex-direction:column;gap:14px">${o.b.map(([i, t, a, s]) => `<div class="rowt"><span class="t36 ${t}">${ic(i, 19)}</span><div class="col"><div class="t">${a}</div><div class="s">${s}</div></div></div>`).join('')}</div>
+    </div>
+    ${k === 'under' ? sp(16) + `<div class="pbtn">Put it in a new crew</div>` : ''}${cleared}`;
+}
+function optC(k) {
+  const o = V2[k];
+  return `<div class="card p16 rc">
+      <div class="ah" style="gap:10px">${art(MINE, 44)}<div class="col"><div class="an">${MINE.n}</div><div class="ap">${k === 'under' ? 'Crew 01' : 'Crew 07'}</div></div></div>${sp(14)}
+      <div class="cut"></div>${sp(8)}
+      ${o.kv.map(([a, b, t]) => `<div class="kv"><span>${a}</span><span class="v ${t || ''}">${b}</span></div>`).join('')}
+      ${sp(8)}<div class="cut"></div>${sp(14)}
+      <div class="tot"><span class="k">Every night testers</span><span class="v i-${o.tot[1]}">${o.tot[0]}</span>${chip(...o.tot[2])}</div>
+    </div>
+    ${k === 'under' ? sp(16) + `<div class="pbtn">Put it in a new crew</div>` : ''}${cleared}`;
+}
+function v2Loading() {
+  return `<div class="card p16">${sk('150px', 24, 12)}${sp(12)}${sk('70%', 26)}${sp(8)}${sk('90%', 16)}${sp(16)}${sk('100%', 7, 4)}${sp(8)}<div style="display:flex;justify-content:space-between">${sk('90px', 12)}${sk('60px', 12)}</div></div>
+    <div class="head">${sk('80px', 18)}</div>
+    <div class="card p1416"><div style="display:flex;align-items:center;gap:12px">${sk('52px', 52, 16)}<div style="flex:1">${sk('70%', 17)}${sp(6)}${sk('50%', 12)}</div>${sk('60px', 24, 12)}</div>${sp(14)}<div class="stats">${[1, 2, 3].map(() => `<div class="st">${sk('30px', 22)}${sp(6)}${sk('70%', 11)}</div>`).join('')}</div></div>
+    <div class="head">${sk('90px', 18)}</div>
+    <div class="card p12">${sk('110px', 24, 12)}${sp(12)}<div class="stats">${[1, 2, 3].map(() => `<div class="st">${sk('30px', 22)}${sp(6)}${sk('70%', 11)}</div>`).join('')}</div></div>`;
+}
+
+/* ---------- 2. Finished crew page: the run page, once the run is over ---------- */
+const FP = {
+  full: { chip: ['14 nights done', 'ok', 'circleCheck'], h: 'Finished with 13 testers', l: '13 of 14 testers opened your app every night. Google asks for 12, so you can apply for production.',
+    clear: 2, claim: 'can', q: 'ask',
+    you: { c: ['13 of 14', 'ok'], s: 'Tested by 13 people on all 14 days.', m: [14, (i) => (i < 13 ? 'ok' : '')], ml: ['14 days done', '12 needed'] }, nights: 'perfect', pics: true, apps: true },
+  under: { chip: ['14 nights done', 'warn', 'alert'], h: 'Finished with 10 testers', l: '10 of 14 testers opened your app every night. Google asks for 12.', warnLine: true,
+    clear: 2, q: 'ask', btn: 'Put it in a new crew',
+    you: { c: ['10 of 14', 'warn'], s: 'Tested by 10 people on all 14 days.', m: [14, (i) => (i < 10 ? 'warn' : '')], ml: ['14 days done', '12 needed'] }, nights: 'mix', pics: true, apps: true },
+  answered: { chip: ['14 nights done', 'ok', 'circleCheck'], h: 'Finished with 14 testers', l: 'All 14 testers opened your app every night. Google asks for 12, so you can apply for production.',
+    clear: 0, res: ['claimed', 'granted'],
+    you: { c: ['14 of 14', 'ok'], s: 'Tested by 14 people on all 14 days.', m: [14, () => 'ok'], ml: ['14 days done', '12 needed'] }, nights: 'perfect', pics: true, apps: true },
+  left: { chip: ['You left', 'quiet', 'logOut'], h: 'You left on day 6', l: 'Your app was tested for 5 nights. Seats are kept once a run starts.',
+    clear: 2, btn: 'Put it in a new crew',
+    you: { c: ['Left', 'quiet'], s: 'Tested for 5 nights before you left.' }, nights: 'left', pics: true, apps: true },
+  removed: { chip: ['Taken out', 'bad', 'userX'], h: 'Taken out on day 4', l: 'You missed 3 nights in a row, so the team took your app out.',
+    clear: 2, btn: 'Put it in a new crew',
+    you: { c: ['Out', 'bad'], s: 'Tested for 3 nights before it was taken out.' }, nights: 'removed', pics: true, apps: true },
+  moved: { chip: ['Moved on day 2', 'acc', 'moved'], h: 'Moved to Crew 06', l: 'Your app carries on in Crew 06, so its result comes from there.', sbtn: 'Open Crew 06', note: 'Your seat went with it, so no tix were spent twice.' },
+  cancelled: { chip: ['Cancelled', 'quiet', 'ban'], h: 'Crew cancelled', l: "It never filled up, so it never started.", note: 'Your 100 tix came back.', members: false },
+  pruned: { chip: ['14 nights done', 'ok', 'circleCheck'], h: 'Finished with 13 testers', l: '13 of 14 testers opened your app every night. Google asks for 12, so you can apply for production.',
+    res: ['claimed', 'notanswered'],
+    you: { c: ['13 of 14', 'ok'], s: 'Tested by 13 people on all 14 days.', m: [14, (i) => (i < 13 ? 'ok' : '')], ml: ['14 days done', '12 needed'], noBtn: true }, pruned: true, members: false },
+};
+function fHero(o, st = {}) {
+  const clearTxt = o.clear === 0 ? 'Details clear tonight' : `Details clear in ${o.clear} days`;
+  const asks = (o.claim ? qOpt('c', st.c || null) : '') + (o.q ? qOpt('q', st.q || null) : '');
+  const res = o.res ? `<div class="fp-res">${o.res.map((r) => result(r)).join('')}</div>` : '';
+  return `<div class="card p16">
+    ${chip(o.chip[0], 'quiet', o.chip[0] === '14 nights done' ? 'calCheck' : o.chip[2])}${sp(10)}
+    <div class="hero-h${o.chip[1] === 'quiet' ? '' : ' i-' + o.chip[1]}">${o.h}</div>
+    ${o.clear != null ? `<div class="fp-chiprow">${chip(clearTxt, o.clear === 0 ? 'warn' : 'quiet', 'clock')}</div>` : ''}
+    ${asks}${res}
+    ${o.sbtn ? sp(16) + `<div class="sbtn">${o.sbtn}</div>` : ''}
+  </div>${o.note ? `<div class="note">${o.note}</div>` : ''}`;
+}
+/* Your app, compact. n = testers every night, of 14; tone; sub for left or out */
+const YA = {
+  full: { n: 13, tone: 'ok', chip: 'Enough' }, answered: { n: 14, tone: 'ok', chip: 'Enough' }, pruned: { n: 13, tone: 'ok', chip: 'Enough', noTap: true },
+  under: { n: 10, tone: 'warn', chip: '2 short' },
+  left: { sub: 'Tested 5 nights, then you left', short: '5 nights, then you left', tone: 'quiet', chip: 'Left' },
+  removed: { sub: 'Tested 3 nights, then taken out', short: '3 nights, then taken out', tone: 'bad', chip: 'Out' },
+};
+const AV = ['S', 'K', 'N', 'L', 'D', 'Z'];
+function youA(k) {
+  const o = YA[k];
+  const sub = o.short || `${o.n} every night`;
+  return `<div class="card p1416"><div class="ya">${art(MINE, 40)}<div class="col"><div class="nm">${MINE.n}</div><div class="sb">${sub}</div></div>${o.noTap ? '' : `<span class="chev">${ic('chevR', 18)}</span>`}</div></div>`;
+}
+const fYouC = (k) => youA(k);
+function fYou(y) {
+  return `<div class="card p1416">
+    <div class="ah">${art(MINE, 52)}<div class="col"><div class="an">${MINE.n}</div><div class="fp-sub">${y.s}</div></div>${chip(...y.c)}</div>
+    ${y.m ? sp(14) + meter(...y.m) + ml(...y.ml) : ''}
+    ${y.noBtn ? '' : sp(12) + `<div class="sbtn">See who tested it</div>`}
+  </div>`;
+}
+function fNights(k) {
+  const o = NIGHTS[k];
+  const counts = {}; o.n.forEach((x) => (counts[x] = (counts[x] || 0) + 1));
+  const leg = Object.keys(LEG).filter((x) => counts[x]).map((x) => `<span><span class="nc ${x}" style="width:13px;height:13px"></span>${x === 'g' ? '' : counts[x] + ' '}${x === 'g' && k === 'removed' ? 'after it was taken out' : LEG[x]}</span>`).join('');
+  return `<div class="card p14">${chip(...o.c)}${sp(10)}
+    <div class="nights">${o.n.map((x) => cell(x)).join('')}</div>
+    <div class="nnum">${o.n.map((_, i) => `<span>${i + 1}</span>`).join('')}</div>
+    <div class="leg">${leg}</div></div>`;
+}
+/* per state: which of the 13 other apps you missed some nights of (m), and which left the crew (l) */
+const AG = {
+  full: { s: 'You opened every app every night', m: [], l: [4] },
+  answered: { s: 'You opened every app every night', m: [], l: [4] },
+  under: { s: 'You opened 10 of 13 apps every night', m: [2, 8, 11], l: [4] },
+  left: { s: 'Up to day 6, you opened 9 of 13 apps every night', m: [1, 2, 8], l: [4] },
+  removed: { s: 'Up to day 4, you opened 1 of 13 apps every night', m: [1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12], l: [4] },
+};
+function fApps(k) {
+  const o = AG[k];
+  const icons = OTH.slice(0, 13).map((a, i) => `<span class="i${o.l.includes(i) ? ' left' : ''}">${art(a, 36)}${o.m.includes(i) ? '<span class="dot"></span>' : ''}</span>`).join('');
+  const leg = (o.m.length ? '<span><i></i>Missed some nights</span>' : '') + (o.l.length ? '<span><em></em>Left the crew</span>' : '');
+  return head('Apps', 13) + `<div class="card p14 agcard"><div class="ag-sum">${o.s}</div><div class="ag">${icons}</div>${leg ? `<div class="ag-leg">${leg}</div>` : ''}</div>`;
+}
+const fCleared = `<div class="fp-clear">${ic('info', 16)}<div><b>Details cleared on Nov 20</b>Nights, testers, apps and pictures are cleared 3 days after a crew ends. The result above stays.</div></div>`;
+function fPage(k, st, opt = {}) {
+  const o = FP[k];
+  let b = fHero(o, st);
+  if (o.you) b += head('Your app') + fYouC(k);
+  if (o.nights) b += head('Your nights') + fNights(o.nights);
+  if (o.apps && !opt.noApps) b += fApps(k);
+  if (o.pruned) b += fCleared;
+  return b;
+}
+function fLoading() {
+  return `<div class="card p16">${sk('130px', 24, 12)}${sp(12)}${sk('75%', 26)}${sp(14)}${sk('140px', 24, 12)}</div>
+    <div class="head">${sk('80px', 18)}</div>
+    <div class="card p1416"><div style="display:flex;align-items:center;gap:12px">${sk('40px', 40, 12)}<div style="flex:1">${sk('70%', 15)}${sp(6)}${sk('50%', 12)}</div></div></div>
+    <div class="head">${sk('90px', 18)}</div>
+    <div class="card p14">${sk('120px', 24, 12)}${sp(10)}${sk('100%', 20, 5)}</div>
+    <div class="head">${sk('60px', 18)}</div>
+    <div class="card p14">${sk('65%', 16)}<div class="ag">${Array.from({ length: 13 }, () => sk('36px', 36, 10)).join('')}</div></div>`;
+}
+const FSTATES = [
+  ['1. Finished, 12 or more, details kept', 'full', 'Crew 07'],
+  ['2. Finished under 12', 'under', 'Crew 01'],
+  ['3. Answered and claimed', 'answered', 'Crew 06'],
+  ['4. You left on day 6', 'left', 'Crew 02'],
+  ['5. Taken out by the team', 'removed', 'Crew 03'],
+  ['6. Moved to another crew', 'moved', 'Crew 05'],
+  ['7. Cancelled', 'cancelled', 'Crew 08'],
+  ['8. After cleanup', 'pruned', 'Crew 04'],
+];
+function crewPageTab() {
+  const pair = ([label, k, name]) => `<div class="pair"><div class="lbl" style="font-size:16px">${label}</div>${phonePage('light', name, fPage(k), { members: FP[k].members })}${phonePage('dark', name, fPage(k), { members: FP[k].members })}</div>`;
+  return S('2. Finished crew page <span class="rec">Recommended</span>',
+    R(FSTATES.slice(0, 4).map(pair).join('')) + sp(40)
+    + R(FSTATES.slice(4).map(pair).join('')) + sp(40)
+    + `<h3>9. Loading and error</h3>` + R(
+      ['light', 'dark'].map((th) => frame(th === 'light' ? 'Loading' : 'Loading, dark', phonePage(th, 'Crew 07', fLoading(), { fix: true, members: false }))).join('')
+      + ['light', 'dark'].map((th) => frame(th === 'light' ? 'Error' : 'Error, dark', phonePage(th, 'Crew 07', robot('off', "This crew didn't load", 'Check your connection, then try again.', 'Try again', true), { fix: true, members: false }))).join(''))
+    + sp(40) + `<h3>Sending, couldn't send, and narrow phones</h3>` + R(
+      frame('Claiming', phonePage('light', 'Crew 07', fHero(FP.full, { c: 'busy' }), { members: true }))
+      + frame("Couldn't send", phonePage('light', 'Crew 07', fHero(FP.full), { msg: PMSG }))
+      + frame('360 wide', phonePage('light', 'Crew 07', fPage('full'), { w: 360 }))
+      + frame('320 wide', phonePage('light', 'Crew 07', fPage('full'), { w: 320 }))
+      + frame('320 wide, dark', phonePage('dark', 'Crew 01', fPage('under'), { w: 320 }))
+      + frame('360 wide, under 12', phonePage('light', 'Crew 01', fPage('under'), { w: 360 })))
+    + sp(40) + `<h3>Apps card, or nothing</h3>` + R(
+      frame('With the Apps card', phonePage('light', 'Crew 01', fPage('under')))
+      + frame('With the Apps card, dark', phonePage('dark', 'Crew 01', fPage('under')))
+      + frame('No Apps card', phonePage('light', 'Crew 01', fPage('under', undefined, { noApps: true })))
+      + frame('No Apps card, dark', phonePage('dark', 'Crew 01', fPage('under', undefined, { noApps: true })))));
+}
+
+/* ---------- 4. component sheet ---------- */
+function sheet(theme) {
+  const it = (html, label) => `<div class="it">${html}<span>${label}</span></div>`;
+  const g = (t, html) => cap(t) + `<div class="cs">${html}</div>`;
+  return mini(theme,
+    g('Status chips, outcome', [
+      chip('Finished with 13 testers', 'ok', 'circleCheck'), chip('Finished with 10 testers', 'warn', 'alert'), chip('Perfect run', 'ok', 'star'),
+      chip('You left on day 6', 'quiet', 'logOut'), chip('Taken out on day 4', 'bad', 'userX'), chip('Moved on day 2', 'acc', 'moved'), chip('Cancelled', 'quiet', 'ban'),
+    ].join(''))
+    + g('Status chips, small', [
+      chip('13 testers', 'ok'), chip('10 of 12 needed', 'warn'), chip('Left', 'quiet'), chip('Out', 'bad'),
+      chip('Every night', 'ok'), chip('12 of 14', 'warn'), chip('Reported', 'warn'),
+      chip('10 of 14 kept', 'quiet'), chip('Every night kept', 'ok', 'circleCheck'),
+      chip('Kept until Fri, Nov 20', 'quiet', 'clock'), chip('Pictures removed', 'quiet', 'imageOff'),
+    ].join(''))
+    + g('Standing line inks', ['ok:Finished with 13 testers', 'warn:Finished with 10 testers', 'quiet:You left on day 6', 'bad:Taken out on day 4', 'acc:Moved to Crew 06'].map((s) => { const [t, x] = s.split(':'); return `<span style="font-size:15px;font-weight:500" class="i-${t}">${x}</span>`; }).join('<span style="width:14px"></span>'))
+    + g('RecordAsk, final: question and claim', `<div style="width:100%">${qOpt('q', null, OPT)}${qOpt('q', 'busy', OPT)}${qOpt('c', null, OPT)}${qOpt('c', 'busy', OPT)}</div>`)
+    + g('RecordAsk at 320 wide or font above 1.3x', `<div class="lg" style="width:100%;--fs:1.5">${qOpt('q', null, OPT)}${qOpt('c', null, OPT)}</div>`)
+    + g('Your app row: 12 or more, under 12, you left, after cleanup (no chevron)', `<div style="width:100%" class="gap8">${youA('full')}${youA('under')}${youA('left')}${youA('pruned')}</div>`)
+    + g('Results', `<div style="width:100%">${result('granted')}${result('notyet')}${result('notanswered')}${result('claimed')}</div>`)
+    + g('AskButton, plain text: ready, sending, disabled', `<span class="x1 b pills"><span class="qb p">Yes</span><span class="qb p spin"><span class="lbl">Yes</span><i class="ring"></i></span><span class="qb p off">No</span><span class="qb p">Claim 100 tix</span></span>`)
+    + g('PageMessage on a failed send', `<div style="width:100%">${PMSG}</div>`)
+    + g('Details clear', `${chip('Details clear in 2 days', 'quiet', 'clock')}${chip('Details clear tonight', 'warn', 'clock')}<div style="width:100%;position:relative;height:3px" class="edgebar"><i style="width:67%"></i></div><div style="width:100%;position:relative;height:3px" class="edgebar"><i class="warn" style="width:12%"></i></div>`)
+    + g('Night cells', ['k', 's', 'm', 'l', 'r', 'g'].map((t) => it(`<div style="width:26px">${cell(t, 'style="display:grid;width:26px"')}</div>`, LEG[t])).join(''))
+    + g('Picture cells', [['pic', 'picture'], ['hand', 'picked by hand'], ['miss', 'missed'], ['off', 'not owed'], ['gone', 'removed']].map(([k, l]) => it(picCell(k, '', SHOT).replace('<span class="d"></span>', ''), l)).join(''))
+    + g('App icon', [it(art(MINE, 52), '52 your app'), it(art(OTH[0], 44), '44 app tile'), it(art(MINE, 28), '28 tile foot'), it(art(OTH[6], 44), 'no icon, letter'), it(art(OTH[0], 21), '21 strip'), it(sk('44px', 44, 13), 'loading')].join(''))
+    + g('Strip icon states', [it(art(OTH[0], 24), 'plain'), it(art(OTH[8], 24), 'letter'), it(sk('24px', 24, 7), 'loading')].join(''))
+    + g('Figure tiles', `<div style="width:100%">${stats([['14', 'stayed'], ['13', 'every night', 'ok'], ['10', 'every night', 'warn']])}${sp(8)}${stats([['3', 'missed', 'bad'], ['97%', 'on time'], ['182', 'owed']])}</div>`)
+    + g('Meters', `<div style="width:100%" class="gap8">${meter(14, (i) => (i < 13 ? 'ok' : ''))}${meter(14, (i) => (i < 10 ? 'warn' : ''))}${meter(14, () => 'ok')}${meter(14, (i) => (i < 5 ? 'acc' : i === 5 ? 'bad' : ''))}${meter(14, (i) => (i < 1 ? 'acc' : i < 4 ? 'bad' : ''))}</div>`)
+    + g('App tile bands', `<div style="width:100%" class="gap8">${Object.values(BANDS).map(([i, t, x]) => `<div class="band i-${t === 'quiet' ? 'faint' : t}">${ic(i, 15)}<span>${x}</span></div>`).join('')}
+        <div class="fb i-ok" style="padding-top:2px">${ic('msg', 14)}Private feedback sent</div><div class="fb" style="color:var(--text3);padding-top:0">${ic('msg', 14)}No feedback sent</div></div>`)
+    + g('Tix row end', Object.values(TIX).map(([, , , v, vt]) => `<span class="rowt"><span class="v i-${vt}">${v}</span></span>`).join('<span style="width:16px"></span>'))
+    + g('Tester avatar and section heading', `<span class="av">S</span><span class="head" style="padding:0">Testers<span class="cb">14</span></span><span class="head" style="padding:0">Apps<span class="cb">14</span></span>`)
+    + g('Bar and buttons', `<span class="back" style="color:var(--text)">${BACK}</span><span class="memb">${ic('users', 16)}15</span><div style="width:100%" class="gap8"><div class="pbtn">Put it in a new crew</div><div class="sbtn">See all 14 testers</div></div>`)
+    + g('Hint box and page note', `<div style="width:100%" class="gap8"><div class="tint">${inl('clock')}Details and pictures clear on Fri, Nov 20</div><div class="tint"><span class="i-warn">${inl('clock')}Details and pictures clear tonight</span></div>${cleared}</div>`)
+  );
+}
+
+/* ---------- page ---------- */
+const S = (title, inner) => `<div class="sec"><h2>${title}</h2>${inner}</div>`;
+const R = (inner) => `<div class="row">${inner}</div>`;
+const blockRow = (label, items) => `<h3>${label}</h3>` + R(['light', 'dark'].map((t) => frame(t === 'light' ? 'Light' : 'Dark', mini(t, items.map(([c, h]) => cap(c) + h).join('')))).join(''));
+
+const TAB = (id, on, inner) => `<div class="panel-tab${on ? ' on' : ''}" id="tab${id}">${inner}</div>`;
+/* ---------- who tested it: one list, no detail page ---------- */
+/* nights: k opened, m missed, r reported, g after they left; pics: last 3 nights, p picture, h picked by hand, - none */
+const WT = [
+  ['Sofia Alvarez', 'kkkkkkkkkkkkkk', 'every', 'ppp'],
+  ['Kenji Sato', 'kkkkkkkkkkkkkk', 'every', 'php'],
+  ['Nadia Karim', 'kkkkmkkkkkkmkk', 'some', '-hp'],
+  ['Amir Haddad', 'kkkkkkkkkkkkkk', 'every', 'ppp'],
+  ['Zara Ahmed', 'kkrkkkkkkkkkkk', 'reported', 'ppp'],
+  ['Lucas Moreau', 'kkkkgggggggggg', 'left', '---'],
+  ['Daniel Okafor', 'kkmmmggggggggg', 'out', '---'],
+  ['Mei Chen', 'kkkkkkkkkkkkkk', 'every', 'pp-'],
+];
+function wtStatus(s, n) {
+  const kept = n.split('').filter((x) => x === 'k' || x === 'r').length;
+  const g = n.indexOf('g') + 1;
+  switch (s) {
+    case 'every': return `<span class="i-ok">14 of 14 nights</span>`;
+    case 'some': return `<span class="i-warn">${kept} of 14 nights</span>`;
+    case 'reported': return `<span class="i-warn">Reported on night ${n.indexOf('r') + 1}</span>`;
+    case 'left': return `<span class="i-faint">Left on day ${g}</span>`;
+    case 'out': return `<span class="i-bad">Taken out on day ${g}</span>`;
+  }
+}
+const wtThumb = (x) => (x === '-' ? '<span class="wt-th none"></span>' : `<span class="wt-th${x === 'h' ? ' hand' : ''}"><span class="top"></span><span class="ln"></span></span>`);
+const wtRow = ([nm, n, s, pics]) => `<div class="wt-r2"><span class="av">${nm[0]}</span><div class="col">
+    <div class="l1"><span class="nm">${nm}</span><span class="wst">${wtStatus(s, n)}</span></div>
+    <div class="l2"><span class="wt-strip">${n.split('').map((x) => `<i class="${x}"></i>`).join('')}</span>${pics === '---' ? '' : `<span class="wt-ths">${pics.split('').map(wtThumb).join('')}</span>`}</div>
+  </div></div>`;
+function whoPage() {
+  return `<div class="wt-sum">13 of 14 testers opened it every night</div>
+    <div class="wt-keep">${ic('clock', 13)}Pictures of the last 3 nights are kept until Fri, Nov 20</div>
+    ${head('Testers', 14)}<div class="card wt-list">${WT.map(wtRow).join('')}</div>
+    <div class="wt-leg2"><span><i class="k"></i>Opened</span><span><i class="m"></i>Missed</span><span><i class="r"></i>Reported</span><span><i class="g"></i>After they left</span></div>`;
+}
+function whoRows() {
+  return `<div class="card wt-list">${[WT[0], WT[2], WT[4], WT[5], WT[6]].map(wtRow).join('')}</div>`;
+}
+function whoViewer() {
+  return `<div class="phone fix dark wt-view"><div class="sbar"></div>
+    <div class="wv-bar"><span class="wv-x">${ic('x', 22)}</span><div class="col"><div class="t">Sofia Alvarez</div><div class="s">Night 14, opened at 9:42 PM</div></div></div>
+    <div class="wv-pic"><span class="top"></span><span class="ln"></span></div>
+  </div>`;
+}
+function whoLoading() {
+  return `${sk('70%', 18)}${sp(8)}${sk('60%', 13)}<div class="head">${sk('80px', 18)}</div>
+    <div class="card wt-list">${[1, 2, 3, 4, 5].map(() => `<div class="wt-r2">${sk('36px', 36, 18)}<div class="col"><div class="l1">${sk('45%', 15)}${sk('25%', 12)}</div><div class="l2">${sk('120px', 8, 3)}<span class="wt-ths">${sk('24px', 32, 5)}${sk('24px', 32, 5)}${sk('24px', 32, 5)}</span></div></div></div>`).join('')}</div>`;
+}
+function whoView() {
+  const W = 'Who tested Bluefy';
+  const f = (lab, html) => `<div class="cp-ph"><div class="lbl">${lab}</div>${html}</div>`;
+  const cleared = (th) => phonePage(th, W, robot('cal', 'Details cleared on Nov 20', 'Testers and pictures are cleared 3 days after a crew ends. The result stays on the crew page.', 'Back to Crew 07', true), { fix: true, members: false });
+  return `<div class="cp-grid">
+    <div class="cp-sec">1. The page</div>
+    ${f('Light', phonePage('light', W, whoPage(), { members: false }))}${f('Dark', phonePage('dark', W, whoPage(), { members: false }))}
+    ${f('320 wide', phonePage('light', W, whoPage(), { members: false, w: 320 }))}
+    <div class="cp-sec">2. Row states: every night, 12 of 14, reported, left, taken out</div>
+    ${f('Light', mini('light', whoRows()))}${f('Dark', mini('dark', whoRows()))}
+    <div class="cp-sec">3. Tap a picture</div>
+    ${f('Full screen picture', whoViewer())}
+    <div class="cp-sec">4. Loading, error, details cleared</div>
+    ${f('Loading', phonePage('light', W, whoLoading(), { fix: true, members: false }))}
+    ${f('Error', phonePage('dark', W, robot('off', "This list didn't load", 'Check your connection, then try again.', 'Try again', true), { fix: true, members: false }))}
+    ${f('Details cleared, from an old link', cleared('light'))}${f('Details cleared, dark', cleared('dark'))}
+  </div>`;
+}
+
+L.image = '<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>';
+/* the rows every option shows: every night (3 pictures), 12 of 14 (1 picture), left (0), taken out (0), reported (3, one by hand), long name */
+const TR = [
+  ['Sofia Alvarez', 'kkkkkkkkkkkkkk', 'every', 'ppp'],
+  ['Nadia Karim', 'kkkkkkkkkkkmmk', 'some', '--p'],
+  ['Lucas Moreau', 'kkkkgggggggggg', 'left', '---'],
+  ['Daniel Okafor', 'kkmmmggggggggg', 'out', '---'],
+  ['Zara Ahmed', 'kkrkkkkkkkkkkk', 'reported', 'php'],
+  ['Bartholomew Featherstonehaugh-Wright', 'kkkkkkkkkkkkkk', 'every', 'ppp'],
+];
+const nPics = (p) => p.split('').filter((x) => x !== '-').length;
+const listJoin = (a) => (a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1]);
+function short(s, n) {
+  const kept = n.split('').filter((x) => x === 'k' || x === 'r').length;
+  const g = n.indexOf('g') + 1;
+  return {
+    every: ['14 of 14', 'ok'], some: [`${kept} of 14`, 'warn'], reported: [`Reported night ${n.indexOf('r') + 1}`, 'warn'],
+    left: [`Left on day ${g}`, 'faint'], out: [`Taken out day ${g}`, 'bad'],
+  }[s];
+}
+function detail(s, n) {
+  const miss = n.split('').map((x, i) => (x === 'm' ? i + 1 : 0)).filter(Boolean);
+  const g = n.indexOf('g');
+  switch (s) {
+    case 'every': return 'Opened it every night';
+    case 'some': return `Missed night${miss.length > 1 ? 's' : ''} ${listJoin(miss)}`;
+    case 'reported': return 'Opened the other 13 nights';
+    case 'left': return `Opened ${g} nights, then left`;
+    case 'out': return `Missed nights ${listJoin(miss)}`;
+  }
+}
+const thumbs = (p) => (nPics(p) ? `<span class="wt-ths">${p.split('').filter((x) => x !== '-').map((x) => wtThumb(x)).join('')}</span>` : '');
+const stat = (s, n) => { const [txt, tone] = short(s, n); return `<span class="fs-sm i-${tone}">${txt}</span>`; };
+
+/* 1 current */
+const r1 = ([nm, n, s, p]) => `<div class="tr"><span class="av fs">${nm[0]}</span><div class="col">
+  <div class="l1"><span class="fs-nm">${nm}</span>${stat(s, n)}</div>
+  <div class="o1-l2"><span class="wt-strip">${n.split('').map((x) => `<i class="${x}"></i>`).join('')}</span>${thumbs(p)}</div></div></div>`;
+/* 2 picture cards */
+function r2([nm, n, s, p]) {
+  const ps = p.split('').filter((x) => x !== '-');
+  const last = ps[ps.length - 1];
+  const pic = ps.length
+    ? `<div class="pic has${last === 'h' ? ' hand' : ''}"><span class="top"></span><span class="ln"></span>${ps.length > 1 ? `<span class="cnt">${ps.length}</span>` : ''}</div>`
+    : `<div class="pic"><span class="none">${ic('imageOff', 18)}No pictures</span></div>`;
+  return `<div class="tc${['left', 'out'].includes(s) ? ' faded' : ''}">${pic}<div class="bd"><div class="fs-nm">${nm}</div>${stat(s, n)}</div></div>`;
+}
+/* 3 ring */
+function ringBg(n) {
+  const seg = 360 / 14, gap = 3;
+  const col = { k: 'var(--ok)', m: 'var(--bad)', r: 'var(--warn)', g: 'var(--track)' };
+  return 'conic-gradient(' + n.split('').map((x, i) => `${col[x]} ${i * seg}deg ${(i + 1) * seg - gap}deg, transparent ${(i + 1) * seg - gap}deg ${(i + 1) * seg}deg`).join(', ') + ')';
+}
+const r3 = ([nm, n, s, p]) => `<div class="tr"><span class="ringw"><span class="rg" style="background:${ringBg(n)}"></span><span class="av">${nm[0]}</span></span><div class="col">
+  <div class="fs-nm">${nm}</div><div style="margin-top:2px">${stat(s, n)}</div></div>${nPics(p) ? `<span class="stack">${p.split('').filter((x) => x !== '-').map((x) => wtThumb(x)).join('')}</span>` : ''}</div>`;
+/* 4 two lines, picture chip */
+const r4 = ([nm, n, s, p]) => `<div class="tr tr4"><span class="av fs">${nm[0]}</span><div class="col">
+  <div class="l1"><span class="fs-nm">${nm}</span>${stat(s, n)}</div><div class="fs-sm t4-l2">${detail(s, n)}</div></div>
+  ${nPics(p) ? `<span class="pchip">${ic('image', 14)}${nPics(p)} picture${nPics(p) > 1 ? 's' : ''}</span>` : ''}</div>`;
+/* 5 dot calendar */
+const r5 = ([nm, n, s, p]) => `<div class="tr"><span class="av fs">${nm[0]}</span><div class="col">
+  <div class="l1"><span class="fs-nm">${nm}</span>${stat(s, n)}</div>
+  <div class="t5-l2"><span class="dots">${n.split('').map((x) => `<i class="${x}"></i>`).join('')}</span>${thumbs(p)}</div></div></div>`;
+
+const OPTS = [
+  [1, 'Current: strip and thumbs', 'night strip under the name, the last 3 pictures at the end', (rows) => `<div class="card wt-list">${rows.map(r1).join('')}</div>`],
+  [2, 'Picture cards', '2-column grid, the last picture on top, name and nights below', (rows) => `<div class="tc-grid">${rows.map(r2).join('')}</div>`],
+  [3, 'Ring, one tile per tester', 'avatar wrapped in a ring of 14 nights, name and count, a tiny picture stack; each tester is its own card, 8dp apart', (rows) => `<div class="gap8">${rows.map((r) => `<div class="card tr3c">${r3(r)}</div>`).join('')}</div>`],
+  [4, 'Two lines, no strip', 'name and count, then the missed nights in words, one "3 pictures" chip that opens the viewer', (rows) => `<div class="card wt-list">${rows.map(r4).join('')}</div>`],
+  [5, 'Dot calendar', '14 dots in 2 rows of 7 under the name, pictures in a small row at the end', (rows) => `<div class="card wt-list">${rows.map(r5).join('')}</div>`],
+];
+const REC = 3;
+const body = (fn) => head('Testers', 14) + fn(TR);
+const fr = (lab, html) => `<div class="to-f"><div class="lbl">${lab}</div>${html}</div>`;
+document.getElementById('doc').innerHTML = OPTS.map(([n, name, sub, fn]) => `<div class="to-sec">
+  <div class="to-h"><span class="to-n">${n}</span><div class="to-t">${name}${n === REC ? ' <span class="rec">Picked</span>' : ''}<small>${sub}</small></div></div>
+  <div class="to-row">
+    ${fr('Light', mini('light', body(fn)))}${fr('Dark', mini('dark', body(fn)))}
+    ${fr('360 wide', mini('light', body(fn), { w: 360 }))}${fr('320 wide', mini('light', body(fn), { w: 320 }))}${fr('Font 1.5x', mini('light', body(fn), { fs: 1.5 }))}
+  </div></div>`).join('');
+</script>
+</body>
+</html>

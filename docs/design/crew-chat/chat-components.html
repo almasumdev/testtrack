@@ -1,0 +1,710 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<title>Crew chat components</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:TtBarlow;src:url(../../../app/src/main/res/font/barlow_regular.ttf);font-weight:400}
+@font-face{font-family:TtBarlow;src:url(../../../app/src/main/res/font/barlow_medium.ttf);font-weight:500}
+@font-face{font-family:TtBarlow;src:url(../../../app/src/main/res/font/barlow_semibold.ttf);font-weight:600}
+@font-face{font-family:TtBarlow;src:url(../../../app/src/main/res/font/barlow_bold.ttf);font-weight:700}
+@font-face{font-family:TtMono;src:url(../../../app/src/main/res/font/plexmono_medium.ttf);font-weight:400 500}
+@font-face{font-family:TtMono;src:url(../../../app/src/main/res/font/plexmono_semibold.ttf);font-weight:600}
+@font-face{font-family:TtMono;src:url(../../../app/src/main/res/font/plexmono_bold.ttf);font-weight:700}
+
+:root{
+  --photo:#000;--onPhoto:#fff;--photoScrim:rgba(0,0,0,.5);--photoBad:#FF8A80;
+}
+[data-theme=light]{
+  --bg:#F7FCFF;--text:#142F43;--text2:#203A4E;--text3:#223D50;--text4:#59758A;
+  --glass:#F2F9FD;--glass2:#DFEDF6;--glassBorder:#B7D1E2;--glassBorderStrong:#789AAF;--hair:#B7D1E2;
+  --accent:#3A5B73;--onAccent:#fff;--accentInk:#22394B;--badgeFill:#3A5B73;--tile:#DCE6EE;--tileInk:#3A5B73;
+  --leafSoft:rgba(74,114,144,.16);--tabSelected:#2E4E66;
+  --ok:#246B59;--okBg:rgba(36,107,89,.12);--bad:#9E3B2E;--badBg:rgba(158,59,46,.12);--badBorder:rgba(158,59,46,.24);--onBad:#fff;
+  --field:#F7FCFF;--fieldBorder:#789AAF;--scrim:rgba(20,34,48,.46);--sheetScrim:rgba(20,34,48,.32);
+  --surface3:#C7DEED;--inverse:#172F42;--onInverse:#EFF7FC;--sheet:#FFFFFF;--card:#F3F8FB;--cardLine:#E1ECF3;
+  --shadow:#102F46;--primary:#3A5B73;--onPrimary:#fff;--skTint:rgba(34,57,75,.07);--skHi:rgba(242,249,253,.8);
+  --pageBg:#D9E1E7;--pageInk:#1d2b36;
+}
+[data-theme=dark]{
+  --bg:#0F1011;--text:#ECEEF0;--text2:#BCC1C6;--text3:#9DA3A9;--text4:#757C82;
+  --glass:#1C1E20;--glass2:#292C2F;--glassBorder:#383C41;--glassBorderStrong:#666D74;--hair:#2B2E32;
+  --accent:#4A7290;--onAccent:#fff;--accentInk:#93B3CA;--badgeFill:#4A7290;--tile:#2A2D31;--tileInk:#A2BED2;
+  --leafSoft:#2A2D31;--tabSelected:#B6CCDC;
+  --ok:#83D8C4;--okBg:rgba(131,216,196,.12);--bad:#E4938A;--badBg:rgba(228,147,138,.15);--badBorder:rgba(228,147,138,.3);--onBad:#3F0D06;
+  --field:#141618;--fieldBorder:#666D74;--scrim:rgba(0,0,0,.6);--sheetScrim:rgba(0,0,0,.32);
+  --surface3:#2E3236;--inverse:#E8EBEE;--onInverse:#15181A;--sheet:#1C1E20;--card:#1C1E20;--cardLine:#2D3034;
+  --shadow:#000;--primary:#93B3CA;--onPrimary:#0F1011;--skTint:rgba(147,179,202,.07);--skHi:rgba(28,30,32,.8);
+  --pageBg:#2a2c2f;--pageInk:#e6e8ea;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--pageBg);color:var(--pageInk);font-family:TtBarlow,Barlow,sans-serif;padding:24px 28px 80px}
+.top{display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:50;background:var(--pageBg);padding:10px 0 12px}
+.top h1{font-size:22px;font-weight:700}
+.toggle{display:flex;border-radius:99px;overflow:hidden;border:1px solid var(--glassBorderStrong)}
+.toggle button{font:600 14px TtBarlow,Barlow,sans-serif;padding:7px 16px;border:0;background:transparent;color:var(--pageInk);cursor:pointer}
+.toggle button.on{background:var(--accent);color:#fff}
+.nav-links{display:flex;gap:10px;flex-wrap:wrap;font-size:13px;font-weight:600}
+.nav-links a{color:var(--pageInk);opacity:.75;text-decoration:none}
+h2{font-size:19px;font-weight:700;margin:34px 0 14px;padding-top:6px;border-top:1px solid rgba(127,127,127,.35)}
+.grid{display:flex;flex-wrap:wrap;gap:26px 22px;align-items:flex-start}
+.item{display:flex;flex-direction:column;gap:7px}
+.lab{font-size:13.5px;font-weight:700;letter-spacing:.2px}
+.lab small{font-weight:500;opacity:.7;margin-left:4px}
+
+/* phone */
+.phone{width:360px;height:760px;background:var(--bg);border-radius:26px;overflow:hidden;position:relative;box-shadow:0 0 0 7px #111,0 10px 30px rgba(0,0,0,.25);display:flex;flex-direction:column;color:var(--text)}
+.phone.short{height:520px}
+.sbar{height:24px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 18px;font:500 12px TtBarlow,sans-serif;color:var(--text)}
+.sbar.dark{color:#fff;background:transparent}
+.scr{flex:1;display:flex;flex-direction:column;position:relative;min-height:0}
+.navb{height:16px;flex:none;display:flex;align-items:center;justify-content:center}
+.navb i{width:108px;height:4px;border-radius:2px;background:var(--text);opacity:.35}
+.panel{width:360px;background:var(--bg);border-radius:18px;padding:6px 12px 16px;color:var(--text);position:relative}
+.panel.flat{padding:16px}
+
+/* text */
+.t{font-family:TtBarlow,Barlow,sans-serif;letter-spacing:.25px}
+.mono{font-family:TtMono,'IBM Plex Mono',monospace;font-feature-settings:"tnum"}
+svg.ic{display:block;flex:none}
+
+/* top bar */
+.pbar{height:64px;flex:none;display:flex;align-items:center;padding:0 4px 0 4px}
+.pbar .nav{width:48px;height:48px;display:flex;align-items:center;justify-content:center}
+.pbar .title{flex:1;min-width:0;display:flex;align-items:center;font:700 22px/28px TtBarlow,sans-serif;color:var(--text)}
+.pbar .title span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pbar .acts{display:flex;align-items:center;padding-right:16px;position:relative}
+.ibtn{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+
+/* thread */
+.thread{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;padding:4px 12px 10px}
+.row{display:flex;align-items:flex-end;width:100%}
+.row.mine{justify-content:flex-end}
+.col{display:flex;flex-direction:column;align-items:flex-start;min-width:0}
+.row.mine .col{align-items:flex-end}
+.who{font:600 12px/16px TtBarlow,sans-serif;letter-spacing:.25px;color:var(--text3);padding:0 0 2px 12px;max-width:270px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bub{max-width:270px;padding:7px 10px 6px 12px;position:relative;overflow:hidden}
+.bub.q{padding-top:6px}
+.words{position:relative;font:400 15px/20px TtBarlow,sans-serif;letter-spacing:.25px;word-wrap:break-word}
+.msp{display:inline-block;height:1px}
+.meta{position:absolute;right:0;bottom:-2px;display:flex;align-items:center;gap:3px;height:14px}
+.time{font:500 10.5px/14px TtMono,'IBM Plex Mono',monospace;font-feature-settings:"tnum";white-space:nowrap}
+.mn{font-weight:700}
+.mme{font-weight:700;background:var(--tile);color:var(--tileInk)}
+.chip{display:inline-flex;align-items:center;vertical-align:middle;height:21px;margin:-2px 0;padding:1px 0}
+.chip>span{display:inline-flex;align-items:center;height:19px;border-radius:99px;background:var(--bg);box-shadow:inset 0 0 0 1px var(--cardLine);padding:0 8px 0 3px;gap:5px;font:600 14px/19px TtBarlow,sans-serif;color:var(--text);letter-spacing:.25px}
+.quote{display:flex;border-radius:8px;padding:4px 8px 5px 11px;position:relative;overflow:hidden;max-width:240px}
+.quote::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--qbar)}
+.quote .qw{font:700 12px/16px TtBarlow,sans-serif;letter-spacing:.25px;color:var(--qbar);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.quote .qt{font:400 13px/17px TtBarlow,sans-serif;letter-spacing:.25px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.avatar{border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--tile);color:var(--tileInk);font:600 14px TtBarlow,sans-serif;letter-spacing:.1px;flex:none;overflow:hidden}
+.apptile{display:flex;align-items:center;justify-content:center;flex:none;font-weight:600;font-family:TtBarlow,sans-serif}
+.daychip{display:flex;justify-content:center;padding:14px 0 4px}
+.daychip span{border-radius:99px;background:var(--glass2);padding:3px 10px;font:600 11.5px/15px TtBarlow,sans-serif;letter-spacing:.25px;color:var(--text3)}
+.newline{display:flex;align-items:center;padding-top:14px}
+.newline i{flex:1;height:1px;background:var(--glassBorder)}
+.newline span{padding:0 8px;font:700 12px/16px TtBarlow,sans-serif;letter-spacing:.25px;color:var(--accentInk)}
+.botline{display:flex;justify-content:center;padding:12px 0 2px}
+.botline>div{max-width:340px;display:flex;align-items:center;border-radius:99px;padding:3px 12px 3px 5px;gap:7px;font:400 12.5px/17px TtBarlow,sans-serif;letter-spacing:.25px}
+.team{margin:12px 0 2px;border-radius:14px;background:var(--bg);padding:10px 14px 12px;outline:1px dashed var(--glassBorder);outline-offset:-.5px}
+.failed{display:flex;flex-direction:column;align-items:flex-end;padding:4px 4px 0}
+.failed .r{display:flex;align-items:center;font:400 12.5px/17px TtBarlow,sans-serif;letter-spacing:.25px}
+.failed .e{font:400 12px/16px TtBarlow,sans-serif;letter-spacing:.25px;color:var(--text3)}
+.stub{display:flex;align-items:center;padding:6px 10px 6px 12px;gap:0}
+.skel{background:linear-gradient(var(--skTint),var(--skTint)),var(--glass2);position:relative;overflow:hidden}
+.skel::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,var(--skHi) 50%,transparent 70%);background-size:300% 100%;animation:sh 2.2s linear infinite}
+@keyframes sh{from{background-position:150% 0}to{background-position:-150% 0}}
+
+/* composer */
+.cframe{flex:none;background:var(--bg);border-top:1px solid var(--cardLine);padding:6px 12px 12px}
+.crow{display:flex;align-items:flex-end;gap:8px}
+.rb{border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none;position:relative}
+.field{flex:1;min-height:48px;border-radius:24px;background:var(--bg);padding:13px 16px;display:flex;align-items:flex-end;gap:8px;font:400 15px/20px TtBarlow,sans-serif;letter-spacing:.25px;min-width:0}
+.field .ph{color:var(--text4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
+.field .tx{color:var(--text);flex:1;min-width:0}
+.caret{display:inline-block;width:2px;height:18px;background:var(--accentInk);vertical-align:-3px;margin-left:1px}
+.left{font:500 12px/20px TtMono,'IBM Plex Mono',monospace;color:var(--text4);white-space:nowrap}
+.pbadge{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:9px;background:var(--badgeFill);box-shadow:0 0 0 1.5px var(--bg);padding:0 4px;display:flex;align-items:center;justify-content:center;font:700 10.5px/13px TtMono,monospace;color:var(--onAccent)}
+.cline{display:flex;gap:6px;padding:7px 8px 0;font:400 13px/17px TtBarlow,sans-serif;letter-spacing:.25px}
+.tip{position:absolute;left:12px;bottom:calc(100% + 2px);max-width:260px;border-radius:12px;background:var(--inverse);color:var(--onInverse);padding:8px 12px;font:400 13px/17px TtBarlow,sans-serif;letter-spacing:.25px;z-index:5}
+.closed{display:flex;align-items:center;gap:10px;border-radius:14px;background:var(--glass2);padding:12px 14px;font:400 13.5px/18px TtBarlow,sans-serif;letter-spacing:.25px;color:var(--text2)}
+
+/* sheets and dialogs */
+.ov{position:absolute;inset:0;z-index:20}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--glass);border-radius:22px 22px 0 0;z-index:21;padding:0 16px 16px;display:flex;flex-direction:column}
+.handle{align-self:center;width:38px;height:4px;border-radius:2px;background:var(--text4);opacity:.5;margin:10px 0 14px}
+.stitle{font:700 17px/22px TtBarlow,sans-serif;letter-spacing:.15px;color:var(--text);margin-bottom:14px}
+.srow{display:flex;align-items:center;min-height:58px;padding:4px 0;gap:14px}
+.srow .tt{font:600 16px/20px TtBarlow,sans-serif;letter-spacing:.25px}
+.srow .ln{font:400 12.5px/16px TtBarlow,sans-serif;letter-spacing:.25px;color:var(--text3)}
+.itile{border-radius:11px;display:flex;align-items:center;justify-content:center;flex:none}
+.shead{font:700 13px/17px TtBarlow,sans-serif;letter-spacing:.25px;color:var(--text3);padding:14px 0 2px}
+.search{height:48px;border-radius:24px;background:var(--field);box-shadow:inset 0 0 0 1.2px var(--fieldBorder);display:flex;align-items:center;padding:0 11px 0 14px;gap:10px;font:500 15px TtBarlow,sans-serif;letter-spacing:.5px}
+.menu{position:absolute;top:52px;right:16px;background:var(--sheet);border-radius:14px;padding:8px 0;z-index:22;box-shadow:0 3px 10px rgba(0,0,0,.18),0 1px 3px rgba(0,0,0,.12)}
+.mrow{width:214px;min-height:48px;display:flex;align-items:center;gap:12px;padding:8px 16px}
+.dlgwrap{position:absolute;left:22px;right:22px;top:50%;transform:translateY(-50%);z-index:21}
+.dlg{background:var(--glass);border-radius:18px;padding:18px 16px 14px;position:relative}
+.dlg h3{font:700 16px/21px TtBarlow,sans-serif;letter-spacing:.15px;color:var(--text)}
+.dlg p{font:400 13.5px/19.5px TtBarlow,sans-serif;letter-spacing:.25px;color:var(--text2);margin-top:6px}
+.btns{display:flex;justify-content:flex-end;gap:6px;margin-top:14px}
+.btn{height:52px;border-radius:26px;padding:0 18px;display:flex;align-items:center;font:600 14px TtBarlow,sans-serif;letter-spacing:.1px}
+.pmsg{padding:6px 16px}
+.pmsg>div{display:flex;align-items:center;gap:10px;border-radius:14px;background:var(--glass);box-shadow:inset 0 0 0 1px var(--glassBorder);padding:11px 10px 11px 14px;font:400 14px/19px TtBarlow,sans-serif;letter-spacing:.25px;color:var(--text)}
+
+/* photo screens */
+.dark-scr{background:#000;color:#fff}
+.ebtn{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none}
+.schip{min-height:36px;border-radius:18px;padding:8px 14px;font:600 14px/20px TtBarlow,sans-serif;letter-spacing:.1px;flex:none}
+
+/* entry */
+.crewcard{border-radius:14px;background:var(--bg);box-shadow:inset 0 0 0 1px var(--cardLine);padding:16px}
+.fab{height:52px;min-width:52px;border-radius:26px;display:inline-flex;align-items:center;position:relative}
+.track{border-radius:99px;background:var(--card);box-shadow:inset 0 0 0 1px var(--cardLine);padding:4px;display:flex;gap:2px}
+.seg{height:34px;border-radius:17px;display:flex;align-items:center;justify-content:center;flex:1;font:500 14px TtBarlow,sans-serif;letter-spacing:.1px}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute"><defs id="robotdefs"></defs></svg>
+<div class="top">
+  <h1>Crew chat components</h1>
+  <div class="toggle"><button id="bl" class="on">Light</button><button id="bd">Dark</button></div>
+  <div class="nav-links">
+    <a href="#s1">Page</a><a href="#s2">Bubbles</a><a href="#s3">Rows</a><a href="#s4">Pictures</a><a href="#s5">Composer</a><a href="#s6">Sheets</a><a href="#s7">Editor</a><a href="#s8">Ways in</a>
+  </div>
+</div>
+<div id="app"></div>
+
+<script>
+window.ASSETS = {"icons": {"bell-off": "<path d=\"M8.7 3A6 6 0 0 1 18 8a21.3 21.3 0 0 0 .6 5\"/><path d=\"M17 17H3s3-2 3-9a4.67 4.67 0 0 1 .3-1.7\"/><path d=\"M10.3 21a1.94 1.94 0 0 0 3.4 0\"/><path d=\"m2 2 20 20\"/>", "bell": "<path d=\"M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9\"/><path d=\"M10.3 21a1.94 1.94 0 0 0 3.4 0\"/>", "ellipsis-vertical": "<circle cx=\"12\" cy=\"12\" r=\"1\"/><circle cx=\"12\" cy=\"5\" r=\"1\"/><circle cx=\"12\" cy=\"19\" r=\"1\"/>", "users": "<path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/><path d=\"M22 21v-2a4 4 0 0 0-3-3.87\"/><path d=\"M16 3.13a4 4 0 0 1 0 7.75\"/>", "messages-square": "<path d=\"M14 9a2 2 0 0 1-2 2H6l-4 4V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2z\"/><path d=\"M18 9h2a2 2 0 0 1 2 2v11l-4-4h-6a2 2 0 0 1-2-2v-1\"/>", "circle-alert": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><line x1=\"12\" x2=\"12\" y1=\"8\" y2=\"12\"/><line x1=\"12\" x2=\"12.01\" y1=\"16\" y2=\"16\"/>", "rotate-ccw": "<path d=\"M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8\"/><path d=\"M3 3v5h5\"/>", "ban": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m4.9 4.9 14.2 14.2\"/>", "clock": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><polyline points=\"12 6 12 12 16 14\"/>", "image-off": "<line x1=\"2\" x2=\"22\" y1=\"2\" y2=\"22\"/><path d=\"M10.41 10.41a2 2 0 1 1-2.83-2.83\"/><line x1=\"13.5\" x2=\"6\" y1=\"13.5\" y2=\"21\"/><line x1=\"18\" x2=\"21\" y1=\"12\" y2=\"15\"/><path d=\"M3.59 3.59A1.99 1.99 0 0 0 3 5v14a2 2 0 0 0 2 2h14c.55 0 1.052-.22 1.41-.59\"/><path d=\"M21 15V5a2 2 0 0 0-2-2H9\"/>", "image-plus": "<path d=\"M16 5h6\"/><path d=\"M19 2v6\"/><path d=\"M21 11.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7.5\"/><path d=\"m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21\"/><circle cx=\"9\" cy=\"9\" r=\"2\"/>", "send": "<path d=\"M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z\"/><path d=\"m21.854 2.147-10.94 10.939\"/>", "x": "<path d=\"M18 6 6 18\"/><path d=\"m6 6 12 12\"/>", "lock": "<rect width=\"18\" height=\"11\" x=\"3\" y=\"11\" rx=\"2\" ry=\"2\"/><path d=\"M7 11V7a5 5 0 0 1 10 0v4\"/>", "reply": "<polyline points=\"9 17 4 12 9 7\"/><path d=\"M20 18v-2a4 4 0 0 0-4-4H4\"/>", "copy": "<rect width=\"14\" height=\"14\" x=\"8\" y=\"8\" rx=\"2\" ry=\"2\"/><path d=\"M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2\"/>", "trash-2": "<path d=\"M3 6h18\"/><path d=\"M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6\"/><path d=\"M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2\"/><line x1=\"10\" x2=\"10\" y1=\"11\" y2=\"17\"/><line x1=\"14\" x2=\"14\" y1=\"11\" y2=\"17\"/>", "crop": "<path d=\"M6 2v14a2 2 0 0 0 2 2h14\"/><path d=\"M18 22V8a2 2 0 0 0-2-2H2\"/>", "pencil": "<path d=\"M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z\"/><path d=\"m15 5 4 4\"/>", "type": "<polyline points=\"4 7 4 4 20 4 20 7\"/><line x1=\"9\" x2=\"15\" y1=\"20\" y2=\"20\"/><line x1=\"12\" x2=\"12\" y1=\"4\" y2=\"20\"/>", "undo-2": "<path d=\"M9 14 4 9l5-5\"/><path d=\"M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11\"/>", "check": "<path d=\"M20 6 9 17l-5-5\"/>", "rotate-cw": "<path d=\"M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8\"/><path d=\"M21 3v5h-5\"/>", "message-circle": "<path d=\"M7.9 20A9 9 0 1 0 4 16.1L2 22Z\"/>", "search": "<circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"m21 21-4.3-4.3\"/>", "info": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M12 16v-4\"/><path d=\"M12 8h.01\"/>", "calendar": "<path d=\"M8 2v4\"/><path d=\"M16 2v4\"/><rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\"/><path d=\"M3 10h18\"/>", "log-out": "<path d=\"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4\"/><polyline points=\"16 17 21 12 16 7\"/><line x1=\"21\" x2=\"9\" y1=\"12\" y2=\"12\"/>"}, "robot": {"level_robot_body": "<g transform=\"translate(-185.0 -110.0) rotate(0.0) scale(1 1) translate(-0.0 -0.0)\"><path d=\"M384 784 C426 730 471 713 520 710 L728 710 C778 715 824 736 866 784 L888 946 C824 1005 735 1031 627 1031 C518 1031 428 1005 363 946 Z\" fill=\"url(#rg1)\"/></g>", "level_robot_head": "<g transform=\"translate(-185.0 -110.0) rotate(0.0) scale(1 1) translate(-0.0 -0.0)\"><g transform=\"translate(627.0 530.0) rotate(0.0) scale(1 1) translate(-627.0 -530.0)\"><g transform=\"translate(0.0 0.0) rotate(0.0) scale(1 1) translate(-0.0 -0.0)\"><path d=\"M309 436 C250 430 215 483 215 546 C215 609 249 659 309 654 L330 624 V465 Z\" fill=\"url(#rg2)\"/><path d=\"M944 436 C1003 430 1039 483 1039 546 C1039 609 1004 659 944 654 L923 624 V465 Z\" fill=\"url(#rg3)\"/><path d=\"M267 546 A25 59 0 1 1 217 546 A25 59 0 1 1 267 546 Z\" fill=\"#6CA9CF\"/><path d=\"M1037 546 A25 59 0 1 1 987 546 A25 59 0 1 1 1037 546 Z\" fill=\"#6CA9CF\"/></g><path d=\"M627 277 C428 277 332 328 302 452 C286 514 283 608 307 656 C332 718 409 743 627 743 C845 743 922 718 947 656 C971 608 968 514 952 452 C922 328 826 277 627 277 Z\" fill=\"url(#rg4)\"/><path d=\"M627 372 C481 372 399 387 366 455 C346 492 341 550 350 590 C363 656 397 677 627 677 C857 677 891 656 904 590 C913 550 908 492 888 455 C855 387 773 372 627 372 Z\" fill=\"#FFFCF1\"/><path d=\"M576 594 C602 620 651 620 677 594\" fill-opacity=\"0.000\" fill=\"#000000\" stroke=\"#17253B\" stroke-width=\"31\" stroke-linecap=\"round\"/></g></g>", "level_robot_eyes": "<g transform=\"translate(-185.0 -110.0) rotate(0.0) scale(1 1) translate(-0.0 -0.0)\"><g transform=\"translate(627.0 529.0) rotate(0.0) scale(1 1) translate(-627.0 -529.0)\"><g transform=\"translate(627.0 529.0) rotate(0.0) scale(1 1) translate(-627.0 -529.0)\"><path d=\"M542 529 A61 61 0 1 1 420 529 A61 61 0 1 1 542 529 Z\" fill=\"#17253B\"/><path d=\"M833 529 A61 61 0 1 1 711 529 A61 61 0 1 1 833 529 Z\" fill=\"#17253B\"/><path d=\"M515 504 A19 19 0 1 1 477 504 A19 19 0 1 1 515 504 Z\" fill=\"#FFFFFF\"/><path d=\"M805 504 A19 19 0 1 1 767 504 A19 19 0 1 1 805 504 Z\" fill=\"#FFFFFF\"/></g></g></g>", "level_robot_antenna": "<g transform=\"translate(-185.0 -110.0) rotate(0.0) scale(1 1) translate(-0.0 -0.0)\"><g transform=\"translate(627.0 278.0) rotate(0.0) scale(1 1) translate(-627.0 -278.0)\"><path d=\"M603 227 H650 V295 H603 Z\" fill=\"#1D5C82\"/><path d=\"M687 187 A60 60 0 1 1 567 187 A60 60 0 1 1 687 187 Z\" fill=\"url(#rg5)\"/><path d=\"M618 164 A14 14 0 1 1 590 164 A14 14 0 1 1 618 164 Z\" fill=\"#FFFFFF\"/></g></g>", "level_robot_hands": "<g transform=\"translate(-185.0 -110.0) rotate(0.0) scale(1 1) translate(-0.0 -0.0)\"><path d=\"M302 829 C263 834 230 870 229 912 C226 957 252 992 294 996 C335 1000 366 969 371 925 C375 878 345 835 302 829 Z\" fill=\"url(#rg6)\"/><path d=\"M307 847 C276 841 253 873 254 910 C254 943 275 966 307 966 C340 966 368 947 371 923 C374 894 348 852 307 847 Z\" fill=\"url(#rg7)\"/><path d=\"M951 829 C990 834 1023 870 1024 912 C1027 957 1001 992 959 996 C918 1000 887 969 882 925 C878 878 908 835 951 829 Z\" fill=\"url(#rg8)\"/><path d=\"M946 847 C977 841 1000 873 999 910 C999 943 978 966 946 966 C913 966 885 947 882 923 C879 894 905 852 946 847 Z\" fill=\"url(#rg9)\"/></g>", "robot_prop_plug_face": "<g transform=\"translate(-185.0 -110.0) rotate(0.0) scale(1 1) translate(-0.0 -0.0)\"><path d=\"M433 535 A48 48 0 1 0 529 535 A48 48 0 1 0 433 535 Z\" fill=\"#17253B\"/><path d=\"M452.6 519 A14.4 14.4 0 1 0 481.4 519 A14.4 14.4 0 1 0 452.6 519 Z\" fill=\"#FFFFFF\"/><path d=\"M491.6 551.8 A6.2 6.2 0 1 0 504 551.8 A6.2 6.2 0 1 0 491.6 551.8 Z\" fill=\"#FFFFFF\"/><path d=\"M724 535 A48 48 0 1 0 820 535 A48 48 0 1 0 724 535 Z\" fill=\"#17253B\"/><path d=\"M743.6 519 A14.4 14.4 0 1 0 772.4 519 A14.4 14.4 0 1 0 743.6 519 Z\" fill=\"#FFFFFF\"/><path d=\"M782.6 551.8 A6.2 6.2 0 1 0 795 551.8 A6.2 6.2 0 1 0 782.6 551.8 Z\" fill=\"#FFFFFF\"/><path d=\"M424 470 Q470 462 524 446\" fill=\"none\" stroke=\"#17253B\" stroke-width=\"14\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M829 470 Q783 462 729 446\" fill=\"none\" stroke=\"#17253B\" stroke-width=\"14\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M572 578 H682 A20 20 0 0 1 702 598 V614 A20 20 0 0 1 682 634 H572 A20 20 0 0 1 552 614 V598 A20 20 0 0 1 572 578 Z\" fill=\"#FFFCF1\"/><path d=\"M615 606 A12 13.8 0 1 0 639 606 A12 13.8 0 1 0 615 606 Z\" fill=\"#17253B\"/></g>", "robot_prop_plug_left": "<g transform=\"translate(-185.0 -110.0) rotate(0.0) scale(1 1) translate(-0.0 -0.0)\"><g transform=\"translate(627.0 906.0) rotate(0.0) scale(1.3 1.3) translate(-627.0 -906.0)\"><path d=\"M402 940 C440 946 452 906 496 906\" fill=\"none\" stroke=\"#17405E\" stroke-width=\"50\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M402 940 C440 946 452 906 496 906\" fill=\"none\" stroke=\"#DDE7EF\" stroke-width=\"24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M510 860 H560 A24 24 0 0 1 584 884 V928 A24 24 0 0 1 560 952 H510 A24 24 0 0 1 486 928 V884 A24 24 0 0 1 510 860 Z\" fill=\"none\" stroke=\"#17405E\" stroke-width=\"26\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M510 860 H560 A24 24 0 0 1 584 884 V928 A24 24 0 0 1 560 952 H510 A24 24 0 0 1 486 928 V884 A24 24 0 0 1 510 860 Z\" fill=\"url(#rg10)\"/><path d=\"M591 876 H629 A7 7 0 0 1 636 883 V885 A7 7 0 0 1 629 892 H591 A7 7 0 0 1 584 885 V883 A7 7 0 0 1 591 876 Z\" fill=\"none\" stroke=\"#17405E\" stroke-width=\"16\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M591 876 H629 A7 7 0 0 1 636 883 V885 A7 7 0 0 1 629 892 H591 A7 7 0 0 1 584 885 V883 A7 7 0 0 1 591 876 Z\" fill=\"url(#rg11)\"/><path d=\"M591 920 H629 A7 7 0 0 1 636 927 V929 A7 7 0 0 1 629 936 H591 A7 7 0 0 1 584 929 V927 A7 7 0 0 1 591 920 Z\" fill=\"none\" stroke=\"#17405E\" stroke-width=\"16\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M591 920 H629 A7 7 0 0 1 636 927 V929 A7 7 0 0 1 629 936 H591 A7 7 0 0 1 584 929 V927 A7 7 0 0 1 591 920 Z\" fill=\"url(#rg12)\"/><path d=\"M506 878 V928\" fill=\"none\" stroke=\"#FFFFFF\" stroke-width=\"10\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-opacity=\"0.8\"/></g></g>", "robot_prop_plug_right": "<g transform=\"translate(-185.0 -110.0) rotate(0.0) scale(1 1) translate(-0.0 -0.0)\"><g transform=\"translate(627.0 906.0) rotate(0.0) scale(1.3 1.3) translate(-627.0 -906.0)\"><path d=\"M852 940 C814 946 802 906 758 906\" fill=\"none\" stroke=\"#17405E\" stroke-width=\"50\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M852 940 C814 946 802 906 758 906\" fill=\"none\" stroke=\"#DDE7EF\" stroke-width=\"24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M694 852 H740 A26 26 0 0 1 766 878 V934 A26 26 0 0 1 740 960 H694 A26 26 0 0 1 668 934 V878 A26 26 0 0 1 694 852 Z\" fill=\"none\" stroke=\"#17405E\" stroke-width=\"26\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M694 852 H740 A26 26 0 0 1 766 878 V934 A26 26 0 0 1 740 960 H694 A26 26 0 0 1 668 934 V878 A26 26 0 0 1 694 852 Z\" fill=\"url(#rg13)\"/><path d=\"M693 876 H701 A7 7 0 0 1 708 883 V885 A7 7 0 0 1 701 892 H693 A7 7 0 0 1 686 885 V883 A7 7 0 0 1 693 876 Z\" fill=\"#5A2A20\"/><path d=\"M693 920 H701 A7 7 0 0 1 708 927 V929 A7 7 0 0 1 701 936 H693 A7 7 0 0 1 686 929 V927 A7 7 0 0 1 693 920 Z\" fill=\"#5A2A20\"/></g></g>", "robot_prop_plug_spark": "<g transform=\"translate(-185.0 -110.0) rotate(0.0) scale(1 1) translate(-0.0 -0.0)\"><g transform=\"translate(627.0 906.0) rotate(0.0) scale(1.3 1.3) translate(-627.0 -906.0)\"><path d=\"M664 784 L642 826 L668 826 L646 868\" fill=\"none\" stroke=\"#FFC23D\" stroke-width=\"13\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M605 806 A7 7 0 1 0 619 806 A7 7 0 1 0 605 806 Z\" fill=\"#FFC23D\"/><path d=\"M684 846 A6 6 0 1 0 696 846 A6 6 0 1 0 684 846 Z\" fill=\"#FFC23D\"/></g></g>"}, "defs": "<linearGradient id=\"rg1\" gradientUnits=\"userSpaceOnUse\" x1=\"230\" y1=\"436\" x2=\"1000\" y2=\"985\"><stop offset=\"0\" stop-color=\"#245F84\" stop-opacity=\"1.0\"/><stop offset=\"1\" stop-color=\"#174866\" stop-opacity=\"1.0\"/></linearGradient><linearGradient id=\"rg2\" gradientUnits=\"userSpaceOnUse\" x1=\"230\" y1=\"436\" x2=\"1000\" y2=\"985\"><stop offset=\"0\" stop-color=\"#245F84\" stop-opacity=\"1.0\"/><stop offset=\"1\" stop-color=\"#174866\" stop-opacity=\"1.0\"/></linearGradient><linearGradient id=\"rg3\" gradientUnits=\"userSpaceOnUse\" x1=\"230\" y1=\"436\" x2=\"1000\" y2=\"985\"><stop offset=\"0\" stop-color=\"#245F84\" stop-opacity=\"1.0\"/><stop offset=\"1\" stop-color=\"#174866\" stop-opacity=\"1.0\"/></linearGradient><linearGradient id=\"rg4\" gradientUnits=\"userSpaceOnUse\" x1=\"350\" y1=\"277\" x2=\"910\" y2=\"744\"><stop offset=\"0\" stop-color=\"#32729B\" stop-opacity=\"1.0\"/><stop offset=\"1\" stop-color=\"#1D5C82\" stop-opacity=\"1.0\"/></linearGradient><linearGradient id=\"rg5\" gradientUnits=\"userSpaceOnUse\" x1=\"310\" y1=\"765\" x2=\"568\" y2=\"1056\"><stop offset=\"0\" stop-color=\"#F99B80\" stop-opacity=\"1.0\"/><stop offset=\"1\" stop-color=\"#EF806B\" stop-opacity=\"1.0\"/></linearGradient><linearGradient id=\"rg6\" gradientUnits=\"userSpaceOnUse\" x1=\"230\" y1=\"436\" x2=\"1000\" y2=\"985\"><stop offset=\"0\" stop-color=\"#245F84\" stop-opacity=\"1.0\"/><stop offset=\"1\" stop-color=\"#174866\" stop-opacity=\"1.0\"/></linearGradient><linearGradient id=\"rg7\" gradientUnits=\"userSpaceOnUse\" x1=\"270\" y1=\"846\" x2=\"960\" y2=\"966\"><stop offset=\"0\" stop-color=\"#80BCDE\" stop-opacity=\"1.0\"/><stop offset=\"1\" stop-color=\"#5E9DC5\" stop-opacity=\"1.0\"/></linearGradient><linearGradient id=\"rg8\" gradientUnits=\"userSpaceOnUse\" x1=\"230\" y1=\"436\" x2=\"1000\" y2=\"985\"><stop offset=\"0\" stop-color=\"#245F84\" stop-opacity=\"1.0\"/><stop offset=\"1\" stop-color=\"#174866\" stop-opacity=\"1.0\"/></linearGradient><linearGradient id=\"rg9\" gradientUnits=\"userSpaceOnUse\" x1=\"270\" y1=\"846\" x2=\"960\" y2=\"966\"><stop offset=\"0\" stop-color=\"#80BCDE\" stop-opacity=\"1.0\"/><stop offset=\"1\" stop-color=\"#5E9DC5\" stop-opacity=\"1.0\"/></linearGradient><linearGradient id=\"rg10\" gradientUnits=\"userSpaceOnUse\" x1=\"486\" y1=\"860\" x2=\"584\" y2=\"952\"><stop offset=\"0\" stop-color=\"#FFFFFF\" stop-opacity=\"1.0\"/><stop offset=\"1\" stop-color=\"#E3ECF3\" stop-opacity=\"1.0\"/></linearGradient><linearGradient id=\"rg11\" gradientUnits=\"userSpaceOnUse\" x1=\"584\" y1=\"876\" x2=\"636\" y2=\"892\"><stop offset=\"0\" stop-color=\"#E6EDF3\" stop-opacity=\"1.0\"/><stop offset=\"1\" stop-color=\"#AFC0CE\" stop-opacity=\"1.0\"/></linearGradient><linearGradient id=\"rg12\" gradientUnits=\"userSpaceOnUse\" x1=\"584\" y1=\"920\" x2=\"636\" y2=\"936\"><stop offset=\"0\" stop-color=\"#E6EDF3\" stop-opacity=\"1.0\"/><stop offset=\"1\" stop-color=\"#AFC0CE\" stop-opacity=\"1.0\"/></linearGradient><linearGradient id=\"rg13\" gradientUnits=\"userSpaceOnUse\" x1=\"668\" y1=\"852\" x2=\"766\" y2=\"960\"><stop offset=\"0\" stop-color=\"#F99B80\" stop-opacity=\"1.0\"/><stop offset=\"1\" stop-color=\"#EF806B\" stop-opacity=\"1.0\"/></linearGradient>"};
+</script>
+<script>
+const A = window.ASSETS;
+document.getElementById('robotdefs').innerHTML = A.defs;
+
+/* ---------- small helpers ---------- */
+const ic = (n, s, c, sw = 2) =>
+  `<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${A.icons[n]}</svg>`;
+const back = () =>
+  `<svg class="ic" width="24" height="24" viewBox="0 0 24 24"><path fill="var(--text)" d="M17.77,3.77L16,2L6,12l10,10l1.77,-1.77L9.54,12z"/></svg>`;
+const v = n => `var(--${n})`;
+const R = A.robot;
+
+function botFace(size) {
+  return `<svg class="ic" width="${size}" height="${size}" viewBox="12 -105 860 860" style="overflow:hidden">${R.level_robot_antenna}${R.level_robot_head}${R.level_robot_eyes}</svg>`;
+}
+function robotPlug(size) {
+  const h = size * 980 / 880;
+  return `<div style="width:${size}px;height:${h + size * .16}px;position:relative;display:flex;justify-content:center;align-items:flex-end">
+    <div style="width:${size * .6}px;height:${size * .1}px;border-radius:50%;background:var(--shadow);opacity:.18"></div>
+    <svg width="${size}" height="${h}" viewBox="0 0 880 980" style="position:absolute;left:0;top:${size * .06}px">
+      ${R.level_robot_body}${R.level_robot_head}${R.robot_prop_plug_face}${R.level_robot_antenna}${R.robot_prop_plug_left}${R.robot_prop_plug_right}${R.robot_prop_plug_spark}${R.level_robot_hands}
+    </svg></div>`;
+}
+function dialogRobot() {
+  const w = 96, f = 96 * 980 / 880, lift = 96 * 262 / 880;
+  return {
+    head: `<svg width="${w}" height="${f}" viewBox="0 0 880 980" style="position:absolute;right:10px;top:0;z-index:0">${R.level_robot_antenna}${R.level_robot_head}${R.level_robot_eyes}</svg>`,
+    hands: `<svg width="${w}" height="${f}" viewBox="0 0 880 980" style="position:absolute;right:10px;top:${-lift}px;z-index:2;pointer-events:none">${R.level_robot_hands}</svg>`,
+    rise: 96 * 540 / 880,
+  };
+}
+function hueOf(name) { let h = 0; for (const c of name) h = (h * 31 + c.charCodeAt(0)) | 0; return ((h % 360) + 360) % 360; }
+function appMark(name, size) {
+  const h = hueOf(name);
+  const dark = document.documentElement.dataset.theme === 'dark';
+  const fill = dark ? `hsl(${h},30%,18%)` : `hsl(${h},45%,89%)`;
+  const ink = dark ? `hsl(${h},55%,76%)` : `hsl(${h},50%,32%)`;
+  return `<span class="apptile" style="width:${size}px;height:${size}px;border-radius:${size * .3}px;background:${fill};color:${ink};font-size:${Math.min(16, size * .5)}px">${name[0]}</span>`;
+}
+function avatar(name, size = 28) {
+  return `<span class="avatar" style="width:${size}px;height:${size}px;font-size:${size >= 60 ? 26 : 14}px">${name[0]}</span>`;
+}
+const skel = (w, h, r, extra = '') => `<div class="skel" style="width:${w};height:${h}px;border-radius:${r}px;${extra}"></div>`;
+
+/* ---------- people ---------- */
+const P = {
+  maya: { name: 'Maya Chen', app: 'Habit Grove: Daily Tracker' },
+  arif: { name: 'Arif Rahman', app: 'Pix Clean' },
+  lena: { name: 'Lena Novak', app: 'Budget Buddy: Simple Money' },
+  me: { name: 'Sam Park', app: 'Quiet Hours' },
+};
+const short = a => a.split(':')[0].trim();
+const CREW = 'Crew 7';
+
+/* ---------- message text pieces ---------- */
+const mention = (n, mine) => `<span class="mn" style="color:${mine ? '#fff' : v('accentInk')}">@${n}</span>`;
+const mentionMe = n => `<span class="mme">@${n}</span>`;
+const appChip = a => `<span class="chip"><span>${appMark(a, 17)}${short(a)}</span></span>`;
+
+/* ---------- bubble pieces ---------- */
+function shape(mine, first, last) {
+  const top = first ? 18 : 4, bot = last ? 18 : 4;
+  return mine ? `18px ${top}px ${bot}px 18px` : `${top}px 18px 18px ${bot}px`;
+}
+function metaHtml(time, send, ink) {
+  let s = `<span class="time" style="color:${ink}">${time}</span>`;
+  if (send === 'sending') s += ic('clock', 11, ink);
+  if (send === 'failed') s += ic('circle-alert', 11, v('bad'));
+  return s;
+}
+function metaW(time, send) { return 8 + time.length * 6.3 + (send !== 'sent' ? 14 : 0); }
+function quoteHtml(q, mine, maxW = 240, extra = '') {
+  const bar = mine ? '#fff' : v('accentInk');
+  const fill = mine ? 'rgba(255,255,255,.16)' : v('bg');
+  const ink = mine ? 'rgba(255,255,255,.82)' : q.deleted ? v('text4') : v('text2');
+  return `<div class="quote" style="--qbar:${bar};background:${q.fill || fill};max-width:${maxW}px;${extra}"><div style="min-width:0"><div class="qw">${q.who}</div><div class="qt" style="color:${ink};${q.deleted ? 'font-style:italic' : ''}">${q.text}</div></div></div>`;
+}
+function textBubble(o) {
+  const mine = !!o.mine, first = o.first !== false, last = o.last !== false;
+  const send = o.send || 'sent', time = o.time || '8:15 PM';
+  const fill = mine ? v('accent') : v('glass2');
+  const ink = mine ? '#fff' : v('text');
+  const metaInk = mine ? 'rgba(255,255,255,.72)' : v('text4');
+  let edge = '';
+  if (send === 'failed') edge = `box-shadow:inset 0 0 0 1.5px ${v('badBorder')};`;
+  else if (o.you) edge = `box-shadow:inset 0 0 0 1.5px ${v('accent')};`;
+  const q = o.quote ? `<div style="padding-bottom:5px">${quoteHtml(o.quote, mine, 248)}</div>` : '';
+  return `<div class="bub ${o.quote ? 'q' : ''}" style="border-radius:${shape(mine, first, last)};background:${fill};color:${ink};${edge}${o.lifted ? 'transform:scale(1.04);' : ''}">${q}<div class="words">${o.html}<span class="msp" style="width:${metaW(time, send)}px"></span><span class="meta">${metaHtml(time, send, metaInk)}</span></div></div>`;
+}
+function failedRow(err) {
+  return `<div class="failed"><div class="r">${ic('circle-alert', 14, v('bad'))}<span style="width:6px"></span><span style="color:${v('bad')}">Not sent.</span><span style="display:flex;align-items:center;margin-left:6px;padding:2px">${ic('rotate-ccw', 13, v('accentInk'))}<span style="width:4px"></span><b style="color:${v('accentInk')}">Try again</b></span></div>${err ? `<div class="e">${err}</div>` : ''}</div>`;
+}
+function msg(o, inner) {
+  const mine = !!o.mine, first = o.first !== false, last = o.last !== false;
+  const person = o.p || P.maya;
+  let lead = '';
+  if (!mine) lead = (last ? avatar(person.name) : `<span style="width:28px;flex:none"></span>`) + `<span style="width:8px;flex:none"></span>`;
+  const name = !mine && first ? `<div class="who">${person.name}</div>` : '';
+  const fail = o.send === 'failed' ? failedRow(o.err) : '';
+  return `<div class="row ${mine ? 'mine' : ''}" style="padding-top:${first ? 10 : 2}px">${lead}<div class="col">${name}${inner || textBubble(o)}${fail}</div></div>`;
+}
+function stub(o) {
+  const mine = !!o.mine, first = o.first !== false, last = o.last !== false;
+  const r = shape(mine, first, last);
+  const b = `<div class="stub" style="border-radius:${r};outline:1px dashed ${v('glassBorder')};outline-offset:-1px">${ic('ban', 14, v('text4'))}<span style="width:6px"></span><span class="t" style="font:italic 400 13.5px/18px TtBarlow,sans-serif;letter-spacing:.25px;color:${v('text4')}">Message deleted</span><span style="width:8px"></span><span class="time" style="color:${v('text4')};padding-top:3px">${o.time || '8:15 PM'}</span></div>`;
+  return msg(o, b);
+}
+const day = l => `<div class="daychip"><span>${l}</span></div>`;
+const newLine = n => `<div class="newline"><i></i><span>${n} new</span><i></i></div>`;
+function botLine(text, good) {
+  return `<div class="botline"><div style="background:${good ? v('okBg') : v('glass2')};color:${good ? v('ok') : v('text2')};font-weight:${good ? 600 : 400}">${botFace(20)}<span>${text}</span></div></div>`;
+}
+function teamPost(text, time = '9:02 AM') {
+  return `<div class="team"><div style="display:flex;align-items:center">${botFace(26)}<span style="width:8px"></span><b class="t" style="font-size:13.5px;line-height:18px;color:${v('text')}">Crew bot</b><span style="width:8px"></span><span class="t" style="background:${v('tile')};color:${v('accentInk')};border-radius:99px;padding:1px 8px;font-weight:700;font-size:11.5px;line-height:15px;white-space:nowrap">TestTrack team</span><span style="flex:1"></span><span class="time" style="color:${v('text4')}">${time}</span></div><div class="t" style="margin-top:4px;font-size:14.5px;line-height:20px;color:${v('text')}">${text}</div></div>`;
+}
+
+/* ---------- pictures ---------- */
+function shot(kind) {
+  const shots = {
+    portrait: `<svg viewBox="0 0 300 400" preserveAspectRatio="xMidYMid slice" width="100%" height="100%"><rect width="300" height="400" fill="#EEF5F1"/><rect width="300" height="70" fill="#2F7A5F"/><rect x="18" y="30" width="120" height="14" rx="7" fill="#fff" opacity=".9"/><circle cx="268" cy="37" r="12" fill="#fff" opacity=".35"/>${[0, 1, 2, 3].map(i => `<rect x="16" y="${88 + i * 74}" width="268" height="62" rx="12" fill="#fff"/><circle cx="46" cy="${119 + i * 74}" r="16" fill="${['#F2B544', '#5BB37F', '#5E9BD6', '#E07A6A'][i]}"/><rect x="72" y="${108 + i * 74}" width="${150 - i * 18}" height="10" rx="5" fill="#2B3B35" opacity=".8"/><rect x="72" y="${124 + i * 74}" width="${100 + i * 10}" height="8" rx="4" fill="#2B3B35" opacity=".35"/>`).join('')}</svg>`,
+    landscape: `<svg viewBox="0 0 400 225" preserveAspectRatio="xMidYMid slice" width="100%" height="100%"><defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F6A66B"/><stop offset=".6" stop-color="#F9D58C"/><stop offset="1" stop-color="#FCE9C2"/></linearGradient></defs><rect width="400" height="225" fill="url(#sky)"/><circle cx="290" cy="110" r="34" fill="#FFF3D6"/><path d="M0 160 Q90 110 180 150 T400 140 V225 H0Z" fill="#7C6A8E"/><path d="M0 190 Q120 150 240 185 T400 175 V225 H0Z" fill="#4E4566"/></svg>`,
+    tall: `<svg viewBox="0 0 300 670" preserveAspectRatio="xMidYMid slice" width="100%" height="100%"><rect width="300" height="670" fill="#F4F1FA"/><rect width="300" height="64" fill="#5B4BA8"/><rect x="18" y="26" width="110" height="13" rx="6.5" fill="#fff"/>${Array.from({ length: 11 }, (_, i) => `<rect x="16" y="${80 + i * 54}" width="268" height="44" rx="10" fill="#fff"/><rect x="30" y="${94 + i * 54}" width="${120 + (i % 3) * 30}" height="9" rx="4.5" fill="#3B3355" opacity=".75"/><rect x="30" y="${109 + i * 54}" width="${80 + (i % 4) * 20}" height="7" rx="3.5" fill="#3B3355" opacity=".3"/>`).join('')}</svg>`,
+  };
+  return shots[kind];
+}
+function overMark(inner) {
+  return `<div style="position:absolute;inset:0;background:rgba(0,0,0,.16);display:flex;align-items:center;justify-content:center"><div style="width:48px;height:48px;border-radius:50%;background:${v('photoScrim')};display:flex;align-items:center;justify-content:center">${inner}</div></div>`;
+}
+const spinner = `<svg width="26" height="26" viewBox="0 0 26 26" style="animation:spin 1s linear infinite"><circle cx="13" cy="13" r="11.75" fill="none" stroke="#fff" stroke-width="2.5" stroke-dasharray="52 80" stroke-linecap="round"/></svg>`;
+function missing(label) {
+  return `<div style="position:absolute;inset:0;background:${v('surface3')};display:flex;flex-direction:column;align-items:center;justify-content:center">${ic('image-off', 24, v('text3'))}<div class="t" style="margin-top:6px;font-weight:600;font-size:13px;line-height:17px;color:${v('text3')}">${label}</div></div>`;
+}
+function pictureBubble(o) {
+  const mine = !!o.mine, first = o.first !== false, last = o.last !== false;
+  const W = 259, send = o.send || 'sent', time = o.time || '8:15 PM';
+  const ratio = { portrait: .75, landscape: 16 / 9, tall: 9 / 20 }[o.kind || 'portrait'];
+  const H = o.expired ? 140 : Math.round(Math.min(Math.max(W / ratio, W * .55), W * 1.4));
+  const fill = mine ? v('accent') : v('glass2');
+  const ink = mine ? '#fff' : v('text');
+  const metaInk = mine ? 'rgba(255,255,255,.72)' : v('text4');
+  let edge = '';
+  if (send === 'failed') edge = `box-shadow:inset 0 0 0 1.5px ${v('badBorder')};`;
+  else if (o.you) edge = `box-shadow:inset 0 0 0 1.5px ${v('accent')};`;
+  let pic = '';
+  if (o.expired) pic = missing('Picture expired');
+  else if (o.broken) pic = missing("Couldn't load");
+  else if (o.loading) pic = `<div class="skel" style="position:absolute;inset:0"></div>`;
+  else pic = `<div style="position:absolute;inset:0">${shot(o.kind || 'portrait')}</div>`;
+  if (!o.expired && send === 'sending') pic += overMark(spinner);
+  if (!o.expired && send === 'failed') pic += overMark(ic('rotate-ccw', 22, '#fff'));
+  if (!o.caption) {
+    pic += o.expired
+      ? `<div style="position:absolute;right:10px;bottom:7px;display:flex;align-items:center;gap:3px">${metaHtml(time, send, v('text4'))}</div>`
+      : `<div style="position:absolute;right:6px;bottom:6px;border-radius:99px;background:${v('photoScrim')};padding:2px 7px;display:flex;align-items:center;gap:3px">${metaHtml(time, send, '#fff')}</div>`;
+  }
+  const q = o.quote ? `<div style="padding:4px">${quoteHtml(o.quote, mine, W - 8)}</div>` : '';
+  const cap = o.caption ? `<div style="padding:6px 10px"><div class="words" style="color:${ink}">${o.caption}<span class="msp" style="width:${metaW(time, send)}px"></span><span class="meta">${metaHtml(time, send, metaInk)}</span></div></div>` : '';
+  return `<div style="width:${W}px;border-radius:${shape(mine, first, last)};background:${fill};overflow:hidden;position:relative">${q}<div style="width:${W}px;height:${H}px;position:relative;overflow:hidden">${pic}</div>${cap}${edge ? `<div style="position:absolute;inset:0;border-radius:inherit;${edge};pointer-events:none"></div>` : ''}</div>`;
+}
+
+/* ---------- page parts ---------- */
+function pageBar(title, o = {}) {
+  const muted = o.muted ? `<span style="width:6px;flex:none"></span>${ic('bell-off', 16, v('text3'))}` : '';
+  const menu = o.noMenu ? '' : `<div class="ibtn" style="${o.menuOpen ? `background:${v('glass2')}` : ''}">${ic('ellipsis-vertical', 20, v('text2'))}</div>`;
+  return `<div class="pbar"><div class="nav">${back()}</div><div class="title" style="margin-left:4px"><span>${title}</span>${muted}</div><div class="acts">${menu}</div></div>`;
+}
+const pageMsg = text => `<div class="pmsg"><div>${ic('info', 17, v('accentInk'))}<span style="flex:1">${text}</span>${ic('x', 16, v('text3'))}</div></div>`;
+function roundBtn(icon, size, iconSize, fill, ink, extra = '') {
+  return `<div class="rb" style="width:${size}px;height:${size}px;background:${fill}">${ic(icon, iconSize, ink)}${extra}</div>`;
+}
+/* composer: o = {text, ph, focused, bad, left, pics, picsOff, canSend, reply, problem, closedField, tip} */
+function composer(o = {}) {
+  const msgsLeft = o.left ?? 10;
+  const open = msgsLeft > 0;
+  const pics = o.pics ?? 3;
+  const canAttach = open && pics > 0;
+  const badge = pics > 0 ? `<div class="pbadge">${pics > 9 ? '9+' : pics}</div>` : '';
+  const picBtn = roundBtn('image-plus', 48, 21, canAttach ? v('tile') : v('glass2'), canAttach ? v('tileInk') : v('text4'), o.noBadge ? '' : badge);
+  const border = o.bad ? `1.6px ${v('bad')}` : o.focused ? `1.6px ${v('text')}` : !open ? `1.2px ${v('glassBorder')}` : `1.2px ${v('glassBorderStrong')}`;
+  const count = msgsLeft >= 1 && msgsLeft <= 3 ? `<span class="left">${msgsLeft} left</span>` : '';
+  const body = o.text ? `<span class="tx">${o.text}${o.focused ? '<span class="caret"></span>' : ''}</span>` : `<span class="ph">${open ? `Message ${CREW}` : 'No messages left today'}</span>`;
+  const field = `<div class="field" style="box-shadow:inset 0 0 0 ${border};${count ? 'padding-right:12px' : ''}">${body}${count}</div>`;
+  const canSend = o.canSend ?? false;
+  const send = roundBtn('send', 48, 20, canSend ? v('primary') : v('glass2'), canSend ? v('onPrimary') : v('text4'));
+  const reply = o.reply ? `<div style="display:flex;align-items:center;padding:0 2px 8px;gap:8px">${quoteHtml({ who: `Replying to ${o.reply.who}`, text: o.reply.text, fill: v('glass2') }, false, 9999, 'flex:1;min-width:0')}${roundBtn('x', 32, 15, v('glass2'), v('text2'))}</div>` : '';
+  const prob = o.problem ? `<div class="cline" style="color:${v('bad')}">${ic('circle-alert', 15, v('bad'))}<span>${o.problem}</span></div>` : '';
+  const tip = o.tip ? `<div class="tip">${o.tip}</div>` : '';
+  return `<div class="cframe" style="position:relative">${tip}${reply}<div class="crow">${picBtn}${field}${send}</div>${prob}</div>`;
+}
+function composerLoading() {
+  return `<div class="cframe"><div class="crow">${roundBtn('image-plus', 48, 21, v('glass2'), v('text4'))}<div class="field" style="box-shadow:inset 0 0 0 1.2px ${v('glassBorderStrong')}"></div>${roundBtn('send', 48, 20, v('glass2'), v('text4'))}</div></div>`;
+}
+const closedBar = text => `<div class="cframe"><div class="closed">${ic('lock', 18, v('text2'))}<span>${text}</span></div></div>`;
+function phone(inner, o = {}) {
+  return `<div class="phone ${o.cls || ''}" ${o.style ? `style="${o.style}"` : ''}><div class="sbar ${o.dark ? 'dark' : ''}" style="${o.dark ? 'background:#000' : ''}"><span>9:41</span><span>5G</span></div><div class="scr ${o.dark ? 'dark-scr' : ''}">${inner}</div><div class="navb" style="${o.dark ? 'background:#000' : ''}"><i style="${o.dark ? 'background:#fff' : ''}"></i></div></div>`;
+}
+const item = (label, html, sub = '') => `<div class="item"><div class="lab">${label}${sub ? `<small>${sub}</small>` : ''}</div>${html}</div>`;
+const section = (id, title, items) => `<h2 id="${id}">${title}</h2><div class="grid">${items.join('')}</div>`;
+const panel = (html, extra = '') => `<div class="panel" style="${extra}">${html}</div>`;
+
+/* ---------- sample thread ---------- */
+function sampleThread(o = {}) {
+  const rows = [
+    day('Yesterday'),
+    botLine('Night 1 has started. Open every app in your list once a day.', true),
+    msg({ p: P.maya, first: true, last: false, html: 'Hi all! Opened everyone for tonight.', time: '9:12 PM', lifted: o.lift === 'maya' }),
+    msg({ p: P.maya, first: false, last: true, html: `Mine is ${appChip(P.maya.app)}, any feedback is welcome.`, time: '9:13 PM' }),
+    msg({ mine: true, html: 'Done for tonight too.', time: '9:40 PM' }),
+    day('Today'),
+    newLine(3),
+    msg({ p: P.arif, html: 'Pix Clean froze on the second screen for anyone else?', time: '8:02 AM' }),
+    msg({ p: P.lena, quote: { who: 'Arif Rahman', text: 'Pix Clean froze on the second screen for anyone else?' }, html: 'Works for me. Try clearing its cache.', time: '8:10 AM' }),
+    msg({ p: P.maya, you: true, html: `${mentionMe('Sam Park')} your app asked me to sign in twice.`, time: '8:14 AM' }),
+    msg({ mine: true, first: true, last: false, html: 'Thanks, looking at it now.', time: '8:15 AM' }),
+    msg({ mine: true, first: false, last: true, html: 'Fixed in the next build.', time: '8:16 AM', send: 'sending', lifted: o.lift === 'mine' }),
+  ];
+  return (o.readOnly ? rows.slice(0, 9) : rows).join('');
+}
+function chatPage(o = {}) {
+  const top = pageBar(`${CREW} chat`, o) + (o.msg ? pageMsg(o.msg) : '');
+  const body = o.body ?? `<div class="thread">${sampleThread()}</div>`;
+  const bottom = o.bottom ?? composer({});
+  return phone(`${top}${body}${bottom}${o.over || ''}`, o.phone || {});
+}
+
+/* skeleton */
+function chatSkeleton() {
+  const rows = [[0, .62], [0, .44], [1, .52], [0, .7], [1, .4], [0, .55], [1, .64], [0, .46]];
+  return rows.map(([m, s]) => `<div class="row ${m ? 'mine' : ''}" style="padding-top:14px">${m ? '' : skel('28px', 28, 14, 'flex:none') + '<span style="width:8px;flex:none"></span>'}${skel(`${Math.round(m ? 336 * s : 300 * s)}px`, 38, 18, 'flex:none')}</div>`).join('');
+}
+function emptyNote(canPost) {
+  return `<div style="display:flex;flex-direction:column;align-items:center;padding:24px 32px"><div style="width:96px;height:96px;border-radius:50%;background:${v('glass2')};display:flex;align-items:center;justify-content:center"><div style="width:68px;height:68px;border-radius:50%;background:${v('tile')};display:flex;align-items:center;justify-content:center">${ic('messages-square', 30, v('tileInk'))}</div></div><div class="t" style="margin-top:16px;font-weight:600;font-size:17px;line-height:22px;color:${v('text')}">No messages yet</div><div class="t" style="margin-top:4px;font-size:14px;line-height:20px;color:${v('text3')};text-align:center">${canPost ? 'Say hi to your crew.' : 'Nobody wrote in this chat.'}</div></div>`;
+}
+function offline() {
+  return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding-bottom:40px">${robotPlug(112)}<div style="height:14px"></div><div style="font:700 20px/25px TtBarlow,sans-serif;color:${v('text')};text-align:center">Chat didn't load</div><div class="t" style="margin-top:6px;max-width:300px;font-size:14px;line-height:20px;color:${v('text2')};text-align:center">Check your connection, then try again.</div><div style="margin-top:18px;height:52px;border-radius:26px;box-shadow:inset 0 0 0 1.5px ${v('accentInk')};padding:0 22px;display:flex;align-items:center;font:700 14.5px TtBarlow,sans-serif;color:${v('accentInk')}">Try again</div></div>`;
+}
+function menuHtml(muted, members = true) {
+  const row = (icon, title, line) => `<div class="mrow">${ic(icon, 19, v('text2'))}<div><div class="t" style="font-weight:500;font-size:15px;line-height:20px;color:${v('text')}">${title}</div>${line ? `<div class="t" style="font-size:12px;line-height:16px;color:${v('text3')}">${line}</div>` : ''}</div></div>`;
+  return `<div class="menu">${muted ? row('bell', 'Unmute chat') : row('bell-off', 'Mute chat', 'Mentions still reach you')}${members ? row('users', 'Members') : ''}</div>`;
+}
+
+/* sheets */
+function sheet(title, body, h) {
+  return `<div class="ov" style="background:${v('sheetScrim')}"></div><div class="sheet" style="${h ? `height:${h}px` : ''}"><div class="handle"></div><div class="stitle">${title}</div>${body}</div>`;
+}
+function iconTile(icon, danger) {
+  return `<span class="itile" style="width:36px;height:36px;background:${danger ? v('badBg') : v('tile')}">${ic(icon, 18.7, danger ? v('bad') : v('tileInk'))}</span>`;
+}
+function sheetAction(icon, title, line, danger) {
+  return `<div class="srow">${iconTile(icon, danger)}<div><div class="tt" style="color:${danger ? v('bad') : v('text')}">${title}</div>${line ? `<div class="ln">${line}</div>` : ''}</div></div>`;
+}
+function pickRow(lead, title, line) {
+  return `<div class="srow">${lead}<div style="min-width:0;flex:1"><div class="tt" style="color:${v('text')};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${title}</div>${line ? `<div class="ln">${line}</div>` : ''}</div></div>`;
+}
+const hl = (text, q) => { if (!q) return text; const i = text.toLowerCase().indexOf(q.toLowerCase()); return i < 0 ? text : `${text.slice(0, i)}<b style="color:${v('accentInk')};font-weight:700">${text.slice(i, i + q.length)}</b>${text.slice(i + q.length)}`; };
+function mentionSheet(q = '') {
+  const people = [P.arif, P.lena, P.maya];
+  const match = p => !q || p.name.toLowerCase().includes(q) || p.app.toLowerCase().includes(q);
+  const apps = people.filter(match).sort((a, b) => a.app.localeCompare(b.app));
+  const mem = people.filter(match).sort((a, b) => a.name.localeCompare(b.name));
+  const search = `<div class="search" style="${q ? `box-shadow:inset 0 0 0 1.6px ${v('text')}` : ''}">${ic('search', 18, v('text3'))}<span style="flex:1;color:${q ? v('text') : v('text4')};font-weight:${q ? 500 : 400}">${q || 'Search apps and people'}${q ? '<span class="caret"></span>' : ''}</span>${q ? `<span style="width:26px;height:26px;border-radius:50%;background:${v('glass2')};display:flex;align-items:center;justify-content:center">${ic('x', 14, v('text2'))}</span>` : ''}</div>`;
+  let list = '';
+  if (apps.length) list += `<div class="shead">Apps in ${CREW}</div>` + apps.map(p => pickRow(appMark(p.app, 36), hl(p.app, q), p.name)).join('');
+  if (mem.length) list += `<div class="shead">Members</div>` + mem.map(p => pickRow(avatar(p.name, 36), hl(p.name, q), short(p.app))).join('');
+  if (!apps.length && !mem.length) list = `<div class="t" style="padding:18px 0;font-size:14px;line-height:19px;color:${v('text3')}">Nobody in ${CREW} matches that.</div>`;
+  return sheet('Mention', search + `<div style="padding-top:4px;overflow:hidden">${list}</div>`, 640);
+}
+function ask(title, body, dismiss, confirm, danger, content = '') {
+  const r = dialogRobot();
+  const btns = `<div class="btns">${dismiss ? `<div class="btn" style="box-shadow:inset 0 0 0 1px ${v('hair')};color:${v('accentInk')}">${dismiss}</div>` : ''}${confirm ? `<div class="btn" style="background:${danger ? v('bad') : v('accent')};color:${danger ? v('onBad') : v('onAccent')}">${confirm}</div>` : ''}</div>`;
+  return `<div class="ov" style="background:${v('scrim')}"></div><div class="dlgwrap"><div style="position:relative;padding-top:${r.rise}px">${r.head}<div class="dlg" style="z-index:1">${title ? `<h3>${title}</h3>` : ''}${body ? `<p>${body}</p>` : ''}${content}${btns}</div>${r.hands}</div></div>`;
+}
+
+/* ---------- editor ---------- */
+const ebtn = (icon, active, enabled = true) => `<div class="ebtn" style="background:${active ? '#fff' : v('photoScrim')}">${ic(icon, 21, active ? '#000' : enabled ? '#fff' : 'rgba(255,255,255,.35)')}</div>`;
+function editorTop(mode) {
+  return `<div style="display:flex;align-items:center;padding:8px 12px;gap:8px;flex:none">${ebtn('x')}<span style="flex:1"></span>${ebtn('crop', mode === 'crop')}${ebtn('pencil', mode === 'draw')}${ebtn('type')}${ebtn('undo-2', false, mode !== 'fresh')}</div>`;
+}
+const PENS = ['#FFFFFF', '#000000', '#F44336', '#FF9800', '#FFEB3B', '#4CAF50', '#00BCD4', '#2196F3', '#9C27B0', '#E91E63'];
+function penColours(picked) {
+  return `<div style="display:flex;align-items:center;gap:10px;overflow:hidden">${PENS.map(c => { const on = c === picked; const s = on ? 32 : 26; return `<span style="width:${s}px;height:${s}px;border-radius:50%;background:${c};box-shadow:inset 0 0 0 ${on ? 3 : 1.5}px #fff;flex:none"></span>`; }).join('')}</div>`;
+}
+function editorCanvas(mode, extra = '') {
+  const inset = mode === 'crop' ? 28 : 0;
+  const strokes = `<svg viewBox="0 0 300 400" width="100%" height="100%" style="position:absolute;inset:0"><path d="M70 160 C95 140 150 150 170 175 S220 230 200 250" fill="none" stroke="#F44336" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><text x="150" y="330" text-anchor="middle" font-family="Roboto,Arial,sans-serif" font-weight="700" font-size="30" fill="#FFEB3B" style="filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))">Stuck here</text></svg>`;
+  let pic;
+  if (mode === 'crop') {
+    const w = 360 - inset * 2, h = w / .75;
+    pic = `<div style="position:absolute;left:${inset}px;top:50%;width:${w}px;height:${h}px;transform:translateY(-50%)">${shot('portrait')}${strokes}
+      <div style="position:absolute;left:0;right:0;top:0;height:14%;background:${v('photoScrim')}"></div>
+      <div style="position:absolute;left:0;right:0;bottom:0;height:10%;background:${v('photoScrim')}"></div>
+      <div style="position:absolute;left:0;top:14%;bottom:10%;width:8%;background:${v('photoScrim')}"></div>
+      <div style="position:absolute;right:0;top:14%;bottom:10%;width:8%;background:${v('photoScrim')}"></div>
+      <div style="position:absolute;left:8%;right:8%;top:14%;bottom:10%;box-shadow:inset 0 0 0 1.5px #fff">
+        <i style="position:absolute;left:33.3%;top:0;bottom:0;width:1px;background:rgba(255,255,255,.45)"></i><i style="position:absolute;left:66.6%;top:0;bottom:0;width:1px;background:rgba(255,255,255,.45)"></i>
+        <i style="position:absolute;top:33.3%;left:0;right:0;height:1px;background:rgba(255,255,255,.45)"></i><i style="position:absolute;top:66.6%;left:0;right:0;height:1px;background:rgba(255,255,255,.45)"></i>
+        ${[['left', 'top'], ['right', 'top'], ['left', 'bottom'], ['right', 'bottom']].map(([x, y]) => `<i style="position:absolute;${x}:-4px;${y}:-4px;width:22px;height:4px;background:#fff"></i><i style="position:absolute;${x}:-4px;${y}:-4px;width:4px;height:22px;background:#fff"></i>`).join('')}
+      </div></div>`;
+  } else {
+    pic = `<div style="position:absolute;left:0;top:50%;width:360px;height:480px;transform:translateY(-50%)">${shot('portrait')}${mode === 'fresh' ? '' : strokes}</div>`;
+  }
+  return `<div style="flex:1;position:relative;overflow:hidden">${pic}${extra}</div>`;
+}
+function captionBar(o = {}) {
+  const prob = o.problem ? `<div style="display:flex;gap:6px;padding:0 8px 8px;color:${v('photoBad')};font:400 12px/16px TtBarlow,sans-serif;letter-spacing:.4px">${ic('circle-alert', 15, v('photoBad'))}<span>${o.problem}</span></div>` : '';
+  const canSend = o.canSend ?? true;
+  return `<div style="padding:8px 12px 12px;flex:none">${prob}<div style="display:flex;align-items:flex-end;gap:8px"><div style="flex:1;min-height:48px;border-radius:24px;background:rgba(255,255,255,.14);box-shadow:inset 0 0 0 1px ${o.problem ? v('photoBad') : 'transparent'};padding:13px 16px;font:400 15px/20px TtBarlow,sans-serif;letter-spacing:.5px;color:${o.text ? '#fff' : 'rgba(255,255,255,.6)'}">${o.text || 'Add a caption...'}${o.text ? '<span class="caret" style="background:#fff"></span>' : ''}</div><div class="rb" style="width:48px;height:48px;background:${canSend ? v('accent') : 'rgba(255,255,255,.18)'}">${ic('send', 20, canSend ? '#fff' : 'rgba(255,255,255,.4)')}</div></div></div>`;
+}
+function editor(mode, o = {}) {
+  let bottom;
+  if (mode === 'draw') bottom = `<div style="padding:10px 16px;flex:none">${penColours('#F44336')}<div style="display:flex;align-items:center;margin-top:6px;gap:8px"><div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center"><span style="width:6px;height:6px;border-radius:50%;background:#F44336"></span></div><div style="flex:1;position:relative;height:36px"><i style="position:absolute;left:0;right:0;top:16px;height:4px;border-radius:2px;background:rgba(255,255,255,.3)"></i><i style="position:absolute;left:0;width:15%;top:16px;height:4px;border-radius:2px;background:#fff"></i><i style="position:absolute;left:calc(15% - 2px);top:8px;width:4px;height:20px;border-radius:2px;background:#fff"></i></div></div></div>`;
+  else if (mode === 'crop') bottom = `<div style="display:flex;align-items:center;padding:12px;gap:10px;flex:none">${ebtn('rotate-cw')}<div style="flex:1;display:flex;gap:6px;overflow:hidden">${['Free', '1:1', '4:3', '3:4', '16:9'].map((l, i) => `<span class="schip" style="background:${i === 0 ? '#fff' : v('photoScrim')};color:${i === 0 ? '#000' : '#fff'}">${l}</span>`).join('')}</div>${ebtn('check', true)}</div>`;
+  else bottom = captionBar(o);
+  const words = o.words ? `<div style="position:absolute;inset:0;background:${v('photoScrim')};display:flex;flex-direction:column;z-index:3"><div style="display:flex;align-items:center;padding:10px 12px 0 16px;gap:10px"><div style="flex:1;overflow:hidden">${penColours('#FFFFFF')}</div><span style="background:#fff;color:#000;border-radius:20px;padding:9px 18px;font:700 14px TtBarlow,sans-serif">Done</span></div><div style="flex:1;display:flex;align-items:center;justify-content:center;padding:0 24px;text-align:center;font:700 30px/36px TtBarlow,sans-serif;color:#FFFFFF">Login loops<span class="caret" style="background:#fff;height:32px;vertical-align:-5px"></span></div></div>` : '';
+  return phone(`<div style="flex:1;display:flex;flex-direction:column;position:relative;background:#000">${editorTop(mode)}${editorCanvas(mode)}${bottom}${words}</div>`, { dark: true });
+}
+
+/* ---------- viewer ---------- */
+function viewer(o = {}) {
+  const img = o.broken
+    ? `<div style="position:absolute;left:0;top:50%;width:360px;height:480px;transform:translateY(-50%);display:flex;flex-direction:column;align-items:center;justify-content:center">${ic('image-off', 28, 'rgba(255,255,255,.75)')}<div class="t" style="margin-top:8px;font-size:14px;line-height:19px;color:rgba(255,255,255,.75)">Couldn't load the picture</div></div>`
+    : `<div style="position:absolute;left:0;top:50%;width:360px;height:${o.kind === 'landscape' ? 202 : 480}px;transform:translateY(-50%)">${shot(o.kind || 'portrait')}</div>`;
+  const top = `<div style="position:absolute;left:0;right:0;top:0;background:linear-gradient(rgba(0,0,0,.5),transparent);padding:4px 16px 16px 4px;display:flex;align-items:center;gap:4px"><div class="ibtn">${ic('x', 24, '#fff')}</div><div><div class="t" style="font-weight:600;font-size:16px;line-height:21px;color:#fff">${o.who || 'Maya Chen'}</div><div class="t" style="font-size:12.5px;line-height:17px;color:rgba(255,255,255,.75)">Today at 8:14 AM</div></div></div>`;
+  const foot = `<div style="position:absolute;left:0;right:0;bottom:0;background:linear-gradient(transparent,rgba(0,0,0,.5));padding:24px 20px 16px;display:flex;flex-direction:column;align-items:center">${o.caption ? `<div class="t" style="font-size:15px;line-height:21px;color:#fff">${o.caption}</div><div style="height:8px"></div>` : ''}<div style="display:flex;align-items:center;gap:4px">${ic('clock', 12, 'rgba(255,255,255,.75)')}<span class="t" style="font-size:12px;line-height:16px;color:rgba(255,255,255,.75)">Gone in 21 h</span></div></div>`;
+  return phone(`<div style="flex:1;position:relative;background:#000">${img}${top}${foot}</div>`, { dark: true });
+}
+
+/* ---------- entry points ---------- */
+function tileButton(count, muted) {
+  const badge = count > 0 ? `<span style="position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:9px;background:${v('bg')};padding:1.5px;display:flex"><span style="flex:1;border-radius:7.5px;background:${muted ? v('text3') : v('badgeFill')};padding:0 3.5px;display:flex;align-items:center;justify-content:center;font:700 10px/15px TtMono,monospace;color:${muted ? v('bg') : v('onAccent')}">${count > 9 ? '9+' : count}</span></span>` : '';
+  return `<span style="width:28px;height:28px;position:relative;display:flex;align-items:center;justify-content:center;flex:none">${ic('message-circle', 24, v('text2'))}${badge}</span>`;
+}
+function crewTile(count, muted) {
+  return `<div class="crewcard" style="width:336px"><div style="display:flex;align-items:center"><span style="flex:1;font:600 18px/23px TtBarlow,sans-serif;color:${v('text')}">${CREW}</span><span style="font:400 12px/17px TtBarlow,sans-serif;color:${v('text3')}">Night 5 of 14</span></div><div style="display:flex;margin-top:14px;align-items:flex-start"><span style="flex:1;font:500 15px/20px TtBarlow,sans-serif;color:${v('text')}">3 apps left tonight</span><span style="flex:1;text-align:right;font:400 12px/17px TtBarlow,sans-serif;color:${v('text3')}">8 of 14 opened yours</span></div><div style="display:flex;align-items:center;margin-top:12px">${appMark(P.me.app, 28)}<span style="width:8px"></span><span style="flex:1;font:400 13px/18px TtBarlow,sans-serif;color:${v('text2')}">${P.me.app}</span><span style="width:8px"></span>${tileButton(count, muted)}</div></div>`;
+}
+function fab(kind, count = 0) {
+  const ro = kind === 'readonly', wide = kind !== 'folded';
+  const ink = ro ? v('text') : v('onPrimary');
+  const c = ro ? 0 : count;
+  const dot = !wide && c > 0 ? `<span style="position:absolute;top:-3px;right:-3px;width:9px;height:9px;border-radius:50%;background:${v('onPrimary')}"></span>` : '';
+  let tail = '';
+  if (wide) {
+    tail = `<span style="width:8px"></span><span style="font:700 15.5px/20px TtBarlow,sans-serif;letter-spacing:.25px;color:${ink}">Chat</span>`;
+    if (ro) tail += `<span style="width:8px"></span>${ic('lock', 14, v('text3'))}`;
+    else if (c > 0) tail += `<span style="width:8px"></span><span style="min-width:24px;height:24px;border-radius:12px;background:${v('onPrimary')};padding:0 6px;display:flex;align-items:center;justify-content:center;font:700 12.5px TtMono,monospace;color:${v('primary')}">${c > 99 ? '99+' : c}</span>`;
+  }
+  const style = ro ? `background:${v('glass2')};box-shadow:inset 0 0 0 1px ${v('glassBorder')}` : `background:${v('primary')};box-shadow:0 4px 10px rgba(0,0,0,.22),0 1px 3px rgba(0,0,0,.18)`;
+  return `<div class="fab" style="${style};padding:0 ${wide && c > 0 ? 12 : 16}px 0 ${wide ? 18 : 16}px"><span style="position:relative;display:flex">${ic('message-circle', ro ? 19 : 20, ink)}${dot}</span>${tail}</div>`;
+}
+function tabs(sel, dots, counts = {}) {
+  const labels = ['Open', 'Lobby', 'Run', 'Record'];
+  return `<div class="track" style="width:328px">${labels.map((l, i) => {
+    const on = i === sel;
+    const dot = dots.includes(i) ? `<span style="width:7px;height:7px;border-radius:50%;background:${v('primary')};margin-left:2px;transform:translateY(-6px)"></span>` : '';
+    const cnt = counts[i] ? `<span style="margin-left:5px;border-radius:99px;background:${on && document.documentElement.dataset.theme === 'dark' ? v('card') : v('tile')};padding:0 5px;font:700 11px/16px TtBarlow,sans-serif;color:${v('tileInk')}">${counts[i]}</span>` : '';
+    return `<div class="seg" style="background:${on ? v('leafSoft') : 'transparent'};color:${on ? v('tabSelected') : v('text2')};font-weight:${on ? 600 : 500}">${l}${dot}${cnt}</div>`;
+  }).join('')}</div>`;
+}
+
+/* ---------- build ---------- */
+function build() {
+  const out = [];
+
+  /* 1. page shell */
+  out.push(section('s1', 'Page', [
+    item('Thread', chatPage()),
+    item('Muted, menu open', chatPage({ muted: true, menuOpen: true, over: menuHtml(true) })),
+    item('Menu, not muted', chatPage({ menuOpen: true, over: menuHtml(false) })),
+    item('Loading', chatPage({ noMenu: true, body: `<div class="thread" style="padding:0 12px 10px">${chatSkeleton()}</div>`, bottom: composerLoading() })),
+    item('Empty', chatPage({ body: `<div class="thread" style="justify-content:flex-start;padding-top:0">${botLine(`${CREW} is full. Night 1 starts at midnight, your own time.`, true)}<div style="flex:1"></div><div style="align-self:center">${emptyNote(true)}</div><div style="flex:1"></div></div>` })),
+    item('Empty, read only', chatPage({ body: `<div class="thread" style="justify-content:center">${emptyNote(false)}</div>`, bottom: closedBar(`${CREW} has ended, so this chat is read only. It goes with the crew's details on Nov 23.`) })),
+    item("Didn't load", chatPage({ noMenu: true, body: offline(), bottom: '' })),
+    item('Page message', chatPage({ msg: "You're offline. The chat catches up once you're back." })),
+    item('Read only', chatPage({ body: `<div class="thread">${sampleThread({ readOnly: true })}${botLine('The run is over. This chat is now read only. It will be deleted in 3 days.', true)}</div>`, bottom: closedBar(`${CREW} has ended, so this chat is read only. It goes with the crew's details on Nov 23.`) })),
+  ]));
+
+  out.push(section('s1b', 'Closed bars', [
+    item('Ended', panel(closedBar(`${CREW} has ended, so this chat is read only. It goes with the crew's details on Nov 23.`), 'padding:0;overflow:hidden')),
+    item('App out', panel(closedBar("Your app is out of this run, so you can read the chat but not post."), 'padding:0;overflow:hidden')),
+    item('Paused', panel(closedBar('The team has paused your messages in this chat.'), 'padding:0;overflow:hidden')),
+    item('Deleted', panel(closedBar("This chat was deleted with the crew's details."), 'padding:0;overflow:hidden')),
+    item('Page messages', panel([
+      'Chat muted. You still hear when someone mentions you.', 'Chat unmuted.', 'Back online.',
+      "That picture couldn't be opened. Try another one.", "Couldn't delete it. Try again.",
+    ].map(pageMsg).join(''), 'padding:6px 0')),
+  ]));
+
+  /* 2. bubbles */
+  out.push(section('s2', 'Bubbles', [
+    item('Theirs, yours', panel(msg({ p: P.lena, html: 'Opened yours, the new chart looks great.' }) + msg({ mine: true, html: 'Thanks! Yours is done too.' }) + msg({ p: P.arif, html: 'Ok' , time: '8:20 PM'}) + msg({ mine: true, html: 'A longer message that wraps onto a second line, so the time drops under it when the last line is full width.', time: '8:21 PM' }))),
+    item('Run of three', panel(
+      msg({ p: P.maya, first: true, last: false, html: 'First in a run, with the name' }) +
+      msg({ p: P.maya, first: false, last: false, html: 'Middle' }) +
+      msg({ p: P.maya, first: false, last: true, html: 'Last, with the face' }) +
+      msg({ mine: true, first: true, last: false, html: 'Yours, first' }) +
+      msg({ mine: true, first: false, last: false, html: 'Middle' }) +
+      msg({ mine: true, first: false, last: true, html: 'Last' }))),
+    item('Sending, not sent', panel(
+      msg({ mine: true, html: 'On its way', send: 'sending' }) +
+      msg({ mine: true, html: 'No network when sent', send: 'failed' }) +
+      msg({ mine: true, html: 'Look at play.google.com', send: 'failed', err: "Links can't be sent here." }) +
+      msg({ mine: true, html: 'One more today', send: 'failed', err: 'No messages left today.' }))),
+    item('Mentions', panel(
+      msg({ p: P.maya, you: true, html: `${mentionMe('Sam Park')} can you look at my login screen?` }) +
+      msg({ p: P.arif, html: `${mention('Lena Novak')} thanks for the tip.` }) +
+      msg({ p: P.lena, html: `Try ${appChip(P.arif.app)} with dark mode on.` }) +
+      msg({ mine: true, html: `${mention('Maya Chen', true)} ${appChip(P.maya.app)} opens fine now.` }))),
+    item('Replies', panel(
+      msg({ p: P.lena, quote: { who: 'You', text: 'Fixed in the next build.' }, html: 'Great, will check tonight.' }) +
+      msg({ mine: true, quote: { who: 'Arif Rahman', text: 'Pix Clean froze on the second screen for anyone else?' }, html: 'Same on my Pixel.' }) +
+      msg({ p: P.arif, quote: { who: 'Maya Chen', text: 'Message deleted', deleted: true }, html: 'What did I miss?' }) +
+      msg({ mine: true, quote: { who: 'Lena Novak', text: 'Picture' }, html: 'That screen, yes.' }))),
+    item('Deleted', panel(stub({ p: P.arif }) + stub({ mine: true }) + stub({ p: P.maya, first: true, last: false }) + msg({ p: P.maya, first: false, html: 'Sorry, wrong crew.' }))),
+    item('Held down', panel(msg({ p: P.maya, lifted: true, html: 'Hi all! Opened everyone for tonight.' }) + '<div style="height:10px"></div>')),
+  ]));
+
+  /* 3. rows */
+  out.push(section('s3', 'Rows', [
+    item('Days, new line', panel(day('Yesterday') + day('Mon, Nov 17') + day('Oct 30, 2025') + day('Today') + newLine(3) + '<div style="height:8px"></div>')),
+    item('Bot, good news', panel([
+      `${CREW} is full. Night 1 starts at midnight, your own time.`,
+      'Night 1 has started. Open every app in your list once a day.',
+      'Halfway there: night 7 of 14.',
+      'Last night of the run. Open every app one more time.',
+      'The run is over. This chat is now read only. It will be deleted in 3 days.',
+    ].map(t => botLine(t, true)).join('') + '<div style="height:8px"></div>')),
+    item('Bot, other news', panel([
+      'Habit Grove: Daily Tracker joined. 9 of 15 apps are in.',
+      'Pix Clean left the crew.',
+      'Habit Grove: Daily Tracker joined the run.',
+      'Pix Clean is out of the run.',
+      'The team stopped this crew. This chat is now read only.',
+    ].map(t => botLine(t, false)).join('') + '<div style="height:8px"></div>')),
+    item('Team post', panel(teamPost('Play is slow to list new testers today. Your nights still count, keep opening every app.') + '<div style="height:8px"></div>')),
+    item('Bot face', `<div class="panel flat" style="display:flex;gap:18px;align-items:center">${botFace(20)}${botFace(26)}${botFace(48)}${botFace(96)}</div>`, '20, 26, 48, 96'),
+  ]));
+
+  /* 4. pictures */
+  out.push(section('s4', 'Pictures', [
+    item('Portrait, landscape', panel(msg({ p: P.lena }, pictureBubble({ kind: 'portrait' })) + msg({ mine: true }, pictureBubble({ mine: true, kind: 'landscape' })))),
+    item('Tall, cropped', panel(msg({ p: P.arif }, pictureBubble({ kind: 'tall' })))),
+    item('Caption', panel(msg({ p: P.maya, you: true }, pictureBubble({ kind: 'landscape', you: true, caption: `${mentionMe('Sam Park')} this is the screen that froze.` })) + msg({ mine: true }, pictureBubble({ mine: true, kind: 'portrait', caption: 'Settings page after the fix.' })))),
+    item('Sending, failed', panel(msg({ mine: true }, pictureBubble({ mine: true, kind: 'landscape', send: 'sending' })) + msg({ mine: true, send: 'failed' }, pictureBubble({ mine: true, kind: 'landscape', send: 'failed' })))),
+    item('Expired, broken, loading', panel(msg({ p: P.lena }, pictureBubble({ expired: true })) + msg({ mine: true }, pictureBubble({ mine: true, expired: true, caption: 'Old login screen.' })) + msg({ p: P.arif }, pictureBubble({ kind: 'landscape', broken: true })) + msg({ p: P.arif, first: false }, pictureBubble({ kind: 'landscape', first: false, loading: true })))),
+    item('Picture reply', panel(msg({ mine: true }, pictureBubble({ mine: true, kind: 'landscape', quote: { who: 'Maya Chen', text: 'Where is the crash?' } })))),
+    item('Viewer', viewer({ caption: 'This is the screen that froze.' })),
+    item('Viewer, wide', viewer({ kind: 'landscape', who: 'You' })),
+    item("Viewer, didn't load", viewer({ broken: true })),
+  ]));
+
+  /* 5. composer */
+  const cp = (o, label, sub) => item(label, panel(composer(o), `padding:0;overflow:visible;${o.tip ? 'margin-top:48px' : ''}`), sub);
+  out.push(section('s5', 'Composer', [
+    cp({}, 'Normal'),
+    cp({ text: `Thanks ${mention('Maya Chen')}, opened it`, focused: true, canSend: true }, 'Typing'),
+    cp({ text: 'A long message grows the field line by line, up to five lines, then scrolls inside it.', focused: true, canSend: true }, 'Grows to 5 lines'),
+    cp({ text: 'Thanks', focused: true, canSend: true, reply: { who: 'Lena Novak', text: 'Works for me. Try clearing its cache.' } }, 'Reply'),
+    cp({ text: '', reply: { who: 'You', text: 'Picture' } }, 'Reply to a picture'),
+    cp({ text: 'see play.google.com/store/apps', focused: true, bad: true, problem: "Links can't be sent here. Take it out to send. To point at an app, type @ and pick it." }, 'Link'),
+    cp({ text: 'A very long message...', bad: true, problem: "That's over 500 characters. Make it shorter to send." }, 'Too long'),
+    cp({ text: `${mention('Maya Chen')} ${mention('Arif Rahman')} ${mention('Lena Novak')}...`, bad: true, problem: 'You can mention up to 5 people or apps in one message.' }, 'Too many mentions'),
+    cp({ left: 3 }, 'Messages left', '3'),
+    cp({ left: 1, text: 'Last one today', canSend: true }, 'Messages left', '1'),
+    cp({ left: 0, pics: 2 }, 'Messages left', '0'),
+    cp({ left: 0, pics: 2, tip: 'No messages left today. More after midnight.' }, 'Messages 0, picture tapped'),
+    cp({ pics: 3 }, 'Picture badge', '3'),
+    cp({ pics: 1 }, 'Picture badge', '1'),
+    cp({ pics: 0 }, 'Picture badge', '0, grey'),
+    cp({ pics: 0, tip: 'No pictures left today. You get 3 more after midnight.' }, 'Pictures 0, tapped'),
+    cp({ pics: 0, tip: 'Pictures are off in this chat.' }, 'Pictures off, tapped'),
+    cp({ noBadge: true }, 'No badge', 'pictures per day not lower than messages'),
+    item('Loading', panel(composerLoading(), 'padding:0;overflow:hidden')),
+    item('Chat closed', panel(closedBar('The team has paused your messages in this chat.'), 'padding:0;overflow:hidden')),
+  ]));
+
+  /* 6. sheets and dialogs */
+    out.push(section('s6', 'Sheets and dialogs', [
+    item('Mention picker', chatPage({ bottom: composer({ text: 'Thanks @', focused: true, canSend: true }), over: mentionSheet() })),
+    item('Mention, searching', chatPage({ bottom: composer({ text: 'Thanks @', focused: true, canSend: true }), over: mentionSheet('pix') })),
+    item('Mention, no match', chatPage({ bottom: composer({ text: 'Thanks @', focused: true, canSend: true }), over: mentionSheet('zz') })),
+    item('Their message', chatPage({ body: `<div class="thread" style="justify-content:flex-start;padding-top:0">${sampleThread({ lift: 'maya' })}</div>`, over: sheet("Maya's message", `<div style="padding-bottom:18px">${sheetAction('reply', 'Reply')}${sheetAction('copy', 'Copy')}</div>`) })),
+    item('Your message', chatPage({ body: `<div class="thread">${sampleThread({ lift: 'mine' })}</div>`, over: sheet('Your message', `<div style="padding-bottom:18px">${sheetAction('reply', 'Reply')}${sheetAction('copy', 'Copy')}${sheetAction('trash-2', 'Delete', 'Gone for everyone', true)}</div>`) })),
+    item('Your picture, no caption', chatPage({ over: sheet('Your message', `<div style="padding-bottom:18px">${sheetAction('reply', 'Reply')}${sheetAction('trash-2', 'Delete', 'Gone for everyone', true)}</div>`) })),
+    item('Your failed message', chatPage({ over: sheet('Your message', `<div style="padding-bottom:18px">${sheetAction('copy', 'Copy')}${sheetAction('trash-2', 'Delete', 'Gone for everyone', true)}</div>`) })),
+    item('Delete', chatPage({ over: ask('Delete this message?', `It goes for everyone in ${CREW}. It still counts toward your 10 today.`, 'Keep it', 'Delete', true) })),
+    item('Face tapped', chatPage({ over: ask(null, null, 'Close', null, false, `<div style="display:flex;align-items:center;gap:12px">${avatar('Maya Chen', 64)}<div><div style="font:700 16px/21px TtBarlow,sans-serif;color:${v('text')}">Maya Chen</div><div class="t" style="margin-top:3px;font-size:13.5px;line-height:18px;color:${v('text3')}">maya.chen@example.com</div></div></div><div style="margin-top:14px;background:${v('bg')};border-radius:12px;padding:10px;display:flex;align-items:center;gap:10px">${appMark(P.maya.app, 40)}<div><div class="t" style="font-weight:600;font-size:14px;line-height:18px;color:${v('text')}">${P.maya.app}</div><div class="mono" style="margin-top:2px;font-size:11.5px;line-height:15px;color:${v('text4')}">com.grove.habits</div></div></div><div style="margin-top:12px;display:flex;align-items:center;gap:6px">${ic('calendar', 15, v('text3'))}<span class="t" style="font-size:13.5px;line-height:18px;color:${v('text2')}">Their day 5, <b style="color:${v('accentInk')};font-weight:600">2 of 11 opened tonight</b></span></div>`) })),
+  ]));
+
+  /* 7. editor */
+  out.push(section('s7', 'Picture editor', [
+    item('Just picked', editor('fresh')),
+    item('Drawn on', editor('main')),
+    item('Crop', editor('crop')),
+    item('Pen', editor('draw')),
+    item('Words', editor('main', { words: true })),
+    item('Caption', editor('main', { text: 'This is the screen that froze' })),
+    item('Caption problem', editor('main', { text: 'see play.google.com', problem: "Links can't be sent here. Take it out to send.", canSend: false })),
+    item("Couldn't make it", editor('main', { problem: "That picture couldn't be made ready. Try again." })),
+  ]));
+
+  /* 8. entry points */
+  out.push(section('s8', 'Ways in', [
+    item('Crew tile', `<div class="panel flat">${crewTile(0)}</div>`, 'nothing new'),
+    item('Crew tile', `<div class="panel flat">${crewTile(3)}</div>`, '3 new'),
+    item('Crew tile', `<div class="panel flat">${crewTile(12)}</div>`, '12 new'),
+    item('Crew tile', `<div class="panel flat">${crewTile(3, true)}</div>`, 'muted, 3 new'),
+    item('Tile button', `<div class="panel flat" style="display:flex;gap:28px;align-items:center;justify-content:center">${tileButton(0)}${tileButton(3)}${tileButton(12)}${tileButton(3, true)}</div>`, '0, 3, 12, muted'),
+    item('Chat button', `<div class="panel flat" style="display:flex;flex-wrap:wrap;gap:16px;align-items:center">${fab('wide', 0)}${fab('wide', 4)}${fab('wide', 128)}${fab('folded', 0)}${fab('folded', 4)}${fab('readonly')}</div>`, 'open, unread, 99+, folded, folded unread, read only'),
+    item('Crew tabs', `<div class="panel flat" style="display:flex;flex-direction:column;gap:14px">${tabs(2, [2])}${tabs(2, [1])}${tabs(1, [1, 2], { 0: 2 })}${tabs(3, [])}</div>`, 'dot = unread, not muted'),
+  ]));
+
+  document.getElementById('app').innerHTML = out.join('');
+}
+build();
+function setTheme(t) {
+  document.documentElement.dataset.theme = t;
+  document.getElementById('bl').classList.toggle('on', t === 'light');
+  document.getElementById('bd').classList.toggle('on', t === 'dark');
+  const y = scrollY; build(); scrollTo(0, y);
+}
+document.getElementById('bl').onclick = () => setTheme('light');
+document.getElementById('bd').onclick = () => setTheme('dark');
+if (location.search.includes('dark')) setTheme('dark');
+const only = new URLSearchParams(location.search).get('only');
+if (only) document.querySelectorAll('#app > h2').forEach(h => { if (!only.split(',').includes(h.id)) { h.nextElementSibling.style.display = 'none'; h.style.display = 'none'; } });
+const st = document.createElement('style'); st.textContent = '@keyframes spin{to{transform:rotate(360deg)}}'; document.head.appendChild(st);
+</script>
+</body>
+</html>

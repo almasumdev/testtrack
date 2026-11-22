@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Finished crew, two views</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  @font-face { font-family: "BarlowApp"; font-weight: 400; src: url("../../../app/src/main/res/font/barlow_regular.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 500; src: url("../../../app/src/main/res/font/barlow_medium.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 600; src: url("../../../app/src/main/res/font/barlow_semibold.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 700; src: url("../../../app/src/main/res/font/barlow_bold.ttf"); }
+
+  .light {
+    --bg:#F7FCFF; --text:#142F43; --text2:#203A4E; --text3:#223D50; --text4:#59758A;
+    --tabSel:#2E4E66; --glass2:#DFEDF6; --gb:#B7D1E2; --gbs:#789AAF; --cardLine:#E1ECF3; --card:#F3F8FB;
+    --accent:#3A5B73; --onAccent:#FFFFFF; --accentInk:#22394B; --primary:#3A5B73; --onPrimary:#FFFFFF;
+    --tile:#DCE6EE; --tileInk:#3A5B73; --track:#E4EEF4;
+    --ok:#246B59; --okBg:rgba(36,107,89,.12); --warn:#8A611C; --warnBg:rgba(154,110,36,.12);
+    --bad:#9E3B2E; --badBg:rgba(158,59,46,.12);
+    --selFill:#3A5B73; --onSel:#FFFFFF;
+    --pTop:#F7FCFF; --pBot:#E3F0F8; --pGlow:rgba(184,204,219,.60); --pLine:rgba(74,114,144,.22); --pOut:#94B8CF;
+  }
+  .dark {
+    --bg:#0F1011; --text:#ECEEF0; --text2:#BCC1C6; --text3:#9DA3A9; --text4:#757C82;
+    --tabSel:#B6CCDC; --glass2:#292C2F; --gb:#383C41; --gbs:#666D74; --cardLine:#2D3034; --card:#1C1E20;
+    --accent:#4A7290; --onAccent:#FFFFFF; --accentInk:#93B3CA; --primary:#93B3CA; --onPrimary:#0F1011;
+    --tile:#2A2D31; --tileInk:#A2BED2; --track:#2D3034;
+    --ok:#83D8C4; --okBg:rgba(131,216,196,.12); --warn:#D8B774; --warnBg:rgba(216,183,116,.14);
+    --bad:#E4938A; --badBg:rgba(228,147,138,.15);
+    --selFill:#2A2D31; --onSel:#93B3CA;
+    --pTop:#1F2225; --pBot:#18191B; --pGlow:rgba(147,179,202,.06); --pLine:rgba(147,179,202,.10); --pOut:#40464C;
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #E7ECEF; font-family: "BarlowApp", "Barlow", system-ui, sans-serif; }
+  .doc { padding: 28px; display: flex; flex-direction: column; gap: 40px; }
+  .sec h2 { margin: 0 0 14px 4px; font-size: 22px; font-weight: 700; color: #2D4A5F; }
+  .row { display: flex; flex-wrap: wrap; gap: 36px 36px; align-items: flex-start; }
+  .state { display: flex; flex-direction: column; }
+  .lbl { font-size: 15px; font-weight: 700; color: #2D4A5F; margin: 0 0 8px 4px; display: flex; align-items: center; gap: 8px; }
+  .rec { padding: 2px 9px; border-radius: 10px; background: #246B59; color: #fff; font-size: 11.5px; font-weight: 700; }
+  svg.i { display: block; flex: none; }
+  svg.il { display: inline-block; vertical-align: -2px; margin-right: 5px; }
+  b { font-weight: 600; color: var(--text); }
+  .tn { font-feature-settings: "tnum"; }
+
+  /* phone */
+  .phone { width: 412px; height: 892px; background: var(--bg); color: var(--text); border-radius: 26px; overflow: hidden; border: 1px solid #C3CFD8; display: flex; flex-direction: column; position: relative; }
+  .dark.phone { border-color: #2A2D31; }
+  .sbar { height: 24px; flex: none; }
+  .pbar { height: 64px; flex: none; display: flex; align-items: center; padding: 0 16px 0 4px; }
+  .pbar .back { width: 48px; height: 48px; display: grid; place-items: center; color: var(--text); flex: none; }
+  .pbar .pt { flex: 1; margin-left: 4px; font-size: 22px; line-height: 28px; font-weight: 700; }
+  .pbar .guide { font-size: 15px; font-weight: 600; color: var(--text3); margin-right: 14px; }
+  .mem { display: flex; align-items: center; gap: 6px; padding: 7px 12px; border: 1px solid var(--cardLine); border-radius: 20px; color: var(--accentInk); font-size: 14px; font-weight: 700; }
+  .vp { flex: 1 1 auto; overflow: hidden; }
+  .scroll { padding: 8px 16px 24px; }
+
+  /* card, chip, meter */
+  .card { border: 1px solid var(--cardLine); border-radius: 14px; background: var(--bg); }
+  .p16 { padding: 16px; } .p1416 { padding: 14px 16px; } .p12 { padding: 12px; }
+  .chip { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 20px; font-size: 12.5px; line-height: 16px; font-weight: 700; white-space: nowrap; }
+  .chip.ok { background: var(--okBg); color: var(--ok); }
+  .chip.warn { background: var(--warnBg); color: var(--warn); }
+  .chip.quiet { background: var(--glass2); color: var(--text3); }
+  .hl { font-size: 23px; line-height: 27px; font-weight: 700; }
+  .line { font-size: 14px; line-height: 20px; color: var(--text2); }
+  .meter { display: flex; gap: 4px; }
+  .meter i { flex: 1; height: 7px; border-radius: 4px; background: var(--track); }
+  .meter i.ok { background: var(--ok); } .meter i.warn { background: var(--warn); } .meter i.bad { background: var(--bad); } .meter i.acc { background: var(--accent); }
+  .ml { display: flex; justify-content: space-between; padding-top: 6px; font-size: 12.5px; line-height: 16px; color: var(--text4); }
+  .note { text-align: center; padding-top: 10px; font-size: 12.5px; line-height: 17px; color: var(--text4); }
+  .head { font-size: 16px; line-height: 19px; font-weight: 700; padding: 20px 0 10px; }
+  .sec2 { display: flex; align-items: center; }
+  .sec2 .end { margin-left: auto; font-size: 12.5px; color: var(--text3); font-weight: 500; }
+
+  /* flat figures (no boxes) */
+  .figs { display: flex; }
+  .figs > div { flex: 1; padding-left: 12px; border-left: 1px solid var(--cardLine); }
+  .figs > div:first-child { padding-left: 0; border-left: 0; }
+  .fn { font-size: 22px; line-height: 26px; font-weight: 700; font-feature-settings: "tnum"; }
+  .fn { height: 26px; white-space: nowrap; }
+  .fn small { font-size: 14px; line-height: 1; font-weight: 500; color: var(--text4); }
+  .fl { font-size: 12.5px; line-height: 15px; color: var(--text4); }
+
+  /* app */
+  .ai { width: 52px; height: 52px; border-radius: 30%; background: linear-gradient(140deg, #3479A6, #1C4C6E); color: #fff; display: grid; place-items: center; flex: none; }
+  .ai.s40 { width: 40px; height: 40px; border-radius: 12px; }
+  .ah { display: flex; align-items: center; }
+  .ah .col { flex: 1; min-width: 0; margin-left: 12px; }
+  .an { font-size: 16px; line-height: 19px; font-weight: 600; }
+  .ap { margin-top: 2px; font-size: 12.5px; line-height: 14px; color: var(--text3); }
+  .ast { margin-top: 2px; font-size: 12.5px; line-height: 15px; color: var(--text3); }
+  .sbtn { height: 52px; border-radius: 26px; background: var(--glass2); color: var(--text); display: grid; place-items: center; font-size: 15px; font-weight: 700; }
+  .pbtn { height: 52px; border-radius: 26px; background: var(--primary); color: var(--onPrimary); display: grid; place-items: center; font-size: 15px; font-weight: 700; }
+
+  /* A: record panel */
+  .panel { position: relative; border-radius: 14px; border: 1.5px dashed var(--pOut); background: radial-gradient(circle at 100% 0%, var(--pGlow), transparent 55%), linear-gradient(160deg, var(--pTop), var(--pBot)); padding: 16px; overflow: hidden; }
+  .pr { display: flex; align-items: center; }
+  .pr .end { margin-left: auto; font-size: 12.5px; line-height: 16px; color: var(--text3); font-weight: 500; white-space: nowrap; }
+  .big { display: flex; align-items: baseline; gap: 8px; }
+  .big .n { font-size: 44px; line-height: 46px; font-weight: 700; font-feature-settings: "tnum"; }
+  .big .n.ok { color: var(--ok); } .big .n.warn { color: var(--warn); }
+  .big .w { font-size: 17px; line-height: 22px; font-weight: 600; color: var(--text2); }
+  .rule { height: 1px; background: var(--pLine); }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; row-gap: 14px; }
+  .tix { display: flex; align-items: center; font-size: 14px; line-height: 18px; font-weight: 600; }
+  .tix .end { margin-left: auto; font-weight: 500; color: var(--text3); font-size: 13px; }
+  .tix .end.ok { color: var(--ok); font-weight: 600; }
+
+  /* B: tile rows */
+  .r40 { display: flex; align-items: center; min-height: 40px; }
+  .r40 .col { flex: 1; min-width: 0; margin-left: 12px; }
+  .t40 { width: 40px; height: 40px; border-radius: 12px; background: var(--tile); color: var(--tileInk); display: grid; place-items: center; flex: none; }
+  .t40.ok { background: var(--okBg); color: var(--ok); }
+  .t40.warn { background: var(--warnBg); color: var(--warn); }
+  .nm { font-size: 16px; line-height: 19px; font-weight: 600; font-feature-settings: "tnum"; }
+  .sub { margin-top: 2px; font-size: 12.5px; line-height: 14px; font-weight: 500; color: var(--text3); }
+
+  /* C: receipt */
+  .dash { height: 0; border-top: 1.5px dashed var(--gb); }
+  .kv { display: flex; align-items: center; min-height: 34px; font-size: 14px; color: var(--text3); }
+  .kv .v { margin-left: auto; font-size: 15px; font-weight: 600; color: var(--text); font-feature-settings: "tnum"; }
+  .kv .v.bad { color: var(--bad); }
+  .tot { display: flex; align-items: center; gap: 10px; }
+  .tot .k { font-size: 15px; font-weight: 700; flex: 1; }
+  .tot .v { font-size: 22px; font-weight: 700; color: var(--ok); font-feature-settings: "tnum"; }
+
+  /* every night */
+  .gname { width: 58px; font-size: 11px; line-height: 13px; color: var(--text2); white-space: nowrap; overflow: hidden; flex: none; }
+  .gname.out { color: var(--text4); }
+  .grow { display: flex; align-items: center; padding: 1.5px 0; }
+  .gcells { flex: 1; display: grid; grid-template-columns: repeat(14, 1fr); gap: 2px; }
+  .sq { aspect-ratio: 1; border-radius: 3px; border: 1px solid transparent; }
+  .sq.p { background: var(--ok); border-color: var(--ok); }
+  .sq.m { background: var(--badBg); border-color: var(--bad); }
+  .sq.n { background: var(--glass2); border-color: var(--gb); }
+  .sq.h { background: var(--ok); border: 1.5px solid var(--warn); }
+  .gnum { flex: 1; display: grid; grid-template-columns: repeat(14, 1fr); gap: 2px; font-size: 9.5px; color: var(--text4); text-align: center; }
+  .leg { padding-top: 8px; font-size: 11px; line-height: 14px; color: var(--text4); }
+  .tc { margin-top: 8px; }
+  .tc .top { display: flex; align-items: center; }
+  .tc .tnm { flex: 1; font-size: 15px; font-weight: 600; }
+  .cells { display: flex; gap: 6px; margin-top: 8px; }
+  .cell { display: flex; flex-direction: column; align-items: center; }
+  .cell .c { width: 40px; height: 53px; border-radius: 8px; position: relative; overflow: hidden; display: grid; place-items: center; }
+  .cell .c.gone { background: var(--okBg); border: 1.5px solid color-mix(in srgb, var(--ok) 40%, transparent); color: color-mix(in srgb, var(--ok) 70%, transparent); }
+  .cell .c.pic { background: #fff; border: 1px solid var(--gb); }
+  .cell .c.pic::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 13px; background: #2A6690; }
+  .cell .c.pic::after { content: ""; position: absolute; left: 6px; right: 6px; top: 19px; height: 26px; background: repeating-linear-gradient(#D5E2EC 0 3px, transparent 3px 7px); }
+  .cell .d { padding-top: 2px; font-size: 11px; color: var(--text4); }
+  .cell .d.now { color: var(--text2); font-weight: 600; }
+
+  /* tabs and rows */
+  .tabs { margin: 6px 16px 0; height: 44px; border-radius: 22px; background: var(--card); border: 1px solid var(--cardLine); display: flex; padding: 3px; gap: 2px; }
+  .tabs span { flex: 1; display: grid; place-items: center; border-radius: 19px; font-size: 14px; font-weight: 600; color: var(--text3); }
+  .tabs span.on { background: var(--selFill); color: var(--onSel); }
+  .hr { display: flex; align-items: center; min-height: 76px; border: 1px solid var(--cardLine); border-radius: 14px; padding: 12px 8px 12px 12px; background: var(--bg); }
+  .hr + .hr { margin-top: 8px; }
+  .hr .col { flex: 1; min-width: 0; margin-left: 12px; }
+  .hr .t { font-size: 16px; line-height: 19px; font-weight: 600; }
+  .hr .n { margin-top: 2px; font-size: 12.5px; line-height: 14px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hr .n.acc { color: var(--accentInk); font-weight: 600; }
+  .hr .chev { color: var(--text4); margin-left: 2px; }
+  .hr .ai.gray { filter: grayscale(.2); }
+  .ai.green { background: linear-gradient(140deg, #3F9A72, #23694B); }
+  .ai.plum { background: linear-gradient(140deg, #8A62C4, #5A3A8E); }
+  .ai.amber { background: linear-gradient(140deg, #E09A3A, #B4651E); }
+
+  /* skeleton */
+  .sk { background: color-mix(in srgb, var(--text) 9%, transparent); border-radius: 6px; flex: none; }
+</style>
+</head>
+<body>
+<div class="doc" id="doc"></div>
+
+<script>
+const P = (d, s = 24, w = 2) => `<svg class="i" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const inl = svg => svg.replace('class="i"', 'class="il"');
+const I = {
+  circleCheck: (s, w = 2.4) => P('<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>', s, w),
+  alert: (s, w = 2.2) => P('<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>', s, w),
+  clock: (s, w = 2.2) => P('<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>', s, w),
+  users: s => P('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>', s),
+  coins: (s, w = 2) => P('<circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/><path d="m16.71 13.88.7.71-2.82 2.82"/>', s, w),
+  cal: (s, w = 2) => P('<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>', s, w),
+  calCheck: s => P('<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="m9 16 2 2 4-4"/>', s),
+  circleX: s => P('<circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/>', s),
+  logOut: (s, w = 2) => P('<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/>', s, w),
+  chev: s => P('<path d="m9 18 6-6-6-6"/>', s),
+  info: (s, w = 2) => P('<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>', s, w),
+  imageOff: (s, w = 2) => P('<line x1="2" x2="22" y1="2" y2="22"/><path d="M10.41 10.41a2 2 0 1 1-2.83-2.83"/><line x1="13.5" x2="6" y1="13.5" y2="21"/><line x1="18" x2="21" y1="12" y2="15"/><path d="M3.59 3.59A1.99 1.99 0 0 0 3 5v14a2 2 0 0 0 2 2h14c.55 0 1.052-.22 1.41-.59"/><path d="M21 15V5a2 2 0 0 0-2-2H9"/>', s, w),
+  hourglass: s => P('<path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>', s, 2.2),
+  leaf: s => P('<path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>', s, 2.2),
+  music: s => P('<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>', s, 2.2),
+  wallet: s => P('<path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>', s, 2.2),
+  backIos: s => `<svg class="i" width="${s}" height="${s}" viewBox="0 0 24 24" fill="currentColor"><path d="M17.77 3.77 16 2 6 12l10 10 1.77-1.77L9.54 12z"/></svg>`,
+};
+
+const APP = { name: 'Focus Flow', pkg: 'com.example.focusflow' };
+const icon = (size = 52, cls = '') => `<span class="ai${size === 40 ? ' s40' : ''} ${cls}">${I.hourglass(size === 40 ? 20 : 26)}</span>`;
+const sp = h => `<div style="height:${h}px"></div>`;
+const meter = (n, f) => `<div class="meter">${Array.from({ length: n }, (_, i) => `<i class="${f(i)}"></i>`).join('')}</div>`;
+const ml = (a, b) => `<div class="ml"><span>${a}</span><span>${b}</span></div>`;
+
+function phone(theme, title, body, o = {}) {
+  const acts = o.members ? `<span class="guide">Guide</span><span class="mem">${I.users(16)}15</span>` : '';
+  const bar = o.tabs
+    ? `<div class="tabs">${['Open', 'Lobby', 'Run', 'Record'].map(t => `<span class="${t === 'Record' ? 'on' : ''}">${t}</span>`).join('')}</div>`
+    : `<div class="pbar"><span class="back">${I.backIos(24)}</span><span class="pt">${title}</span>${acts}</div>`;
+  return `<div class="phone ${theme}"><div class="sbar"></div>${bar}<div class="vp"><div class="scroll"${o.tabs ? ' style="padding-top:12px"' : ''}>${body}</div></div></div>`;
+}
+const frame = (label, html, rec) => `<div class="state"><div class="lbl">${label}${rec ? '<span class="rec">Recommended</span>' : ''}</div>${html}</div>`;
+
+/* ---------- View 1: just finished ---------- */
+function view1() {
+  const hero = `<div class="card p16">
+    <span class="chip ok">${I.circleCheck(13)}Finished after 14 days</span>${sp(10)}
+    <div class="hl">Crew 07 finished</div>${sp(4)}
+    <div class="line"><b>13</b> of <b>14</b> stayed. Enough for Google, so you can apply for production.</div>${sp(14)}
+    <div class="figs"><div><div class="fn">14</div><div class="fl">days tested</div></div><div><div class="fn">13</div><div class="fl">stayed</div></div><div><div class="fn">1</div><div class="fl">you missed</div></div></div>
+  </div>
+  <div class="note">${inl(I.clock(13))}Details and pictures clear on Thu, Nov 19</div>`;
+  const yours = `<div class="head">Your app</div>
+  <div class="card p1416">
+    <div class="ah">${icon()}<div class="col"><div class="an">${APP.name}</div><div class="ast">Tested by 13 people on all 14 days. Enough for Google.</div></div><span class="chip ok" style="margin-left:10px">13 of 14</span></div>
+    ${sp(14)}${meter(14, i => i < 13 ? 'ok' : '')}${ml('14 days done', '12 keep it counting')}
+    ${sp(12)}<div class="sbtn">See who tested it</div>
+  </div>`;
+  return hero + yours;
+}
+
+const NAMES = ['Amir', 'Bea', 'Chen', 'Dana', 'Eli', 'Farah', 'Gus', 'Hana', 'Ivan', 'Jo', 'Kim', 'Lena', 'Max', 'Noor'];
+function sqOf(r, d) {
+  if (r === 11 && d >= 7) return 'n';           // Lena left on night 7
+  if ((r === 3 && d === 5) || (r === 8 && d === 10)) return 'm';
+  if (r === 6 && d === 9) return 'n';           // let off
+  if ((r === 1 && d === 4) || (r === 9 && d === 12)) return 'h';
+  return 'p';
+}
+function everyNight() {
+  let g = '';
+  NAMES.forEach((n, r) => {
+    g += `<div class="grow"><span class="gname${r === 11 ? ' out' : ''}">${n}</span><div class="gcells">${Array.from({ length: 14 }, (_, d) => `<span class="sq ${sqOf(r, d + 1)}"></span>`).join('')}</div></div>`;
+  });
+  const counts = Array.from({ length: 14 }, (_, d) => NAMES.filter((_, r) => ['p', 'h'].includes(sqOf(r, d + 1))).length);
+  g += `<div class="grow" style="padding-top:4px"><span class="gname"></span><div class="gnum">${counts.map(c => `<span>${c}</span>`).join('')}</div></div>`;
+  const cells = (from, gone) => Array.from({ length: 7 }, (_, k) => {
+    const d = from + k;
+    const c = d <= gone ? `<span class="c gone">${I.imageOff(14)}</span>` : `<span class="c pic"></span>`;
+    return `<div class="cell">${c}<span class="d">${d}</span></div>`;
+  }).join('');
+  return `<div class="ast" style="color:var(--text3)">${APP.name} in Crew 07, night by night.</div>${sp(6)}
+    <div class="ast" style="color:var(--text4)">${inl(I.imageOff(13))}Pictures from the last 3 nights only. Older ones were removed after 3 days.</div>${sp(12)}
+    <div class="card p12">
+      <span class="chip ok">Every night reached 12</span>${sp(8)}${g}
+      <div class="leg">Full: picture in. Yellow edge: picked by hand. Red: missed. Grey: not owed.</div>
+    </div>
+    <div class="head" style="padding-top:20px;padding-bottom:4px">Each member's pictures</div>
+    <div class="card p12 tc"><div class="top"><span class="tnm">Amir</span><span class="chip ok">14 of 14 nights</span></div><div class="cells">${cells(8, 11)}</div></div>
+    <div class="card p12 tc"><div class="top"><span class="tnm">Bea</span><span class="chip ok">14 of 14 nights</span></div><div class="cells">${cells(8, 11)}</div></div>`;
+}
+
+/* ---------- View 2, option A: record panel ---------- */
+function optA(v = 'ok') {
+  const D = {
+    ok: { chip: `<span class="chip ok">${I.circleCheck(13)}Counts for Google</span>`, n: '13', nc: 'ok', w: 'of 14 stayed', m: i => i < 13 ? 'ok' : '', l: ['14 days, finished', '12 needed'],
+      g: [['12', ' of 14', 'nights tested'], ['93%', '', 'daily rate'], ['Day 14', '', 'finished'], ['1', '', 'missed'], ['1', '', 'let off'], ['0', '', 'reported']], tix: ['100 tix spent', 'None back', ''] },
+    short: { chip: `<span class="chip warn">${I.alert(13)}Under 12</span>`, n: '10', nc: 'warn', w: 'of 14 stayed', m: i => i < 10 ? 'warn' : '', l: ['14 days, finished', '12 needed'],
+      g: [['14', ' of 14', 'nights tested'], ['100%', '', 'daily rate'], ['Day 14', '', 'finished'], ['0', '', 'missed'], ['0', '', 'let off'], ['0', '', 'reported']], tix: ['100 tix spent', 'All 100 back', 'ok'] },
+    left: { chip: `<span class="chip quiet">${I.logOut(13)}You left on day 6</span>`, n: '5', nc: '', w: 'of 14 nights tested', m: i => i < 5 ? 'acc' : i === 5 ? 'bad' : '', l: ['Your app left with you', '14 in the run'],
+      g: [['5', ' of 14', 'nights tested'], ['83%', '', 'daily rate'], ['Day 6', '', 'left'], ['1', '', 'missed'], ['0', '', 'let off'], ['0', '', 'reported']], tix: ['100 tix spent', 'None back', ''] },
+  }[v];
+  const grid = D.g.map(([n, s, l]) => `<div><div class="fn">${n}${s ? `<small>${s}</small>` : ''}</div><div class="fl">${l}</div></div>`).join('');
+  return `<div class="ah">${icon()}<div class="col"><div class="an">${APP.name}</div><div class="ap">${APP.pkg}</div></div></div>${sp(16)}
+    <div class="panel">
+      <div class="pr">${D.chip}<span class="end">${inl(I.cal(13))}Nov 3 to 16</span></div>${sp(12)}
+      <div class="big"><span class="n ${D.nc}">${D.n}</span><span class="w">${D.w}</span></div>${sp(10)}
+      ${meter(14, D.m)}${ml(...D.l)}${sp(14)}
+      <div class="rule"></div>${sp(14)}
+      <div class="grid3">${grid}</div>${sp(14)}
+      <div class="rule"></div>${sp(12)}
+      <div class="tix">${inl(I.coins(16))}${D.tix[0]}<span class="end ${D.tix[2]}">${D.tix[1]}</span></div>
+    </div>
+    ${v === 'short' ? sp(16) + '<div class="pbtn">Put it in a new crew</div>' : ''}
+    <div class="note">${inl(I.info(13))}Night lists and pictures cleared on Nov 19</div>`;
+}
+function loadingA() {
+  const b = (w, h, r = 6) => `<div class="sk" style="width:${w};height:${h}px;border-radius:${r}px"></div>`;
+  return `<div style="display:flex;align-items:center;gap:12px">${b('52px', 52, 16)}<div style="display:flex;flex-direction:column;gap:8px">${b('120px', 15)}${b('150px', 11)}</div></div>${sp(16)}
+    <div class="panel" style="border-color:color-mix(in srgb, var(--text) 12%, transparent)">
+      <div style="display:flex;justify-content:space-between">${b('130px', 24, 12)}${b('80px', 13)}</div>${sp(14)}
+      <div style="display:flex;align-items:flex-end;gap:10px">${b('54px', 40, 8)}${b('110px', 16)}</div>${sp(14)}
+      ${b('100%', 7, 4)}${sp(8)}<div style="display:flex;justify-content:space-between">${b('100px', 11)}${b('60px', 11)}</div>${sp(16)}
+      ${b('100%', 1, 0)}${sp(14)}
+      <div class="grid3">${Array.from({ length: 6 }, () => `<div style="display:flex;flex-direction:column;gap:6px">${b('46px', 20)}${b('70px', 11)}</div>`).join('')}</div>${sp(16)}
+      ${b('100%', 1, 0)}${sp(12)}<div style="display:flex;justify-content:space-between">${b('120px', 14)}${b('70px', 12)}</div>
+    </div>`;
+}
+
+/* ---------- View 2, option B: flat rows ---------- */
+function optB() {
+  const row = (ic, tone, t, s) => `<div class="r40"><span class="t40 ${tone}">${ic}</span><div class="col"><div class="nm">${t}</div><div class="sub">${s}</div></div></div>`;
+  return `<span class="chip ok">${I.circleCheck(13)}Counts for Google</span>${sp(10)}
+    <div class="hl">13 of 14 stayed</div>${sp(4)}
+    <div class="line">Nov 3 to 16, 14 days. Google needs 12.</div>${sp(14)}
+    ${meter(14, i => i < 13 ? 'ok' : '')}${ml('13 stayed', '12 needed')}
+    <div class="head" style="padding-top:24px">Your app</div>
+    <div class="r40">${icon(40)}<div class="col"><div class="nm">${APP.name}</div><div class="sub">${APP.pkg}</div></div></div>
+    <div class="head sec2" style="padding-top:24px">Your nights</div>
+    ${row(I.calCheck(20), '', '12 of 14 tested', '93% daily rate')}${sp(16)}
+    ${row(I.circleX(20), '', '1 missed, 1 let off', '0 reported')}${sp(16)}
+    ${row(I.circleCheck(20), 'ok', 'Finished', 'Stayed to day 14')}${sp(16)}
+    ${row(I.coins(20), '', '100 tix spent', 'None back')}
+    ${sp(8)}<div class="note">${inl(I.info(13))}Night lists and pictures cleared on Nov 19</div>`;
+}
+
+/* ---------- View 2, option C: receipt ---------- */
+function optC() {
+  const kv = (k, v, c = '') => `<div class="kv"><span>${k}</span><span class="v ${c}">${v}</span></div>`;
+  return `<div class="card p16">
+      <div class="ah">${icon()}<div class="col"><div class="an">${APP.name}</div><div class="ap">Crew 07, Nov 3 to 16</div></div></div>${sp(14)}
+      <div class="dash"></div>${sp(6)}
+      ${kv('Nights tested', '12 of 14')}${kv('Missed', '1', 'bad')}${kv('Let off', '1')}${kv('Reported', '0')}${kv('Daily rate', '93%')}${kv('Finished', 'Day 14')}${kv('Tix', '100 spent, 0 back')}
+      ${sp(6)}<div class="dash"></div>${sp(14)}
+      <div class="tot"><span class="k">Testers stayed</span><span class="v">13 of 14</span><span class="chip ok">Counts</span></div>
+    </div>
+    <div class="note">${inl(I.info(13))}Night lists and pictures cleared on Nov 19</div>`;
+}
+
+/* ---------- Record tab rows ---------- */
+function recordRows() {
+  const row = (ic, cls, title, note, nc, chip) => `<div class="hr"><span class="ai ${cls}">${ic}</span><div class="col"><div class="t">${title}</div><div class="n ${nc}">${note}</div></div>${chip}<span class="chev">${I.chev(18)}</span></div>`;
+  return row(I.hourglass(26), '', 'Crew 07', `${inl(I.clock(12))}13 of 14 stayed, details till Nov 19`, 'acc', `<span class="chip ok">Counts</span>`)
+    + row(I.leaf(26), 'green', 'Crew 04', '13 of 15 stayed, Oct 6 to 19', '', `<span class="chip ok">Counts</span>`)
+    + row(I.music(26), 'plum', 'Crew 02', 'You left on day 6, Sep 8 to 21', '', `<span class="chip quiet">Left</span>`)
+    + row(I.wallet(26), 'amber', 'Crew 01', '10 of 14 stayed, Aug 18 to 31', '', `<span class="chip warn">Under 12</span>`);
+}
+
+const doc = document.getElementById('doc');
+doc.innerHTML = `
+<div class="sec"><h2>View 1: just finished, days 0 to 3</h2><div class="row">
+  ${frame('Page', phone('light', 'Crew 07', view1(), { members: true }), true)}
+  ${frame('Page, dark', phone('dark', 'Crew 07', view1(), { members: true }))}
+  ${frame('Every night', phone('light', 'Every night', everyNight()))}
+</div></div>
+
+<div class="sec"><h2>View 2: after 3 days</h2><div class="row">
+  ${frame('Option A: record panel', phone('light', 'Crew 07', optA('ok')), true)}
+  ${frame('A, dark', phone('dark', 'Crew 07', optA('ok')))}
+  ${frame('A, under 12', phone('light', 'Crew 07', optA('short')))}
+  ${frame('A, you left', phone('dark', 'Crew 07', optA('left')))}
+  ${frame('A, loading', phone('light', 'Crew 07', loadingA()))}
+</div></div>
+
+<div class="sec"><div class="row">
+  ${frame('Option B: flat rows', phone('light', 'Crew 07', optB()))}
+  ${frame('B, dark', phone('dark', 'Crew 07', optB()))}
+</div></div>
+
+<div class="sec"><div class="row">
+  ${frame('Option C: receipt', phone('light', 'Crew 07', optC()))}
+  ${frame('C, dark', phone('dark', 'Crew 07', optC()))}
+</div></div>
+
+<div class="sec"><h2>Record tab rows</h2><div class="row">
+  ${frame('Light', phone('light', '', recordRows(), { tabs: true }))}
+  ${frame('Dark', phone('dark', '', recordRows(), { tabs: true }))}
+</div></div>`;
+</script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+<?xml version='1.0' encoding='utf-8' standalone='yes' ?>
+<map>
+    <int name="review_session_count" value="265" />
+    <set name="review_seen_finished">
+        <string>01a1d151-a0a4-73f6-932e-01a1ac74bab0</string>
+        <string>01a1dbe0-c124-7535-bb0c-8e5086d86bf1</string>
+        <string>01a1dbe0-c116-73d5-b5d0-324cb44911ff</string>
+        <string>01a1d151-a090-721d-b891-eb24e50b17a5</string>
+        <string>01a1eed3-b151-73f5-930b-8caf8e728963</string>
+        <string>01a1d153-ed63-7353-9cf7-42b50bde4542</string>
+        <string>01a1f12b-dcbe-75b1-94d2-032296ba232b</string>
+        <string>01a1d151-a09d-77ed-92ea-85fdb6437475</string>
+        <string>01a1d153-ed52-774c-82d0-d49da15dde03</string>
+        <string>01a1d153-ed43-7548-aa14-1be94dad26e6</string>
+        <string>01a1eed3-ae75-7784-91f0-06ca2eb543c2</string>
+        <string>01a1d153-ed5a-7754-bdfa-d0b14866ce23</string>
+        <string>01a1dbe0-c108-749e-be95-5182e64b3f4f</string>
+        <string>01a1f12b-ddd5-75a1-bf8e-cf7a699062eb</string>
+        <string>01a1d151-a0ae-72ad-893a-ea2780f2611f</string>
+        <string>01a1dbe0-c11b-7067-9ed4-87f42769f6a9</string>
+        <string>01a1e633-ceee-76e8-8f01-3989941e15e9</string>
+        <string>01a1eed3-b04e-7601-9468-734d49d1cd52</string>
+        <string>01a1f12b-db24-74ac-a214-019e429cce51</string>
+    </set>
+    <int name="review_value_events" value="19" />
+</map>

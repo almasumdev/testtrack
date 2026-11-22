@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>TestTrack You page: settings tiles</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  @font-face { font-family: "BarlowApp"; font-weight: 400; src: url("../../../app/src/main/res/font/barlow_regular.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 500; src: url("../../../app/src/main/res/font/barlow_medium.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 600; src: url("../../../app/src/main/res/font/barlow_semibold.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 700; src: url("../../../app/src/main/res/font/barlow_bold.ttf"); }
+
+  .dark {
+    --bg:#0F1011; --text:#ECEEF0; --text2:#BCC1C6; --text3:#9DA3A9; --text4:#757C82;
+    --glass:#1C1E20; --glass2:#292C2F; --glassBorder:#383C41; --hair:#2B2E32; --cardLine:#2D3034;
+    --tile:#2A2D31; --tileInk:#A2BED2; --leafSoft:#2A2D31; --surf2:#212427; --surf3:#2E3236;
+    --ok:#83D8C4; --okBg:rgba(131,216,196,.12); --bad:#E4938A; --badBg:rgba(228,147,138,.15);
+    --gold:#E3A93C; --dock:#1C1E20; --dockInk:#BCC1C6; --tabSel:#B6CCDC; --accent:#4A7290;
+    --press:rgba(236,238,240,.06);
+    color: var(--text); background: var(--bg);
+  }
+  .light {
+    --bg:#F7FCFF; --text:#142F43; --text2:#203A4E; --text3:#223D50; --text4:#59758A;
+    --glass:#F2F9FD; --glass2:#DFEDF6; --glassBorder:#B7D1E2; --hair:#B7D1E2; --cardLine:#E1ECF3;
+    --tile:#DCE6EE; --tileInk:#3A5B73; --leafSoft:rgba(74,114,144,.16); --surf2:#EAF4FB; --surf3:#C7DEED;
+    --ok:#246B59; --okBg:rgba(36,107,89,.12); --bad:#9E3B2E; --badBg:rgba(158,59,46,.12);
+    --gold:#9A7B1F; --dock:#E8F3FA; --dockInk:#304C60; --tabSel:#2E4E66; --accent:#3A5B73;
+    --press:rgba(20,47,67,.05);
+    color: var(--text); background: var(--bg);
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #D7DEE3; font-family: "BarlowApp","Barlow",system-ui,sans-serif; color: #142F43; }
+  header.top { padding: 26px 36px 6px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 18px 28px; }
+  header.top h1 { margin: 0; font-size: 26px; }
+  .legend { display: flex; gap: 18px; font-size: 14px; color: #3d4f5c; align-items: center; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend svg { width: 16px; height: 16px; }
+  .legend .chipdemo { font: 700 11.5px/1 "BarlowApp","Barlow"; background: rgba(36,107,89,.14); color: #246B59; padding: 4px 9px; border-radius: 99px; }
+
+  section.opt { margin: 22px 28px 34px; padding: 22px 24px 26px; background: #EEF2F5; border-radius: 22px; }
+  section.opt.rec { background: #E6F0F6; box-shadow: inset 0 0 0 2px #3A5B73; }
+  .opt-h { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+  .opt-h .letter { width: 34px; height: 34px; border-radius: 10px; background: #3A5B73; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; }
+  .opt-h h2 { margin: 0; font-size: 22px; }
+  .opt-h .rectag { font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; background: #3A5B73; color: #fff; padding: 3px 10px; border-radius: 99px; }
+  .spec { font-size: 13.5px; color: #4a5a66; margin: 0 0 16px 46px; }
+  .frames { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start; }
+  .flab { font-size: 13px; font-weight: 700; color: #4a5a66; margin: 0 0 8px 4px; text-transform: uppercase; letter-spacing: .05em; }
+
+  /* phone */
+  .phone { width: 429px; border-radius: 38px; border: 9px solid #15181B; overflow: hidden; position: relative; box-shadow: 0 12px 30px rgba(15,30,45,.22); }
+  .sb { height: 30px; display: flex; align-items: center; padding: 4px 24px 0; font-size: 14px; font-weight: 600; }
+  .sb .bat { margin-left: auto; width: 24px; height: 12px; border-radius: 6px; background: var(--text); opacity: .8; }
+  .hud { height: 60px; display: flex; align-items: center; padding: 0 16px; gap: 10px; }
+  .hud .bot { width: 40px; height: 40px; border-radius: 12px; background: var(--tile); display: flex; align-items: center; justify-content: center; color: var(--tileInk); }
+  .hud .bot svg { width: 22px; height: 22px; }
+  .hud .lv b { display: block; font-size: 14px; line-height: 19px; font-weight: 600; }
+  .hud .lv span { font-size: 11.5px; color: var(--text2); }
+  .hud .tix { margin-left: auto; font-size: 18px; font-weight: 600; }
+  .page { padding: 0 16px 18px; }
+  .sh { font-size: 18px; line-height: 24px; font-weight: 700; padding: 18px 0 10px; }
+  .ver { text-align: center; font-size: 12.5px; color: var(--text4); padding: 18px 0 6px; }
+  .dock { height: 74px; background: var(--dock); border-top: 1px solid var(--hair); display: flex; padding-top: 8px; }
+  .dock .it { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 12px; color: var(--text2); }
+  .dock .ico { width: 52px; height: 30px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--dockInk); }
+  .dock .ico svg { width: 21px; height: 21px; }
+  .dock .it.on .ico { background: var(--leafSoft); color: var(--tabSel); }
+  .dock .it.on { color: var(--tabSel); font-weight: 700; }
+  .dock .plus { width: 50px; height: 38px; border-radius: 14px; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; margin-top: 3px; }
+  .dock .plus svg { width: 22px; height: 22px; }
+
+  /* row parts common */
+  .grp { display: flex; flex-direction: column; }
+  .row { display: flex; align-items: center; position: relative; }
+  .itile { flex: none; display: flex; align-items: center; justify-content: center; background: var(--tile); color: var(--tileInk); }
+  .itile svg { display: block; }
+  .row.danger .itile { background: var(--badBg); color: var(--bad); }
+  .txt { flex: 1; min-width: 0; }
+  .tt { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row.danger .tt { color: var(--bad); }
+  .st { color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .stars { color: var(--gold); letter-spacing: 1px; }
+  .chip { flex: none; font-weight: 600; font-size: 11.5px; line-height: 14px; padding: 4px 10px; border-radius: 99px; background: var(--okBg); color: var(--ok); }
+  .end { flex: none; color: var(--text4); display: flex; }
+  .end svg { width: 18px; height: 18px; }
+  .val { display: none; }
+
+  /* ---- A Hairline ---- */
+  .A .grp { gap: 8px; }
+  .A .row { min-height: 60px; padding: 0 14px; border-radius: 14px; background: var(--bg); border: 1px solid var(--cardLine); }
+  .dark.A .row { border-color: var(--glassBorder); }
+  .A .itile { width: 36px; height: 36px; border-radius: 11px; }
+  .A .itile svg { width: 19px; height: 19px; }
+  .A .txt { margin-left: 14px; }
+  .A .tt { font-size: 15px; line-height: 19px; }
+  .A .st { font-size: 12.5px; line-height: 17px; }
+  .A .chip { margin-left: 12px; }
+  .A .end { margin-left: 10px; }
+  .A .chip + .end { margin-left: 8px; }
+
+  /* ---- B Solid (current, refined) ---- */
+  .B .grp { gap: 3px; }
+  .B .row { min-height: 62px; padding: 0 14px 0 13px; background: var(--surf2); border-radius: 5px; }
+  .B .row:first-child { border-top-left-radius: 20px; border-top-right-radius: 20px; }
+  .B .row:last-child { border-bottom-left-radius: 20px; border-bottom-right-radius: 20px; }
+  .B .itile { width: 38px; height: 38px; border-radius: 12px; background: var(--surf3); }
+  .light.B .itile { background: var(--tile); }
+  .B .itile svg { width: 19px; height: 19px; }
+  .B .row.danger .itile { background: var(--badBg); }
+  .B .txt { margin-left: 14px; }
+  .B .tt { font-size: 15.5px; line-height: 20px; }
+  .B .st { font-size: 12.5px; line-height: 17px; }
+  .B .chip { margin-left: 12px; }
+  .B .end { margin-left: 10px; }
+  .B .chip + .end { margin-left: 8px; }
+
+  /* ---- C Open ---- */
+  .C .page { padding: 0 12px 18px; }
+  .C .sh { padding: 22px 4px 6px; }
+  .C .grp { gap: 0; }
+  .C .row { min-height: 66px; padding: 0 8px; border-radius: 16px; }
+  .C .row.pressed { background: var(--press); }
+  .C .itile { width: 40px; height: 40px; border-radius: 13px; }
+  .C .itile svg { width: 20px; height: 20px; }
+  .C .txt { margin-left: 16px; }
+  .C .tt { font-size: 16px; line-height: 20px; }
+  .C .st { font-size: 13px; line-height: 17px; }
+  .C .chip { margin-left: 12px; }
+  .C .end { margin-left: 10px; }
+  .C .chip + .end { margin-left: 8px; }
+  .C .ver { padding-top: 10px; }
+
+  /* ---- D Tinted ---- */
+  .D .grp { gap: 6px; }
+  .D .row { min-height: 60px; padding: 0 14px 0 12px; background: var(--surf2); border-radius: 16px; }
+  .D .itile { width: 36px; height: 36px; border-radius: 11px; }
+  .D .itile svg { width: 19px; height: 19px; }
+  .D .txt { margin-left: 14px; }
+  .D .tt { font-size: 15px; line-height: 19px; }
+  .D .st { font-size: 12.5px; line-height: 17px; }
+  .D .chip { margin-left: 12px; }
+  .D .end { margin-left: 10px; }
+  .D .chip + .end { margin-left: 8px; }
+
+  /* ---- E Compact ---- */
+  .E .sh { padding: 16px 0 8px; font-size: 17px; }
+  .E .grp { gap: 2px; }
+  .E .row { min-height: 50px; padding: 0 14px 0 10px; background: var(--surf2); border-radius: 4px; }
+  .E .row:first-child { border-top-left-radius: 14px; border-top-right-radius: 14px; }
+  .E .row:last-child { border-bottom-left-radius: 14px; border-bottom-right-radius: 14px; }
+  .E .itile { width: 30px; height: 30px; border-radius: 9px; }
+  .E .itile svg { width: 17px; height: 17px; }
+  .E .txt { margin-left: 12px; }
+  .E .tt { font-size: 15px; line-height: 19px; }
+  .E .st { display: none; }
+  .E .val { display: block; flex: none; font-size: 12px; margin-left: 10px; }
+  .E .chip { margin-left: 10px; }
+  .E .end { margin-left: 8px; }
+
+  /* zoom */
+  .zoomcol { display: flex; flex-direction: column; gap: 18px; }
+  .zoom { width: 560px; border-radius: 22px; overflow: hidden; box-shadow: 0 8px 22px rgba(15,30,45,.16); }
+  .zoom .sizer { height: calc(var(--h) * 1.4); }
+  .zoom .inner { width: 400px; transform: scale(1.4); transform-origin: top left; padding: 14px 12px; }
+  .dims { font-size: 12.5px; color: #4a5a66; margin: 6px 4px 0; line-height: 18px; }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>You page: settings tiles</h1>
+  <div class="legend">
+    <span><svg viewBox="0 0 24 24" fill="none" stroke="#59758A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>Page in the app</span>
+    <span><svg viewBox="0 0 24 24" fill="none" stroke="#59758A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>Leaves the app</span>
+    <span><b class="chipdemo">Joined</b>Status</span>
+  </div>
+</header>
+<div id="opts"></div>
+
+<script>
+const I = {
+  play: '<circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/>',
+  info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+  star: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+  msg: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+  pencil: '<path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/>',
+  trash: '<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/>',
+  logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/>',
+  chev: '<path d="m9 18 6-6-6-6"/>',
+  out: '<path d="M7 7h10v10"/><path d="M7 17 17 7"/>',
+  chat: '<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>',
+  crew: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/>',
+  plus: '<path d="M5 12h14"/><path d="M12 5v14"/>',
+  grid: '<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>',
+  you: '<circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/>',
+  bot: '<rect width="16" height="12" x="4" y="8" rx="2"/><path d="M12 8V4"/><path d="M9 13v2"/><path d="M15 13v2"/>'
+};
+const svg = (k, sw = 2) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${I[k]}</svg>`;
+
+// Same groups, rows, ends and statuses as MeSettings.kt today. hue = option D's per-row tint.
+const GROUPS = [
+  ['Testing', [
+    { ic: 'users', t: 'Testers group', s: 'So owners can add you to tests', chip: 'Joined', end: 'out', hue: 160 },
+    { ic: 'bell', t: 'Notifications', s: 'Crew news and nightly reminders', chip: 'On', end: 'out', hue: 32 },
+  ]],
+  ['Support', [
+    { ic: 'play', t: 'How-to videos', s: 'Step by step, in English and Bangla', end: 'page', hue: 205 },
+    { ic: 'info', t: 'About TestTrack', s: 'Who made it, and more apps', end: 'page', hue: 185 },
+    { ic: 'star', t: 'Enjoying TestTrack?', s: 'Rate us <span class="stars">★★★★★</span> on Google Play', end: 'out', hue: 44, val: '<span class="stars">★★★★★</span>' },
+    { ic: 'msg', t: 'Send feedback', s: 'Something broken, or missing', end: 'out', hue: 265 },
+  ]],
+  ['Account', [
+    { ic: 'pencil', t: 'Edit profile', s: 'Your name and picture', end: 'page', hue: 220 },
+    { ic: 'trash', t: 'Request account deletion', s: 'What is removed, and what is kept', end: 'out', hue: 300 },
+    { ic: 'logout', t: 'Sign out', danger: true },
+  ]],
+];
+
+// TtTokens.nameTile(hue): pale tile + deep glyph by day, deep tile + pale glyph by night
+function tint(hue, dark) {
+  return dark
+    ? `background:hsl(${hue} 30% 18%);color:hsl(${hue} 55% 76%)`
+    : `background:hsl(${hue} 45% 89%);color:hsl(${hue} 50% 32%)`;
+}
+
+function row(r, opt, dark, extra = '') {
+  const st = (opt === 'D' && !r.danger) ? ` style="${tint(r.hue, dark)}"` : '';
+  const end = r.danger ? '' : `<span class="end">${svg(r.end === 'out' ? 'out' : 'chev')}</span>`;
+  return `<div class="row${r.danger ? ' danger' : ''}${extra}">
+    <span class="itile"${st}>${svg(r.ic)}</span>
+    <div class="txt"><div class="tt">${r.t}</div>${r.s ? `<div class="st">${r.s}</div>` : ''}</div>
+    ${r.val ? `<span class="val">${r.val}</span>` : ''}
+    ${r.chip ? `<span class="chip">${r.chip}</span>` : ''}
+    ${end}
+  </div>`;
+}
+
+function phone(opt, theme) {
+  const dark = theme === 'dark';
+  let body = '';
+  GROUPS.forEach(([h, rows]) => {
+    body += `<div class="sh">${h}</div><div class="grp">${rows.map(r => row(r, opt, dark)).join('')}</div>`;
+  });
+  return `<div><div class="flab">${dark ? 'Dark' : 'Light'}</div>
+  <div class="phone ${theme} ${opt}">
+    <div class="sb">8:59<span class="bat"></span></div>
+    <div class="hud"><span class="bot">${svg('bot')}</span><div class="lv"><b>Level 13</b><span>270 exp to level 14</span></div><span class="tix">365</span></div>
+    <div class="page">${body}<div class="ver">v2.6.0</div></div>
+    <div class="dock">
+      <div class="it"><span class="ico">${svg('chat')}</span>Circle</div>
+      <div class="it"><span class="ico">${svg('crew')}</span>Crew</div>
+      <div class="it"><span class="plus">${svg('plus', 2.4)}</span></div>
+      <div class="it"><span class="ico">${svg('grid')}</span>My apps</div>
+      <div class="it on"><span class="ico">${svg('you')}</span>You</div>
+    </div>
+  </div></div>`;
+}
+
+function zoom(opt, theme, h) {
+  const dark = theme === 'dark';
+  const r = GROUPS[0][1][0];
+  const pressed = opt === 'C' ? ' pressed' : '';
+  return `<div class="zoom ${theme} ${opt}" style="--h:${h}px"><div class="sizer"><div class="inner"><div class="grp">${row(r, opt, dark, pressed)}</div></div></div></div>`;
+}
+
+const OPTS = [
+  { k: 'A', name: 'Hairline', rec: true,
+    spec: 'Page colour inside a 1dp line, the same as the record cards above it. Even 14 corners, 8 apart, 60 high.',
+    dims: '60 high, 1dp line, corners 14, gap 8<br>Icon tile 36, corner 11', zh: 88 },
+  { k: 'B', name: 'Solid',
+    spec: 'Today\'s build, refined: solid fill, grouped corners 20 and 5, 3 apart, 62 high, a slightly bigger icon tile.',
+    dims: '62 high, no line, corners 20 and 5, gap 3<br>Icon tile 38 on surface3, corner 12', zh: 90 },
+  { k: 'C', name: 'Open',
+    spec: 'No tile at all. Rows sit on the page and only the icon tile has a fill. A soft wash shows on press.',
+    dims: '66 high, no fill, press wash corner 16<br>Icon tile 40, corner 13 (shown pressed)', zh: 94 },
+  { k: 'D', name: 'Tinted',
+    spec: 'Each icon tile gets its own soft colour; the tile itself stays quiet. Even 16 corners, 6 apart.',
+    dims: '60 high, corners 16, gap 6<br>Icon tile tinted per row from a hue', zh: 88 },
+  { k: 'E', name: 'Compact',
+    spec: 'One line per row, no subtitle. 50 high, grouped corners 14 and 4, the status chip at the end.',
+    dims: '50 high, corners 14 and 4, gap 2<br>Icon tile 30, corner 9, no subtitle', zh: 78 },
+];
+
+document.getElementById('opts').innerHTML = OPTS.map(o => `
+<section class="opt${o.rec ? ' rec' : ''}">
+  <div class="opt-h"><span class="letter">${o.k}</span><h2>Option ${o.k}: ${o.name}</h2>${o.rec ? '<span class="rectag">Recommended</span>' : ''}</div>
+  <p class="spec">${o.spec}</p>
+  <div class="frames">
+    ${phone(o.k, 'dark')}
+    ${phone(o.k, 'light')}
+    <div class="zoomcol"><div><div class="flab">Zoomed row</div>${zoom(o.k, 'dark', o.zh)}</div>${zoom(o.k, 'light', o.zh)}<p class="dims">${o.dims}</p></div>
+  </div>
+</section>`).join('');
+</script>
+</body>
+</html>

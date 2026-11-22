@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>TestTrack: You page tiles, old and new</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  @font-face { font-family: "BarlowApp"; font-weight: 400; src: url("../../../app/src/main/res/font/barlow_regular.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 500; src: url("../../../app/src/main/res/font/barlow_medium.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 600; src: url("../../../app/src/main/res/font/barlow_semibold.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 700; src: url("../../../app/src/main/res/font/barlow_bold.ttf"); }
+  @font-face { font-family: "PlexApp"; font-weight: 500; src: url("../../../app/src/main/res/font/plexmono_medium.ttf"); }
+
+  .dk {
+    --bg:#0F1011; --text:#ECEEF0; --text2:#BCC1C6; --text3:#9DA3A9; --text4:#757C82;
+    --glass:#1C1E20; --glass2:#292C2F; --glassBorder:#383C41; --gbs:#666D74; --hair:#2B2E32;
+    --accent:#4A7290; --onAccent:#fff; --accentInk:#93B3CA; --tile:#2A2D31; --tileInk:#A2BED2;
+    --leafSoft:#2A2D31; --tabSel:#B6CCDC; --dock:#1C1E20; --dockInk:#BCC1C6;
+    --ok:#83D8C4; --okBg:rgba(131,216,196,.12); --warn:#D8B774; --warnBg:rgba(216,183,116,.14);
+    --bad:#E4938A; --badBg:rgba(228,147,138,.15); --gold:#E3A93C; --goldBg:rgba(227,169,60,.16);
+    --inkBg:rgba(147,179,202,.16); --cardLine:#2D3034; --track:#2D3034; --badge:#4A7290;
+    --sk1:#232629; --sk2:#2E3236; --tixFill:#A9C6DA; --surf2:#212427;
+    color: var(--text); background: var(--bg);
+  }
+  .lt {
+    --bg:#F7FCFF; --text:#142F43; --text2:#203A4E; --text3:#223D50; --text4:#59758A;
+    --glass:#F2F9FD; --glass2:#DFEDF6; --glassBorder:#B7D1E2; --gbs:#789AAF; --hair:#B7D1E2;
+    --accent:#3A5B73; --onAccent:#fff; --accentInk:#22394B; --tile:#DCE6EE; --tileInk:#3A5B73;
+    --leafSoft:rgba(74,114,144,.16); --tabSel:#2E4E66; --dock:#E8F3FA; --dockInk:#304C60;
+    --ok:#246B59; --okBg:rgba(36,107,89,.12); --warn:#8A611C; --warnBg:rgba(154,110,36,.12);
+    --bad:#9E3B2E; --badBg:rgba(158,59,46,.12); --gold:#9A7B1F; --goldBg:rgba(154,123,31,.16);
+    --inkBg:rgba(34,57,75,.16); --cardLine:#E1ECF3; --track:#E4EEF4; --badge:#3A5B73;
+    --sk1:#DFEDF6; --sk2:#F2F8FC; --tixFill:#A9C6DA; --surf2:#EAF4FB;
+    color: var(--text); background: var(--bg);
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #D9E0E5; font-family: "BarlowApp","Barlow",system-ui,sans-serif; color: #142F43; }
+  header.top { padding: 22px 32px 4px; display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+  header.top h1 { margin: 0; font-size: 26px; }
+  .legend { display: flex; gap: 10px; align-items: center; font-size: 14px; color: #4b5d6b; }
+  main { padding: 10px 32px 48px; display: flex; flex-direction: column; gap: 20px; }
+  section { background: #fff; border-radius: 18px; padding: 16px 20px 22px; }
+  section > h2 { margin: 0 0 14px; font-size: 20px; display: flex; align-items: center; gap: 10px; }
+  .num { width: 30px; height: 30px; border-radius: 9px; background: #3A5B73; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 16px; }
+  .tag { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; }
+  .tag.old { background: #FCE4EE; color: #C2185B; }
+  .tag.new { background: #DCEFE4; color: #24684A; }
+  .strip { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+  .lab { display: flex; gap: 8px; align-items: center; font-size: 15px; font-weight: 700; margin: 4px 0 10px; }
+  .lab .sub { font-weight: 500; color: #5b6b77; font-size: 13px; }
+  .block { margin-bottom: 22px; }
+  .block:last-child { margin-bottom: 0; }
+  .fr { display: flex; flex-direction: column; gap: 6px; }
+  .cap { font-size: 12.5px; color: #44535f; }
+  .pills { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; max-width: 760px; }
+  .pills span { font: 600 12px/18px "BarlowApp","Barlow"; background: #EEF3F6; color: #2b3d4a; padding: 1px 9px; border-radius: 999px; }
+  .pills b { font-family: "PlexApp","IBM Plex Mono",monospace; font-weight: 500; color: #C2185B; }
+
+  /* phone */
+  .ph { width: 393px; height: 851px; position: relative; overflow: hidden; border-radius: 30px; box-shadow: 0 0 0 1px #B8C5CE, 0 10px 24px rgba(16,47,70,.14); flex: none; }
+  .ph.new { box-shadow: 0 0 0 2px #8CC5A6, 0 10px 24px rgba(16,47,70,.14); }
+  img.shot { width: 393px; height: 851px; border-radius: 30px; box-shadow: 0 0 0 1px #B8C5CE, 0 10px 24px rgba(16,47,70,.14); display: block; }
+  .sb { position: absolute; top: 0; left: 0; right: 0; height: 30px; display: flex; align-items: center; padding: 4px 24px 0; font-size: 14px; font-weight: 600; background: var(--bg); z-index: 3; }
+  .sb .bat { margin-left: auto; width: 26px; height: 13px; border-radius: 7px; background: var(--text); opacity: .85; }
+  .hud { position: absolute; top: 30px; left: 0; right: 0; height: 64px; display: flex; align-items: center; padding: 0 16px; background: var(--bg); z-index: 3; }
+  .hud .lv { margin-left: 11px; flex: 1; }
+  .hud .lv b { display: block; font-size: 14px; line-height: 20px; font-weight: 600; }
+  .hud .lv span { font-size: 11px; line-height: 16px; color: var(--text2); }
+  .hud .tix { display: flex; align-items: center; gap: 7px; font-size: 18px; font-weight: 600; }
+  .vp { position: absolute; top: 94px; bottom: 81px; left: 0; right: 0; overflow: hidden; }
+  .ct { position: absolute; left: 0; right: 0; top: 0; padding: 12px 16px 32px; }
+  .fade { position: absolute; left: 0; right: 0; top: 94px; height: 22px; background: linear-gradient(var(--bg), transparent); z-index: 2; opacity: 0; }
+  .dock { position: absolute; left: 0; right: 0; bottom: 0; height: 81px; background: var(--dock); border-top: 1px solid var(--hair); display: flex; align-items: flex-start; padding-top: 8px; z-index: 3; }
+  .dock .it { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 12.5px; color: var(--text2); position: relative; }
+  .dock .ico { width: 54px; height: 32px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--dockInk); position: relative; }
+  .dock .it.on .ico { background: var(--leafSoft); color: var(--tabSel); }
+  .dock .it.on { color: var(--tabSel); font-weight: 700; }
+  .dock .cb { position: absolute; top: -4px; left: 30px; min-width: 20px; height: 18px; border-radius: 9px; background: var(--badge); color: #fff; font: 700 10.5px/18px "PlexApp",monospace; padding: 0 5px; text-align: center; }
+  .dock .plus { width: 52px; height: 40px; border-radius: 14px; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; margin-top: 3px; }
+  .homebar { position: absolute; bottom: 6px; left: 50%; width: 120px; margin-left: -60px; height: 4px; border-radius: 2px; background: var(--text4); opacity: .6; }
+
+  svg.ic { display: block; flex: none; }
+  .rc { display: flex; align-items: center; }
+  .grow { flex: 1; min-width: 0; }
+  .ell { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tnum { font-variant-numeric: tabular-nums; }
+
+  /* ---------- OLD look ---------- */
+  .o-h { font-size: 16px; line-height: 24px; font-weight: 700; letter-spacing: .15px; padding: 16px 0 10px; }
+  .o-who .face, .n-who .face { position: relative; flex: none; }
+  .ring { width: 64px; height: 64px; border-radius: 50%; background: var(--glass); border: 1px solid var(--glassBorder); padding: 3px; }
+  .av { width: 100%; height: 100%; border-radius: 50%; background: linear-gradient(140deg,#5E86A3,#2F4F66); color: #fff; font-size: 23px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+  .pen { position: absolute; right: -2px; bottom: -2px; width: 24px; height: 24px; border-radius: 50%; background: var(--glass); padding: 2px; }
+  .pen i { width: 100%; height: 100%; border-radius: 50%; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; }
+  .o-name { font-size: 18px; line-height: 24px; font-weight: 700; }
+  .o-mail { font-size: 13px; line-height: 20px; letter-spacing: .25px; color: var(--text3); }
+  .o-chips { display: flex; gap: 6px; margin-top: 14px; }
+  .qchip { display: inline-flex; align-items: center; gap: 5px; background: var(--glass2); color: var(--text2); border-radius: 999px; font-size: 11.5px; line-height: 16px; font-weight: 600; padding: 4px 10px 4px 8px; }
+  .o-chips .qchip { letter-spacing: .5px; }
+
+  .o-grid, .n-grid { display: flex; flex-direction: column; gap: 8px; }
+  .o-grid > div, .n-grid > div { display: flex; gap: 8px; }
+  .o-stat { flex: 1; min-width: 0; display: flex; align-items: center; background: var(--bg); border: 1px solid var(--cardLine); border-radius: 14px; padding: 12px 10px 12px 12px; }
+  .o-stat .tl { width: 38px; height: 38px; border-radius: 11px; }
+  .o-stat .val { font-size: 20px; line-height: 22px; font-weight: 700; }
+  .o-stat .lb { font-size: 12.5px; line-height: 16px; font-weight: 500; letter-spacing: .5px; color: var(--text3); }
+  .tl { background: var(--tile); color: var(--tileInk); display: flex; align-items: center; justify-content: center; flex: none; }
+  .tl.gold { background: var(--goldBg); color: var(--gold); }
+  .tl.ink { background: var(--inkBg); color: var(--accentInk); }
+  .tl.bad { background: var(--badBg); color: var(--bad); }
+
+  .o-grp { display: flex; flex-direction: column; gap: 3px; }
+  .o-row { display: flex; align-items: center; min-height: 60px; padding: 8px 12px 8px 14px; background: var(--glass); border: 1px solid var(--glassBorder); border-radius: 6px; }
+  .o-grp > .o-row:first-child { border-top-left-radius: 22px; border-top-right-radius: 22px; }
+  .o-grp > .o-row:last-child { border-bottom-left-radius: 22px; border-bottom-right-radius: 22px; }
+  .o-row .tl { width: 36px; height: 36px; border-radius: 11px; margin-right: 14px; }
+  .o-row .tt { font-size: 16px; line-height: 20px; font-weight: 600; letter-spacing: .5px; }
+  .o-row .ts { font-size: 12.5px; line-height: 16px; letter-spacing: .4px; color: var(--text3); }
+  .o-row .tv { font-size: 14px; letter-spacing: .25px; color: var(--text3); margin-left: 8px; }
+  .o-row .tr { margin-left: 6px; color: var(--text4); }
+  .o-row.bad .tt { color: var(--bad); }
+
+  .o-theme { background: var(--glass); border: 1px solid var(--glassBorder); border-radius: 22px; padding: 6px; }
+  .o-theme .hd { display: flex; align-items: center; padding: 6px 8px 8px; }
+  .o-theme .hd .tl { width: 36px; height: 36px; border-radius: 11px; margin-right: 14px; }
+  .o-theme .hd b { font-size: 16px; font-weight: 600; letter-spacing: .5px; }
+  .o-opts { display: flex; }
+  .o-opt { flex: 1; padding: 6px 6px 8px; display: flex; flex-direction: column; align-items: center; }
+  .o-ring { width: 100%; border: 2px solid transparent; border-radius: 14px; padding: 3px; position: relative; }
+  .o-opt.on .o-ring { border-color: var(--accentInk); }
+  .o-opt .th { height: 80px; border-radius: 10px; border: 1px solid var(--glassBorder); overflow: hidden; position: relative; }
+  .o-opt .ck { position: absolute; top: -7px; right: -7px; width: 20px; height: 20px; border-radius: 50%; background: var(--accent); border: 2px solid var(--glass); color: #fff; display: flex; align-items: center; justify-content: center; }
+  .o-opt .ol { margin-top: 8px; font-size: 13.5px; font-weight: 600; color: var(--text2); }
+  .o-opt.on .ol { font-weight: 700; color: var(--accentInk); }
+  .o-ver { text-align: center; padding-top: 12px; font-size: 12.5px; font-weight: 500; color: var(--text4); }
+
+  .sw { display: block; width: 52px; height: 32px; border-radius: 16px; border: 2px solid var(--gbs); background: var(--track); position: relative; flex: none; }
+  .sw i { position: absolute; left: 6px; top: 6px; width: 16px; height: 16px; border-radius: 50%; background: var(--text4); }
+
+  /* ---------- NEW look ---------- */
+  .n-h { font-size: 16px; line-height: 19px; font-weight: 700; padding: 22px 2px 8px; display: flex; align-items: center; gap: 8px; }
+  .n-h .htag { font-size: 12px; line-height: 16px; font-weight: 600; color: var(--text3); background: var(--glass2); border-radius: 10px; padding: 2px 9px; }
+  .n-who { display: flex; align-items: center; gap: 14px; padding: 2px 2px 0; }
+  .n-who .pen { width: 22px; height: 22px; }
+  .n-name { font-size: 18px; line-height: 22px; font-weight: 700; }
+  .n-mail { font-size: 13px; line-height: 17px; color: var(--text3); }
+  .n-chips { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+
+  .n-stat { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; background: var(--bg); border: 1px solid var(--cardLine); border-radius: 14px; padding: 12px 10px 12px 12px; }
+  .n-stat .tl { width: 36px; height: 36px; border-radius: 11px; }
+  .n-stat .val { font-size: 19px; line-height: 22px; font-weight: 700; }
+  .n-stat .lb { font-size: 12px; line-height: 14px; font-weight: 500; color: var(--text3); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .n-stat .tr { color: var(--text4); }
+  .big .n-stat .val { font-size: 24.7px; line-height: 28.6px; }
+  .big .n-stat .lb { font-size: 15.6px; line-height: 18.2px; }
+
+  .n-grp { display: flex; flex-direction: column; gap: 3px; }
+  .n-grp > .n-row { background: var(--surf2); border-radius: 4px; }
+  .n-grp > .n-row:first-child { border-top-left-radius: 14px; border-top-right-radius: 14px; }
+  .n-grp > .n-row:last-child { border-bottom-left-radius: 14px; border-bottom-right-radius: 14px; }
+  .n-row { display: flex; align-items: center; min-height: 56px; padding: 10px 12px; gap: 12px; }
+  .n-row .tl { width: 36px; height: 36px; border-radius: 11px; }
+  .n-row .tt { font-size: 15px; line-height: 19px; font-weight: 600; }
+  .n-row .ts { font-size: 12.5px; line-height: 17px; color: var(--text3); }
+  .n-row .end { display: flex; align-items: center; gap: 8px; flex: none; color: var(--text4); }
+  .n-row.bad .tt { color: var(--bad); }
+  .chip { font-size: 11.5px; line-height: 14px; font-weight: 600; padding: 4px 9px; border-radius: 999px; }
+  .chip.ok { background: var(--okBg); color: var(--ok); }
+  .chip.warn { background: var(--warnBg); color: var(--warn); }
+  .chip.new { background: var(--okBg); color: var(--ok); font-weight: 700; }
+  .rpill { display: inline-flex; align-items: center; gap: 5px; height: 30px; padding: 0 12px; border-radius: 999px; background: var(--accent); color: #fff; font-size: 13.5px; font-weight: 700; }
+  .gap8 { height: 8px; }
+
+  .n-theme { background: var(--bg); border: 1px solid var(--cardLine); border-radius: 14px; padding: 10px; display: flex; gap: 10px; }
+  .n-opt { flex: 1; display: flex; flex-direction: column; align-items: center; }
+  .n-opt .th { width: 100%; height: 62px; border-radius: 8px; border: 1px solid var(--cardLine); overflow: hidden; position: relative; }
+  .n-opt.on .th { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accentInk); }
+  .n-opt .ol { margin-top: 9px; font-size: 13px; line-height: 16px; font-weight: 600; color: var(--text2); display: flex; align-items: center; gap: 4px; }
+  .n-opt.on .ol { font-weight: 700; color: var(--accentInk); }
+  .n-ver { text-align: center; padding-top: 18px; font-size: 12px; line-height: 16px; font-weight: 500; color: var(--text4); }
+
+  .sk { display: block; border-radius: 6px; background: linear-gradient(100deg, var(--sk1) 30%, var(--sk2) 50%, var(--sk1) 70%); background-size: 300% 100%; animation: sh 1.6s linear infinite; }
+  @keyframes sh { from { background-position: 100% 0; } to { background-position: 0 0; } }
+
+  /* mini screens */
+  .mini { position: absolute; inset: 0; display: flex; flex-direction: column; padding: 6px 6px 5px; }
+  .mini i, .mini b, .mini u { display: block; flex: none; }
+  .mini .mc { border-radius: 4px; border: .6px solid; padding: 3px; }
+  .mini .seg { display: flex; gap: 1px; margin-top: 3px; }
+  .mini .seg i { flex: 1; height: 3px; border-radius: 1px; }
+  .mini .dk2 { align-self: center; display: flex; gap: 4px; align-items: center; padding: 2.5px 4px; border-radius: 99px; border: .6px solid; }
+  .half { clip-path: polygon(100% 0, 100% 100%, 0 100%); }
+
+  /* close-ups */
+  .zoom2 { zoom: 2; }
+  .zoom15 { zoom: 1.5; }
+  .pane { padding: 14px; border-radius: 14px; width: 393px; }
+  .rel { position: relative; }
+  .mk { position: absolute; font: 600 9px/12px "PlexApp","IBM Plex Mono",monospace; color: #fff; background: #C2185B; padding: 0 3px; border-radius: 3px; white-space: nowrap; z-index: 4; }
+  .vbar { position: absolute; left: -9px; top: 0; bottom: 0; border-left: 1.5px solid #C2185B; }
+  .vbar::before, .vbar::after { content: ""; position: absolute; left: -4px; width: 7px; border-top: 1.5px solid #C2185B; }
+  .vbar::before { top: 0; } .vbar::after { bottom: 0; }
+  .vlist { display: flex; flex-direction: column; gap: 10px; }
+  .vlist .cap { font-weight: 600; margin-bottom: -4px; }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>TestTrack: You page tiles</h1>
+  <div class="legend"><span class="tag old">old</span> today <span class="tag new">new</span> the one recommended fix</div>
+</header>
+<main>
+
+<section>
+  <h2><span class="num">1</span> Dark, whole page</h2>
+  <div class="block">
+    <div class="lab"><span class="tag old">old</span> phone screenshots</div>
+    <div class="strip">
+      <img class="shot" src="device/01-you.png" alt="">
+      <img class="shot" src="device/02-you-scroll1.png" alt="">
+      <img class="shot" src="device/03-you-scroll2.png" alt="">
+    </div>
+  </div>
+  <div class="block">
+    <div class="lab"><span class="tag new">new</span></div>
+    <div class="strip" data-set="new" data-theme="dk"></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">2</span> Light, whole page</h2>
+  <div class="block">
+    <div class="lab"><span class="tag old">old</span> <span class="sub">drawn from today's code</span></div>
+    <div class="strip" data-set="old" data-theme="lt"></div>
+  </div>
+  <div class="block">
+    <div class="lab"><span class="tag new">new</span></div>
+    <div class="strip" data-set="new" data-theme="lt"></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">3</span> One row, up close</h2>
+  <div class="strip" style="gap:28px">
+    <div class="fr"><div class="lab"><span class="tag old">old</span></div>
+      <div class="dk pane" style="width:758px"><div class="zoom2" id="zOldDk"></div></div>
+      <div class="lt pane" style="margin-top:10px;width:758px"><div class="zoom2" id="zOldLt"></div></div>
+    </div>
+    <div class="fr"><div class="lab"><span class="tag new">new</span></div>
+      <div class="dk pane" style="width:758px"><div class="zoom2" id="zNewDk"></div></div>
+      <div class="lt pane" style="margin-top:10px;width:758px"><div class="zoom2" id="zNewLt"></div></div>
+    </div>
+  </div>
+  <div class="pills">
+    <span>row <b>56</b> high (was 60)</span><span>icon tile <b>36</b>, corner <b>11</b>, glyph <b>19</b></span><span>gap <b>12</b></span>
+    <span>title <b>15/19</b> semibold, no tracking (was 16/20 +0.5)</span><span>line <b>12.5/17</b>, no tracking</span>
+    <span>end mark <b>18</b></span><span>one tile per row, <b>3</b> apart (as before)</span><span>outer corners <b>14</b>, inner <b>4</b> (was 22 and 6)</span><span>solid tile on surface2, no edge line, so two edges never sit side by side</span>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">4</span> What the end of a row says</h2>
+  <div class="strip" style="gap:28px">
+    <div class="dk pane zoom15" style="width:393px" id="varDk"></div>
+    <div class="lt pane zoom15" style="width:393px" id="varLt"></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">5</span> Record cards, up close</h2>
+  <div class="strip" style="gap:28px">
+    <div class="fr"><div class="lab"><span class="tag old">old</span></div>
+      <div class="dk pane zoom15" id="rOldDk"></div>
+      <div class="lt pane zoom15" id="rOldLt"></div>
+    </div>
+    <div class="fr"><div class="lab"><span class="tag new">new</span></div>
+      <div class="dk pane zoom15" id="rNewDk"></div>
+      <div class="lt pane zoom15" id="rNewLt"></div>
+    </div>
+    <div class="fr"><div class="lab"><span class="tag new">new</span> <span class="sub">large text (1.3)</span></div>
+      <div class="dk pane zoom15 big" id="rBig"></div>
+    </div>
+  </div>
+  <div class="pills">
+    <span>icon <b>36</b>, value <b>19/22</b> bold tabular, label <b>12/14</b> medium, no tracking</span>
+    <span>only Rank is gold, the rest use the plain tile</span><span>Rank's chevron is the row chevron, <b>18</b></span>
+    <span>"Crews going on" now "Crews running"</span><span>at large text a label may take 2 lines; both cards in a row grow together</span>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">6</span> Loading</h2>
+  <div class="strip">
+    <div class="ph new dk" id="loadDk"></div>
+    <div class="ph new lt" id="loadLt"></div>
+  </div>
+</section>
+
+</main>
+
+<script>
+const L = {
+  users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  bell:'<path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/>',
+  sunMoon:'<path d="M12 8a2.83 2.83 0 0 0 4 4 4 4 0 1 1-4-4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.9 4.9 1.4 1.4"/><path d="m17.7 17.7 1.4 1.4"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.3 17.7-1.4 1.4"/><path d="m19.1 4.9-1.4 1.4"/>',
+  play:'<circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/>',
+  info:'<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+  star:'<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+  msg:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  msgText:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M13 8H7"/><path d="M17 12H7"/>',
+  pencil:'<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/>',
+  trash:'<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/>',
+  logOut:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/>',
+  layers:'<path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>',
+  chev:'<path d="m9 18 6-6-6-6"/>',
+  out:'<path d="M7 7h10v10"/><path d="M7 17 17 7"/>',
+  ext:'<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
+  trophy:'<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>',
+  phone:'<rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/>',
+  moon:'<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
+  cal:'<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/>',
+  clock:'<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  check:'<path d="M20 6 9 17l-5-5"/>',
+  plus:'<path d="M5 12h14"/><path d="M12 5v14"/>',
+  grid:'<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>',
+  user:'<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  dl:'<path d="M12 17V3"/><path d="m6 11 6 6 6-6"/><path d="M19 21H5"/>',
+};
+const ic = (n, s, w) => `<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w||2}" stroke-linecap="round" stroke-linejoin="round">${L[n]}</svg>`;
+
+/* the two palettes, for the theme thumbnails */
+const PAL = {
+  lt: { bg:'#F7FCFF', text:'#142F43', text2:'#203A4E', text4:'#59758A', glass:'#F2F9FD', glass2:'#DFEDF6', line:'#B7D1E2', accent:'#3A5B73', tile:'#DCE6EE', tix:'#2B4A60', gold:'#9A7B1F', dock:'#E8F3FA', dockInk:'#304C60', leaf:'#3A5B73' },
+  dk: { bg:'#0F1011', text:'#ECEEF0', text2:'#BCC1C6', text4:'#757C82', glass:'#1C1E20', glass2:'#292C2F', line:'#383C41', accent:'#4A7290', tile:'#2A2D31', tix:'#355A75', gold:'#E3A93C', dock:'#1C1E20', dockInk:'#BCC1C6', leaf:'#93B3CA' },
+};
+function mini(p, compact, extra) {
+  const seg = [0,1,2,3,4,5,6].map(n => `<i style="background:${n < 4 ? p.accent : p.glass2}"></i>`).join('');
+  return `<div class="mini ${extra||''}" style="background:${p.bg}">
+    <div class="rc"><i style="width:22px;height:3.5px;border-radius:2px;background:${p.text}"></i><span style="flex:1"></span><b style="width:15px;height:7px;border-radius:4px;background:${p.tix};display:flex;align-items:center"><u style="width:3.5px;height:3.5px;border-radius:50%;background:${p.gold};margin-left:2px"></u></b></div>
+    <div style="height:${compact?5:6}px"></div>
+    <div class="mc" style="background:${p.glass};border-color:${p.line}"><div class="rc"><i style="width:9px;height:9px;border-radius:3px;background:${p.tile}"></i><span style="width:4px"></span><i style="width:18px;height:2.5px;border-radius:2px;background:${p.text2}"></i></div><div class="seg">${seg}</div></div>
+    ${compact ? '' : `<div style="height:4px"></div><div class="mc" style="background:${p.glass};border-color:${p.line}"><div class="rc"><i style="width:7px;height:7px;border-radius:2px;background:${p.tile}"></i><span style="width:4px"></span><i style="width:16px;height:2.5px;border-radius:2px;background:${p.text4}"></i></div></div>`}
+    <span style="flex:1"></span>
+    <div class="dk2" style="background:${p.dock};border-color:${p.line}"><i style="width:9px;height:4px;border-radius:2px;background:${p.leaf}"></i><i style="width:3px;height:3px;border-radius:50%;background:${p.dockInk}"></i><i style="width:3px;height:3px;border-radius:50%;background:${p.dockInk}"></i><i style="width:3px;height:3px;border-radius:50%;background:${p.dockInk}"></i></div>
+  </div>`;
+}
+const thumbs = (compact) => ({
+  sys: mini(PAL.lt, compact) + mini(PAL.dk, compact, 'half'),
+  lt: mini(PAL.lt, compact),
+  dk: mini(PAL.dk, compact),
+});
+
+/* ---------- chrome ---------- */
+const robot = `<svg width="44" height="46" viewBox="0 0 44 46" style="flex:none;display:block"><rect x="21" y="5" width="2.2" height="6" fill="#1D5C82"/><circle cx="22" cy="4.5" r="3.4" fill="#EF806B"/><rect x="2" y="15" width="6" height="12" rx="3" fill="#6CA9CF"/><rect x="36" y="15" width="6" height="12" rx="3" fill="#6CA9CF"/><rect x="5" y="9.5" width="34" height="24" rx="11" fill="#2B6A92"/><rect x="9" y="13.5" width="26" height="16" rx="8" fill="#FFFCF1"/><circle cx="16.5" cy="21" r="3.2" fill="#17253B"/><circle cx="27.5" cy="21" r="3.2" fill="#17253B"/><circle cx="15.6" cy="20" r="1" fill="#fff"/><circle cx="26.6" cy="20" r="1" fill="#fff"/><path d="M19.6 25.2q2.4 1.9 4.8 0" stroke="#17253B" stroke-width="1.6" fill="none" stroke-linecap="round"/><rect x="9" y="33.5" width="26" height="11" rx="5.5" fill="#1F2E3A" stroke="#6CA9CF" stroke-width="1.2"/><text x="22" y="42" font-size="8" font-weight="700" fill="#fff" text-anchor="middle" font-family="BarlowApp,Barlow">13</text></svg>`;
+const ticket = `<svg width="24" height="24" viewBox="0 0 24 24" style="transform:rotate(-12deg);display:block"><path d="M2.5 7.5a2 2 0 0 1 2-2h15a2 2 0 0 1 2 2v2a2.5 2.5 0 0 0 0 5v2a2 2 0 0 1-2 2h-15a2 2 0 0 1-2-2v-2a2.5 2.5 0 0 0 0-5Z" fill="var(--tixFill)" stroke="#17405E" stroke-width="1.5"/><path d="M14.5 8v1.4M14.5 11.3v1.4M14.5 14.6V16" stroke="#17405E" stroke-width="1.3" stroke-linecap="round"/></svg>`;
+const chrome = () => `
+  <div class="sb">8:59<span class="bat"></span></div>
+  <div class="hud">${robot}<div class="lv"><b>Level 13</b><span>270 exp to level 14</span></div><div class="tix">${ticket}<span class="tnum">365</span></div></div>
+  <div class="dock">
+    <div class="it"><span class="ico">${ic('msg',24,1.8)}<span class="cb">20</span></span>Circle</div>
+    <div class="it"><span class="ico">${ic('users',24,1.8)}<span class="cb">14</span></span>Crew</div>
+    <div class="it"><span class="plus">${ic('plus',26,2.2)}</span></div>
+    <div class="it"><span class="ico">${ic('grid',24,1.8)}<span class="cb">2</span></span>My apps</div>
+    <div class="it on"><span class="ico">${ic('user',24,1.8)}</span>You</div>
+    <span class="homebar"></span>
+  </div>`;
+
+const stars = `<span style="color:var(--gold)">★★★★★</span>`;
+
+/* ---------- OLD ---------- */
+function oRow(r) {
+  const tr = r.tr === 'chev' ? `<span class="tr">${ic('chev',18)}</span>` : r.tr === 'ext' ? `<span class="tr">${ic('ext',17)}</span>` : r.tr === 'sw' ? `<span class="tr"><span class="sw"><i></i></span></span>` : '';
+  return `<div class="o-row ${r.bad?'bad':''}"><span class="tl ${r.bad?'bad':''}">${ic(r.i,19)}</span><div class="grow"><div class="tt ell">${r.t}</div>${r.s?`<div class="ts ell">${r.s}</div>`:''}</div>${r.v?`<span class="tv">${r.v}</span>`:''}${tr}</div>`;
+}
+const oGroup = rows => `<div class="o-grp">${rows.map(oRow).join('')}</div>`;
+function oStat(i, v, l, kind, chev) {
+  return `<div class="o-stat"><span class="tl ${kind||''}">${ic(i,19)}</span><div class="grow" style="margin-left:12px"><div class="val tnum">${v}</div><div class="lb ell">${l}</div></div>${chev?`<span style="color:var(--text4)">${ic('chev',16)}</span>`:''}</div>`;
+}
+const oGrid = () => `<div class="o-grid">
+  <div>${oStat('trophy','#1','Rank','gold',true)}${oStat('star','2005','Points','ink')}</div>
+  <div>${oStat('phone','1975','Apps opened')}${oStat('msgText','6','Reviews accepted')}</div>
+  <div>${oStat('users','4','Crews going on')}${oStat('moon','28','Apps a night')}</div></div>`;
+function oTheme(sel) {
+  const t = thumbs(false);
+  const opt = (k, name) => `<div class="o-opt ${sel===k?'on':''}"><div class="o-ring"><div class="th">${t[k]}</div>${sel===k?`<span class="ck">${ic('check',11,3)}</span>`:''}</div><div class="ol">${name}</div></div>`;
+  return `<div class="o-theme"><div class="hd"><span class="tl">${ic('sunMoon',19)}</span><b>Theme</b></div><div class="o-opts">${opt('sys','System')}${opt('lt','Light')}${opt('dk','Dark')}</div></div>`;
+}
+function oldPage(theme) {
+  return `
+  <div class="o-who"><div class="rc"><div class="face"><div class="ring"><div class="av">N</div></div><span class="pen"><i>${ic('pencil',11)}</i></span></div><div class="grow" style="margin-left:16px"><div class="o-name ell">Nurullah Al Masum</div><div class="o-mail ell">nam.bd88@gmail.com</div></div></div>
+    <div class="o-chips"><span class="qchip">${ic('cal',12)}Since Sep 2026</span><span class="qchip">${ic('clock',12)}Dhaka time</span></div></div>
+  <div class="o-h">Your record</div>${oGrid()}
+  <div class="o-h">Testing</div>${oGroup([{i:'users',t:'Testers group',s:'So owners can add you to tests',v:'Joined',tr:'chev'},{i:'bell',t:'Notifications',s:'Crew news and nightly reminders',v:'On',tr:'chev'}])}
+  <div class="o-h">Appearance</div>${oTheme(theme)}
+  <div class="o-h">Support</div>${oGroup([{i:'play',t:'How-to videos',s:'Step by step, in English and Bangla',tr:'chev'},{i:'info',t:'About TestTrack',s:'Who made it, and more apps',tr:'chev'},{i:'star',t:'Enjoying TestTrack?',s:`Rate us ${stars} on Google Play`,tr:'ext'},{i:'msg',t:'Send feedback',s:'Something broken, or missing',tr:'ext'}])}
+  <div class="o-h">Account</div>${oGroup([{i:'pencil',t:'Edit profile',s:'Your name and picture',tr:'chev'},{i:'trash',t:'Request account deletion',s:'What is removed, and what is kept',tr:'ext'},{i:'logOut',t:'Sign out',bad:true}])}
+  <div class="o-h">Debug</div>${oGroup([{i:'users',t:'Force not in testers group',s:'Ignores the remembered yes',tr:'sw'},{i:'layers',t:'Show a snack',s:'Each tap shows the next kind',tr:'chev'}])}
+  <div class="o-ver">v2.6.0-dev</div>`;
+}
+
+/* ---------- NEW ---------- */
+function nRow(r) {
+  let end = '';
+  if (r.chip) end += `<span class="chip ${r.chip[1]}">${r.chip[0]}</span>`;
+  if (r.extra) end += r.extra;
+  if (r.tr === 'chev') end += ic('chev',18);
+  if (r.tr === 'out') end += ic('out',18);
+  if (r.tr === 'sw') end += `<span class="sw"><i></i></span>`;
+  return `<div class="n-row ${r.bad?'bad':''}"><span class="tl ${r.bad?'bad':''}">${ic(r.i,19)}</span><div class="grow"><div class="tt ell">${r.t}</div>${r.s?`<div class="ts ell">${r.s}</div>`:''}</div>${end?`<span class="end">${end}</span>`:''}</div>`;
+}
+const nCard = rows => `<div class="n-grp">${rows.map(nRow).join('')}</div>`;
+function nStat(i, v, l, kind, chev) {
+  const val = v === null ? `<div style="height:22px;display:flex;align-items:center"><span class="sk" style="width:44px;height:18px"></span></div>` : `<div class="val tnum">${v}</div>`;
+  return `<div class="n-stat"><span class="tl ${kind||''}">${ic(i,18)}</span><div class="grow">${val}<div class="lb">${l}</div></div>${chev?`<span class="tr">${ic('chev',18)}</span>`:''}</div>`;
+}
+const nGrid = (load) => `<div class="n-grid">
+  <div>${nStat('trophy',load?null:'#1','Rank','gold',!load)}${nStat('star',load?null:'2005','Points')}</div>
+  <div>${nStat('phone',load?null:'1975','Apps opened')}${nStat('msgText',load?null:'6','Reviews accepted')}</div>
+  <div>${nStat('users',load?null:'4','Crews running')}${nStat('moon',load?null:'28','Apps a night')}</div></div>`;
+function nTheme(sel) {
+  const t = thumbs(true);
+  const opt = (k, name) => `<div class="n-opt ${sel===k?'on':''}"><div class="th">${t[k]}</div><div class="ol">${sel===k?ic('check',13,2.6):''}${name}</div></div>`;
+  return `<div class="n-theme">${opt('sys','System')}${opt('lt','Light')}${opt('dk','Dark')}</div>`;
+}
+const nWho = (load) => load
+  ? `<div class="n-who"><div class="face"><div class="ring"><span class="sk" style="width:56px;height:56px;border-radius:50%"></span></div></div><div class="grow"><span class="sk" style="width:150px;height:18px"></span><div style="height:7px"></div><span class="sk" style="width:180px;height:12px"></span><div style="height:10px"></div><div class="rc" style="gap:6px"><span class="sk" style="width:104px;height:22px;border-radius:11px"></span><span class="sk" style="width:90px;height:22px;border-radius:11px"></span></div></div></div>`
+  : `<div class="n-who"><div class="face"><div class="ring"><div class="av">N</div></div><span class="pen"><i>${ic('pencil',10)}</i></span></div><div class="grow"><div class="n-name ell">Nurullah Al Masum</div><div class="n-mail ell">nam.bd88@gmail.com</div><div class="n-chips"><span class="qchip">${ic('cal',12)}Since Sep 2026</span><span class="qchip">${ic('clock',12)}Dhaka time</span></div></div></div>`;
+function newPage(theme, load) {
+  return `
+  ${nWho(load)}
+  <div class="n-h">Your record</div>${nGrid(load)}
+  <div class="n-h">Testing</div>${nCard([{i:'users',t:'Testers group',s:'So owners can add you to tests',chip:['Joined','ok'],tr:'out'},{i:'bell',t:'Notifications',s:'Crew news and nightly reminders',chip:['On','ok'],tr:'out'}])}
+  <div class="n-h">Appearance</div>${nTheme(theme)}
+  <div class="n-h">Support</div>${nCard([{i:'play',t:'How-to videos',s:'Step by step, in English and Bangla',tr:'chev'},{i:'info',t:'About TestTrack',s:'Who made it, and more apps',tr:'chev'},{i:'star',t:'Enjoying TestTrack?',s:`Rate us ${stars} on Google Play`,tr:'out'},{i:'msg',t:'Send feedback',s:'Something broken, or missing',tr:'out'}])}
+  <div class="n-h">Account</div>${nCard([{i:'pencil',t:'Edit profile',s:'Your name and picture',tr:'chev'},{i:'trash',t:'Request account deletion',s:'What is removed, and what is kept',tr:'out'}])}
+  <div class="gap8"></div>${nCard([{i:'logOut',t:'Sign out',bad:true}])}
+  ${load ? '' : `<div class="n-h">Debug<span class="htag">Debug builds only</span></div>${nCard([{i:'users',t:'Force not in testers group',s:'Ignores the remembered yes',tr:'sw'},{i:'layers',t:'Show a snack',s:'Each tap shows the next kind'}])}`}
+  <div class="n-ver">v2.6.0-dev</div>`;
+}
+
+/* ---------- whole-page strips ---------- */
+const strips = [];
+document.querySelectorAll('.strip[data-set]').forEach(s => {
+  const set = s.dataset.set, th = s.dataset.theme, sel = th;
+  const html = set === 'new' ? newPage(sel) : oldPage(sel);
+  const phones = [];
+  for (let k = 0; k < 3; k++) {
+    const p = document.createElement('div');
+    p.className = `ph ${th} ${set === 'new' ? 'new' : ''}`;
+    p.innerHTML = chrome() + `<div class="vp"><div class="ct">${html}</div></div>` + (set === 'new' ? '<div class="fade"></div>' : '');
+    s.appendChild(p); phones.push(p);
+  }
+  strips.push(phones);
+});
+function place() {
+  strips.forEach(phones => {
+    const ct = phones[0].querySelector('.ct'), vp = phones[0].querySelector('.vp');
+    const room = Math.max(0, ct.scrollHeight - vp.clientHeight);
+    [0, Math.round(room / 2), room].forEach((off, k) => {
+      phones[k].querySelector('.ct').style.transform = `translateY(${-off}px)`;
+      const f = phones[k].querySelector('.fade'); if (f) f.style.opacity = off > 0 ? 1 : 0;
+    });
+  });
+}
+place();
+if (document.fonts) document.fonts.ready.then(place);
+
+/* ---------- loading ---------- */
+['loadDk','loadLt'].forEach((id, n) => {
+  const p = document.getElementById(id);
+  p.innerHTML = chrome() + `<div class="vp"><div class="ct">${newPage(n ? 'lt' : 'dk', true)}</div></div><div class="fade"></div>`;
+});
+
+/* ---------- close-ups ---------- */
+const tester = {i:'users',t:'Testers group',s:'So owners can add you to tests'};
+function zOld(id) { document.getElementById(id).innerHTML = `<div class="rel" style="width:365px">${oGroup([{...tester,v:'Joined',tr:'chev'},{i:'bell',t:'Notifications',s:'Crew news and nightly reminders',v:'On',tr:'chev'}])}</div>`; }
+function zNew(id) {
+  document.getElementById(id).innerHTML = `<div class="rel" style="width:365px">
+    <div class="rel">${nCard([{...tester,chip:['Joined','ok'],tr:'out'},{i:'bell',t:'Notifications',s:'Crew news and nightly reminders',chip:['On','ok'],tr:'out'}])}<span class="vbar" style="bottom:auto;height:56px"></span>
+      <span class="mk" style="left:-26px;top:22px">56</span>
+      <span class="mk" style="left:-2px;top:-7px">14</span>
+      <span class="mk" style="left:24px;top:-7px">36</span>
+      <span class="mk" style="left:63px;top:-7px">15/19</span>
+      <span class="mk" style="left:63px;top:50px">12.5/17</span>
+      <span class="mk" style="right:-6px;top:51px">3</span>
+      <span class="mk" style="right:14px;top:51px">4</span>
+      <span class="mk" style="right:2px;top:-7px">18</span></div></div>`;
+}
+zOld('zOldDk'); zOld('zOldLt'); zNew('zNewDk'); zNew('zNewLt');
+
+const variants = [
+  ['Opens a page or sheet in the app', {i:'info',t:'About TestTrack',s:'Who made it, and more apps',tr:'chev'}],
+  ['Leaves the app: browser, Play, phone settings, mail', {i:'msg',t:'Send feedback',s:'Something broken, or missing',tr:'out'}],
+  ['Status, and it leaves the app', {i:'bell',t:'Notifications',s:'Crew news and nightly reminders',chip:['On','ok'],tr:'out'}],
+  ['Status off, and it leaves the app', {i:'bell',t:'Notifications',s:'Crew news and nightly reminders',chip:['Off','warn'],tr:'out'}],
+  ['Status, and it opens the join steps here', {i:'users',t:'Testers group',s:'So owners can add you to tests',chip:['Not joined','warn'],tr:'chev'}],
+  ['Update waiting (same parts as today)', {i:'dl',t:'Version 2.7.0',s:'Ready to download',extra:`<span class="chip new">NEW</span><span class="rpill">${ic('dl',14,2.4)}Update</span>`}],
+  ['Switch, debug builds only', {i:'users',t:'Force not in testers group',s:'Ignores the remembered yes',tr:'sw'}],
+  ['Does something right here: no end mark', {i:'layers',t:'Show a snack',s:'Each tap shows the next kind'}],
+  ['Destructive', {i:'logOut',t:'Sign out',bad:true}],
+];
+['varDk','varLt'].forEach(id => {
+  document.getElementById(id).innerHTML = `<div class="vlist">${variants.map(([c, r]) => `<div class="cap" style="color:var(--text3)">${c}</div>${nCard([r])}`).join('')}</div>`;
+});
+
+document.getElementById('rOldDk').innerHTML = oGrid();
+document.getElementById('rOldLt').innerHTML = oGrid();
+document.getElementById('rNewDk').innerHTML = nGrid(false);
+document.getElementById('rNewLt').innerHTML = nGrid(false);
+document.getElementById('rBig').innerHTML = nGrid(false);
+['rOldLt','rNewLt'].forEach(id => document.getElementById(id).style.marginTop = '10px');
+</script>
+</body>
+</html>

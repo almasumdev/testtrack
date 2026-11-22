@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Feedback requests: app page and To check</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  @font-face { font-family: "BarlowApp"; font-weight: 400; src: url("../../../app/src/main/res/font/barlow_regular.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 500; src: url("../../../app/src/main/res/font/barlow_medium.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 600; src: url("../../../app/src/main/res/font/barlow_semibold.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 700; src: url("../../../app/src/main/res/font/barlow_bold.ttf"); }
+  @font-face { font-family: "PlexApp"; font-weight: 700; src: url("../../../app/src/main/res/font/plexmono_bold.ttf"); }
+
+  /* OceanLight / OceanDark, ui/theme/Tokens.kt */
+  .light {
+    --bg:#F7FCFF; --text:#142F43; --text2:#203A4E; --text3:#223D50; --text4:#59758A;
+    --tabSelected:#2E4E66; --tabUnselected:#526B7D;
+    --glass:#F2F9FD; --glass2:#DFEDF6; --glassBorder:#B7D1E2; --glassBorderStrong:#789AAF;
+    --accent:#3A5B73; --onAccent:#FFFFFF; --accentInk:#22394B; --badgeFill:#3A5B73;
+    --tile:#DCE6EE; --tileInk:#3A5B73; --leafAccent:#3A5B73; --leafAccentSoft:rgba(74,114,144,.16);
+    --dock:#E8F3FA; --dockInk:#304C60;
+    --ok:#246B59; --okBg:rgba(36,107,89,.12); --warn:#8A611C; --warnBg:rgba(154,110,36,.12);
+    --bad:#9E3B2E; --badBg:rgba(158,59,46,.12);
+    --card:#F3F8FB; --cardLine:#E1ECF3; --ring:rgba(20,47,67,.14);
+    --primary:var(--accent); --onPrimary:var(--onAccent); --onTone:#FFFFFF;
+  }
+  .dark {
+    --bg:#0F1011; --text:#ECEEF0; --text2:#BCC1C6; --text3:#9DA3A9; --text4:#757C82;
+    --tabSelected:#B6CCDC; --tabUnselected:#989EA4;
+    --glass:#1C1E20; --glass2:#292C2F; --glassBorder:#383C41; --glassBorderStrong:#666D74;
+    --accent:#4A7290; --onAccent:#FFFFFF; --accentInk:#93B3CA; --badgeFill:#4A7290;
+    --tile:#2A2D31; --tileInk:#A2BED2; --leafAccent:#93B3CA; --leafAccentSoft:#2A2D31;
+    --dock:#1C1E20; --dockInk:#BCC1C6;
+    --ok:#83D8C4; --okBg:rgba(131,216,196,.12); --warn:#D8B774; --warnBg:rgba(216,183,116,.14);
+    --bad:#E4938A; --badBg:rgba(228,147,138,.15);
+    --card:#1C1E20; --cardLine:#2D3034; --ring:rgba(255,255,255,.16);
+    --primary:var(--accentInk); --onPrimary:var(--bg); --onTone:#0F1011;
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #D9E0E5; font-family: "BarlowApp", "Barlow", system-ui, sans-serif; color: #1B2B36; }
+  .top { position: sticky; top: 0; z-index: 9; display: flex; align-items: center; gap: 14px; padding: 12px 28px; background: #D9E0E5; border-bottom: 1px solid #C3CDD4; }
+  .top h1 { margin: 0; font-size: 20px; font-weight: 700; }
+  .top a { font-size: 14px; font-weight: 700; color: #2D4A5F; text-decoration: none; padding: 5px 13px; border-radius: 16px; background: #F4F7F9; border: 1px solid #B3C0C9; }
+  .doc { padding: 6px 28px 80px; }
+  .sec { font-size: 22px; font-weight: 700; margin: 36px 0 4px 2px; }
+  .sub { font-size: 14px; font-weight: 600; color: #4E5F6B; margin: 18px 0 10px 2px; }
+  .row { display: flex; flex-wrap: wrap; gap: 22px; align-items: flex-start; }
+  .state { display: flex; flex-direction: column; gap: 7px; }
+  .lbl { font-size: 14.5px; font-weight: 700; margin-left: 4px; }
+  .lbl .k { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 5px; border-radius: 7px; background: #2D4A5F; color: #fff; font-size: 12.5px; margin-right: 6px; }
+  .lbl .k.old { background: #8A96A0; }
+
+  /* phone */
+  .phone { width: 392px; height: 852px; background: var(--bg); color: var(--text); border-radius: 26px; overflow: hidden; border: 1px solid #B9C5CE; position: relative; display: flex; flex-direction: column; }
+  .dark.phone { border-color: #3A4046; }
+  .sbar { height: 20px; flex: none; }
+  .pbar { height: 56px; flex: none; display: flex; align-items: center; }
+  .pbar .back { width: 48px; height: 48px; display: grid; place-items: center; margin-left: 4px; color: var(--text); }
+  .scroll { flex: 1; overflow-y: auto; padding: 0 16px 16px; scrollbar-width: none; }
+  .scroll::-webkit-scrollbar { display: none; }
+  .gest { height: 22px; flex: none; display: grid; place-items: center; }
+  .gest i { width: 108px; height: 4px; border-radius: 2px; background: var(--text4); opacity: .55; }
+
+  svg.ic { display: block; flex: none; }
+  .inl { display: inline-block; vertical-align: -2px; margin-right: 6px; }
+  .inl svg { display: inline-block; }
+
+  /* app head (appHead in feedback-card.html and manage-actions.html) */
+  .hd { display: flex; align-items: center; gap: 14px; }
+  .hd .col { flex: 1; min-width: 0; }
+  .hn { font-size: 18px; line-height: 22px; font-weight: 600; }
+  .hp { margin-top: 2px; font-size: 12.5px; line-height: 16px; color: var(--text3); }
+  .facts { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
+  .chip { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 99px; font-size: 12.5px; line-height: 16px; font-weight: 700; white-space: nowrap; }
+  .chip.ok { background: var(--okBg); color: var(--ok); } .chip.quiet { background: var(--glass2); color: var(--text2); }
+
+  /* heading with its when tag (H3) */
+  .head { display: flex; align-items: center; gap: 5px; font-size: 16px; line-height: 19px; font-weight: 700; padding: 20px 0 10px; }
+  .head .when { margin-left: auto; font-size: 12px; line-height: 16px; font-weight: 600; color: var(--text3); background: var(--glass2); padding: 2px 9px; border-radius: 10px; }
+
+  /* card: corner 14, page colour, 1dp cardLine */
+  .card { background: var(--bg); border: 1px solid var(--cardLine); border-radius: 14px; position: relative; }
+  .card + .card { margin-top: 8px; }
+  .p16 { padding: 16px; }
+  .th { display: flex; align-items: center; gap: 8px; }
+  .th .nm { flex: 1; min-width: 0; font-size: 18px; line-height: 23px; font-weight: 600; }
+  .th .dt { font-size: 12px; line-height: 17px; color: var(--text3); white-space: nowrap; }
+  .th .dt.bad { color: var(--bad); } .th .dt.ok { color: var(--ok); }
+  .stand { display: flex; align-items: center; gap: 12px; }
+  .stand .hl { flex: 1; min-width: 0; font-size: 15px; line-height: 20px; font-weight: 500; }
+  .stand .ia { flex: none; margin-right: -8px; }
+  .i-ok { color: var(--ok); } .i-bad { color: var(--bad); } .i-q { color: var(--text3); }
+  .acts { display: flex; justify-content: flex-end; margin: 8px -8px -6px 0; }
+
+  /* start row: soft pill, no chevron */
+  .ra { display: flex; align-items: center; gap: 12px; padding: 12px; min-height: 60px; }
+  .ra .col { flex: 1; min-width: 0; }
+  .ra .t { font-size: 16px; line-height: 20px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ra .s { font-size: 12.5px; line-height: 16px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pill { flex: none; max-width: 44%; min-height: 32px; padding: 7px 14px; border-radius: 16px; font-size: 13.5px; line-height: 16px; font-weight: 700; text-align: center; }
+  .pill.fill { background: var(--primary); color: var(--onPrimary); } .pill.ton { background: var(--tile); color: var(--accentInk); }
+  .itile { position: relative; width: 36px; height: 36px; border-radius: 11px; background: var(--tile); color: var(--tileInk); display: grid; place-items: center; flex: none; }
+  .ia { position: relative; min-height: 32px; padding: 0 8px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-size: 14px; font-weight: 700; color: var(--accentInk); border-radius: 16px; line-height: 17px; }
+  .ia.bad { color: var(--bad); }
+
+  /* reviewer faces (option B) */
+  .rv { display: flex; flex-wrap: wrap; gap: 12px 14px; align-items: center; }
+  .rv.off { opacity: .45; }
+  .rs { position: relative; width: 34px; height: 34px; flex: none; }
+  .rs .av { width: 34px; height: 34px; border-radius: 50%; background: var(--tile); color: var(--tileInk); display: grid; place-items: center; }
+  .rs.chk .av { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--warn); }
+  .rs.prog .av { opacity: .5; }
+  .rs.open .av { background: transparent; border: 1.5px dashed var(--glassBorderStrong); }
+  .rs .mk { position: absolute; right: -4px; bottom: -4px; width: 17px; height: 17px; border-radius: 50%; border: 2px solid var(--bg); display: grid; place-items: center; color: var(--onTone); }
+  .rs .mk.ok { background: var(--ok); } .rs .mk.chk { background: var(--warn); } .rs .mk.prog { background: var(--text4); }
+
+  /* an earlier request: the same card, compact, faces at the crew strip's 24 */
+  .old { padding: 12px 14px; }
+  .old .th .nm { font-size: 16px; line-height: 20px; }
+  .old .rv { gap: 8px 10px; margin-top: 10px; }
+  .old .rs, .old .rs .av { width: 24px; height: 24px; }
+  .old .rs.chk .av { box-shadow: 0 0 0 1.5px var(--bg), 0 0 0 3px var(--warn); }
+  .old .rs .mk { width: 14px; height: 14px; right: -3.5px; bottom: -3.5px; border-width: 1.5px; }
+  .old .stand { margin-top: 10px; }
+  .old .stand .hl { font-size: 14px; }
+  .old .note { margin-top: 8px; font-size: 12.5px; line-height: 16px; color: var(--text3); display: flex; align-items: center; gap: 5px; }
+  .earlier { font-size: 12.5px; line-height: 16px; font-weight: 600; color: var(--text3); margin: 16px 0 8px 2px; }
+  .showmore { display: flex; justify-content: center; margin-top: 6px; }
+
+  /* option D foot, pinned under the scroll */
+  .foot { flex: none; padding: 8px 16px 12px; display: flex; flex-direction: column; align-items: center; gap: 6px; background: var(--bg); }
+  .tbtn { width: 100%; height: 48px; border-radius: 24px; background: var(--tile); color: var(--accentInk); display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 15px; font-weight: 700; }
+  .il { font-size: 12.5px; line-height: 17px; color: var(--text3); margin-top: 6px; display: flex; align-items: center; }
+  .ii { display: inline-grid; place-items: center; width: 22px; height: 18px; color: var(--text3); }
+
+  /* Circle: tabs */
+  .seg { display: flex; margin: 6px 16px 0; padding: 4px; border: 1px solid var(--cardLine); background: var(--card); border-radius: 22px; gap: 2px; flex: none; }
+  .seg span { flex: 1; height: 34px; border-radius: 17px; display: flex; align-items: center; justify-content: center; gap: 5px; font-size: 14px; font-weight: 500; color: var(--text2); white-space: nowrap; }
+  .seg span.on { background: var(--leafAccentSoft); color: var(--tabSelected); font-weight: 600; }
+  .seg b { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--tile); color: var(--tileInk); font: 700 11px/18px "BarlowApp", "Barlow"; text-align: center; }
+  .dark .seg span.on b { background: var(--card); }
+  .clist { flex: 1; overflow-y: auto; padding: 23.5px 0 16px; scrollbar-width: none; }
+  .clist::-webkit-scrollbar { display: none; }
+  .ch { display: flex; align-items: center; gap: 5px; padding: 0 16px 10px; font-size: 16px; line-height: 19px; font-weight: 700; }
+  .ch.gap { padding-top: 20px; }
+  .cb { min-width: 22px; height: 22px; padding: 0 7px; border-radius: 11px; background: var(--badgeFill); color: var(--onAccent); font: 700 12px/22px "PlexApp", "IBM Plex Mono", monospace; text-align: center; }
+  .tkw { padding: 4px 16px; }
+  .tk { position: relative; height: 76px; display: flex; }
+  .tk > svg.shape { position: absolute; inset: 0; overflow: visible; }
+  .tk .main { position: relative; flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 12px 8px 12px 12px; }
+  .tk .col { flex: 1; min-width: 0; }
+  .tk .tt { font-size: 16px; line-height: 19px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tk .nt { margin-top: 3px; font-size: 12.5px; line-height: 14px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 4px; }
+  .tk .nt.warn { color: var(--warn); }
+  .tk .stub { position: relative; width: 58px; flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .tk .fig { margin-top: 3px; font-size: 18px; line-height: 20px; font-weight: 600; color: var(--tabSelected); font-feature-settings: "tnum"; }
+  .moved { outline: 2px dashed #C0563F; outline-offset: 3px; border-radius: 16px; margin: 0 6px; }
+  .gone { font-size: 11.5px; font-weight: 700; color: #C0563F; padding: 2px 10px 6px; }
+
+  /* robot state */
+  .rob { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 32px 60px; text-align: center; }
+  .rob .h { margin-top: 18px; font-size: 20px; line-height: 24px; font-weight: 700; }
+  .rob .b { margin-top: 8px; font-size: 14.5px; line-height: 20px; color: var(--text3); }
+
+  /* MainBar */
+  .bar { flex: none; border-top: 1px solid var(--cardLine); background: var(--dock); display: flex; height: 64px; }
+  .bar span { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 12px; font-weight: 500; color: var(--dockInk); position: relative; }
+  .bar span .ib { width: 52px; height: 32px; border-radius: 8px; display: grid; place-items: center; position: relative; }
+  .bar span.on { color: var(--tabSelected); font-weight: 600; }
+  .bar span.on .ib { background: var(--leafAccentSoft); }
+  .bar .nb { position: absolute; top: 0; left: 30px; min-width: 16px; height: 16px; padding: 0 4.5px; border-radius: 8px; background: var(--badgeFill); color: var(--onAccent); font: 700 10px/16px "BarlowApp", "Barlow"; box-shadow: 0 0 0 1.5px var(--dock); }
+</style>
+</head>
+<body>
+<div class="top"><h1>Feedback requests</h1><a href="#app">App page</a><a href="#check">To check</a></div>
+<div class="doc" id="doc"></div>
+<script>
+const L = {
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  user: '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  eye: '<path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/>',
+  eyeOff: '<path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/>',
+  lock: '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  msq: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  chevD: '<path d="m6 9 6 6 6-6"/>',
+  arrowUR: '<path d="M7 7h10v10"/><path d="M7 17 17 7"/>',
+  flask: '<path d="M14 2v6a2 2 0 0 0 .245.96l5.51 10.08A2 2 0 0 1 18 22H6a2 2 0 0 1-1.755-2.96l5.51-10.08A2 2 0 0 0 10 8V2"/><path d="M6.453 15h11.094"/><path d="M8.5 2h7"/>',
+  badgeCheck: '<path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/>',
+  grid: '<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>',
+  trophy: '<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>',
+};
+const ic = (n, s = 16, w = 2) => `<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${L[n]}</svg>`;
+const inl = (n, s = 14, w = 2.2) => `<span class="inl">${ic(n, s, w)}</span>`;
+const sp = (h) => `<div style="height:${h}px"></div>`;
+const ia = (t, cls = '') => `<span class="ia ${cls}">${t}</span>`;
+const BACK = `<svg width="22" height="22" viewBox="0 0 24 24" style="fill:currentColor"><path d="M17.77 3.77 16 2 6 12l10 10 1.77-1.77L9.54 12z"/></svg>`;
+const TMARK = (s) => `<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" style="transform:rotate(-12deg)"><path d="M4.5 4.5H19.5a2.5 2.5 0 0 1 2.5 2.5V9a3 3 0 0 0 0 6v2a2.5 2.5 0 0 1-2.5 2.5H4.5A2.5 2.5 0 0 1 2 17v-2a3 3 0 0 0 0-6V7a2.5 2.5 0 0 1 2.5-2.5Z" fill="var(--card)" stroke="var(--leafAccent)" stroke-width="1.6" stroke-linejoin="round"/><path d="M16 7.4v.4M16 11.8v.4M16 16.2v.4" stroke="var(--leafAccent)" stroke-width="1.9" stroke-linecap="round"/></svg>`;
+
+/* app icons */
+const ART = {
+  tide: (s) => `<span style="display:grid;place-items:center;width:${s}px;height:${s}px;border-radius:${s * .3}px;background:linear-gradient(160deg,#5FC4D9,#2B6FA6);flex:none"><svg width="${s * .6}" height="${s * .6}" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M2 9c2 0 2-2 4-2s2 2 4 2 2-2 4-2 2 2 4 2 2-2 4-2"/><path d="M2 15c2 0 2-2 4-2s2 2 4 2 2-2 4-2 2 2 4 2 2-2 4-2"/></svg></span>`,
+  chess: (s) => `<span style="display:grid;place-items:center;width:${s}px;height:${s}px;border-radius:${s * .3}px;background:linear-gradient(160deg,#3B3F46,#17191C);flex:none"><svg width="${s * .58}" height="${s * .58}" viewBox="0 0 24 24" fill="#F2E3C2"><circle cx="12" cy="6" r="3"/><path d="M9 10h6l1 7H8z"/><rect x="6" y="18" width="12" height="3" rx="1"/></svg></span>`,
+  budget: (s) => `<span style="display:grid;place-items:center;width:${s}px;height:${s}px;border-radius:${s * .3}px;background:linear-gradient(160deg,#7BD389,#2E8B57);flex:none;color:#fff;font:700 ${s * .48}px/1 BarlowApp,Barlow">$</span>`,
+  recipe: (s) => `<span style="display:grid;place-items:center;width:${s}px;height:${s}px;border-radius:${s * .3}px;background:linear-gradient(160deg,#FFB86B,#E2683C);flex:none"><svg width="${s * .58}" height="${s * .58}" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M4 11h16a8 8 0 0 1-16 0Z"/><path d="M9 6c0-1 1-1 1-2M14 6c0-1 1-1 1-2"/></svg></span>`,
+};
+
+/* ---------- reviewer faces (option B, feedback-card.html) ---------- */
+function face(k, small) {
+  if (k === 'open') return `<span class="rs open"><span class="av"></span></span>`;
+  const z = small ? [7, 8, 8] : [9, 10, 10];
+  const mk = k === 'acc' ? `<span class="mk ok">${ic('check', z[0], 3.6)}</span>`
+    : k === 'chk' ? `<span class="mk chk">${ic('eye', z[1], 2.8)}</span>`
+    : `<span class="mk prog">${ic('clock', z[2], 2.8)}</span>`;
+  return `<span class="rs ${k}"><span class="av">${ic('user', small ? 13 : 17, 2)}</span>${mk}</span>`;
+}
+const slots = (r) => [...Array(r.acc).fill('acc'), ...Array(r.chk || 0).fill('chk'), ...Array(r.prog || 0).fill('prog'), ...Array(r.open || 0).fill('open')];
+const total = (r) => r.acc + (r.chk || 0) + (r.prog || 0) + (r.open || 0);
+const DT = { on: ['', 'On Circle'], off: ['bad', 'Off Circle'], done: ['ok', 'Done'], closed: ['', 'Closed'] };
+const titleOf = (r) => (r.state === 'done' ? `All ${total(r)} reviews in` : `${r.acc + (r.chk || 0)} of ${total(r)} reviews in`);
+
+/* The open or newest request: option B's card, its title the count and its corner the state. */
+function reqTile(r) {
+  const [dc, dt] = DT[r.state];
+  let foot = '';
+  if (r.state === 'off') foot = `${sp(12)}<div class="stand"><span class="hl i-bad">${inl('eyeOff', 15)}Testers can't install it</span>${ia('Fix it')}</div>`;
+  else if (r.chk) foot = `${sp(12)}<div class="stand"><span class="hl">${r.chk} waiting for you</span><span class="pill fill">Check</span></div>`;
+  else if (r.again) foot = `<div class="acts">${ia('Ask again')}</div>`;
+  else if (r.state === 'on') foot = `${sp(12)}<div class="stand"><span class="hl i-q">Testers are on it</span></div>`;
+  return `<div class="card p16"><div class="th"><span class="nm">${titleOf(r)}</span><span class="dt ${dc}">${dt}</span></div>${sp(12)}
+    <div class="rv${r.state === 'off' ? ' off' : ''}">${slots(r).map((k) => face(k)).join('')}</div>${foot}</div>`;
+}
+/* An earlier request: the same card, compact. */
+function oldTile(r) {
+  const [dc, dt] = DT[r.state];
+  let foot = '';
+  if (r.chk) foot = `<div class="stand"><span class="hl">${r.chk} waiting for you</span><span class="pill fill">Check</span></div>`;
+  else if (r.back) foot = `<div class="note">${TMARK(13)}${r.back} tix came back</div>`;
+  return `<div class="card old"><div class="th"><span class="nm">${titleOf(r)}</span><span class="dt ${dc}">${dt} ${r.date}</span></div>
+    <div class="rv">${slots(r).map((k) => face(k, true)).join('')}</div>${foot}</div>`;
+}
+
+/* ---------- app page ---------- */
+const startRow = (icon, t, s, pill) => `<div class="card ra"><span class="itile">${ic(icon, 19)}</span><div class="col"><div class="t">${t}</div><div class="s">${s}</div></div><span class="pill ton">${pill}</span></div>`;
+const head = (t, when) => `<div class="head">${t}<span class="when">${when}</span></div>`;
+const APP = { n: 'Tide Times', p: 'com.seedapps.tidetimes', art: 'tide' };
+
+function appPage(th, feedback, canDelete) {
+  const top = `<div class="hd">${ART[APP.art](56)}<div class="col"><div class="hn">${APP.n}</div><div class="hp">${APP.p}</div></div></div>
+    <div class="facts"><span class="chip quiet">${ic('flask', 13, 2.4)}Closed test</span><span class="chip ok">${ic('badgeCheck', 13, 2.4)}Verified on Play</span></div>`;
+  const crew = head('Crew test', 'Before production') + startRow('users', 'Find a crew', 'Testing days Google asks for', 'Put in');
+  const fb = head('Feedback', 'Any time') + feedback;
+  const foot = `<div class="foot"><div class="tbtn">${ic('arrowUR', 18, 2.4)}It's live on Play</div>${canDelete ? ia('Delete app', 'bad') : `<div class="il">${inl('lock', 13)}Can't delete<span class="ii">${ic('info', 14)}</span></div>`}</div>`;
+  return `<div class="phone ${th}"><div class="sbar"></div><div class="pbar"><span class="back">${BACK}</span></div>
+    <div class="scroll">${top}${crew}${fb}</div>${foot}<div class="gest"><i></i></div></div>`;
+}
+
+const ASK = startRow('msq', 'Get reviews', 'Real people try it, then review', 'Ask');
+const earlier = (tiles) => `<div class="earlier">Earlier</div>${tiles}`;
+
+const APP_STATES = [
+  ['1', 'No request yet', () => ASK, true],
+  ['2', 'One open', () => reqTile({ state: 'on', acc: 1, chk: 2, prog: 1, open: 1 })],
+  ['3', 'One open, two earlier', () => reqTile({ state: 'on', acc: 2, prog: 2, open: 1 }) + earlier(
+    oldTile({ state: 'done', acc: 5, date: 'Nov 2' }) +
+    oldTile({ state: 'closed', acc: 2, open: 2, date: 'Oct 20', back: 70 }))],
+  ['4', 'Off Circle', () => reqTile({ state: 'off', acc: 1, open: 4 })],
+  ['5', 'None open, older folded', () => reqTile({ state: 'done', acc: 5, again: true }) + earlier(
+    oldTile({ state: 'closed', acc: 2, chk: 1, date: 'Nov 1' }) +
+    oldTile({ state: 'done', acc: 3, date: 'Oct 12' }) +
+    `<div class="showmore">${ia(`${ic('chevD', 16)}Show 3 more`)}</div>`)],
+];
+
+/* ---------- To check (Circle tab) ---------- */
+let clipN = 0;
+function ticketShape(w, h) {
+  const r = 14, n = 7, x = w - 58 - 0.75;
+  const d = `M${r},0 H${x - n} A${n},${n} 0 0 0 ${x + n},0 H${w - r} A${r},${r} 0 0 1 ${w},${r} V${h - r} A${r},${r} 0 0 1 ${w - r},${h} H${x + n} A${n},${n} 0 0 0 ${x - n},${h} H${r} A${r},${r} 0 0 1 0,${h - r} V${r} A${r},${r} 0 0 1 ${r},0 Z`;
+  const id = 'clip' + (clipN++);
+  return `<svg class="shape" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><defs><clipPath id="${id}"><path d="${d}"/></clipPath></defs>
+    <path d="${d}" fill="var(--bg)"/><rect x="${x}" y="0" width="${w - x}" height="${h}" fill="var(--leafAccentSoft)" clip-path="url(#${id})"/>
+    <line x1="${x}" y1="${n + 4}" x2="${x}" y2="${h - n - 4}" stroke="var(--glassBorder)" stroke-width="1" stroke-dasharray="3 3"/>
+    <path d="${d}" fill="none" stroke="var(--cardLine)" stroke-width="1"/></svg>`;
+}
+function ticket(art, title, note, stub, warn = false, w = 360) {
+  return `<div class="tkw"><div class="tk">${ticketShape(w, 76)}
+    <div class="main">${ART[art](52)}<div class="col"><div class="tt">${title}</div><div class="nt${warn ? ' warn' : ''}">${note}</div></div></div>
+    <div class="stub">${stub}</div></div></div>`;
+}
+const figStub = (n) => `${TMARK(16)}<div class="fig">${n}</div>`;
+const iconStub = (i) => `<span style="color:var(--text4)">${ic(i, 22)}</span>`;
+const heading = (t, n, gap) => `<div class="ch${gap ? ' gap' : ''}">${t}${n ? `<span class="cb">${n}</span>` : ''}</div>`;
+
+const REVIEWS = heading('Reviews of your apps', 2) +
+  ticket('tide', 'Tide Times', `${ic('clock', 12)}Sam, live app, 1d 4h left`, figStub(40)) +
+  ticket('chess', 'Pocket Chess', `${ic('clock', 12)}Rafi, closed test, 9h left`, figStub(35), true);
+const CASES = heading('Cases to decide', 1, true) +
+  ticket('budget', 'Budget Buddy', 'Disputed, 1 of 3 votes in', figStub(15));
+const REQUESTS = `<div class="moved">` + heading('Your requests', 0, true) +
+  ticket('tide', 'Tide Times', '1 of 5 done, 2 open, 2 under way', figStub(2), false, 348) +
+  ticket('chess', 'Pocket Chess', '5 of 5 done, closed', iconStub('lock'), false, 348) +
+  ticket('recipe', 'Quick Recipes', '1 of 3 done, closed', iconStub('lock'), false, 348) +
+  `<div class="gone">Moves to each app's page in My apps</div></div>`;
+
+const ROBOT = `<svg width="132" height="132" viewBox="0 0 132 132"><circle cx="66" cy="70" r="56" fill="var(--leafAccentSoft)"/>
+  <line x1="66" y1="22" x2="66" y2="34" stroke="var(--tileInk)" stroke-width="3" stroke-linecap="round"/><circle cx="66" cy="20" r="5" fill="var(--warn)"/>
+  <rect x="34" y="34" width="64" height="48" rx="16" fill="var(--tile)" stroke="var(--tileInk)" stroke-width="3"/>
+  <circle cx="54" cy="56" r="6" fill="var(--tileInk)"/><circle cx="78" cy="56" r="6" fill="var(--tileInk)"/>
+  <path d="M56 70q10 7 20 0" fill="none" stroke="var(--tileInk)" stroke-width="3" stroke-linecap="round"/>
+  <rect x="44" y="86" width="44" height="26" rx="10" fill="var(--tile)" stroke="var(--tileInk)" stroke-width="3"/>
+  <path d="M98 92l10-16" stroke="var(--tileInk)" stroke-width="3" stroke-linecap="round"/><path d="M101 66a9 9 0 0 1 14 3l-7 9z" fill="#F4B6C8" stroke="var(--tileInk)" stroke-width="2"/></svg>`;
+const EMPTY = `<div class="rob">${ROBOT}<div class="h">Nothing to check</div><div class="b">New reviews of your apps show up here. Your own requests are on each app's page in My apps.</div></div>`;
+
+function circle(th, owed, body, isList = true) {
+  const tabs = `<div class="seg"><span>Feedback</span><span>My reviews</span><span class="on">To check${owed ? `<b>${owed}</b>` : ''}</span></div>`;
+  const items = [['msq', 'Circle', true], ['users', 'Crew'], ['trophy', 'Ranks'], ['grid', 'My apps'], ['user', 'You']];
+  const bar = `<div class="bar">${items.map(([i, t, on]) => `<span class="${on ? 'on' : ''}"><span class="ib">${ic(i, 22)}${on && owed ? `<span class="nb">${owed}</span>` : ''}</span>${t}</span>`).join('')}</div>`;
+  return `<div class="phone ${th}"><div class="sbar"></div>${tabs}${isList ? `<div class="clist">${body}</div>` : body}${bar}<div class="gest"><i></i></div></div>`;
+}
+const CHECK_STATES = [
+  ['A', 'Before (today)', (th) => circle(th, 3, REVIEWS + CASES + REQUESTS), true],
+  ['B', 'After', (th) => circle(th, 3, REVIEWS + CASES)],
+  ['C', 'After, nothing to check', (th) => circle(th, 0, EMPTY, false)],
+];
+
+/* ---------- page ---------- */
+const F = (k, label, html, old) => `<div class="state"><div class="lbl"><span class="k${old ? ' old' : ''}">${k}</span>${label}</div>${html}</div>`;
+function build() {
+  clipN = 0;
+  let h = `<div class="sec" id="app">App page, Feedback section</div>`;
+  for (const th of ['light', 'dark']) {
+    h += `<div class="sub">${th === 'light' ? 'Light' : 'Dark'}</div><div class="row">`;
+    APP_STATES.forEach(([k, label, fn, del]) => { h += F(k, label, appPage(th, fn(), !!del)); });
+    h += `</div>`;
+  }
+  h += `<div class="sec" id="check">Circle, To check</div>`;
+  for (const th of ['light', 'dark']) {
+    h += `<div class="sub">${th === 'light' ? 'Light' : 'Dark'}</div><div class="row">`;
+    CHECK_STATES.forEach(([k, label, fn, old]) => { h += F(k, label, fn(th), old); });
+    h += `</div>`;
+  }
+  document.getElementById('doc').innerHTML = h;
+}
+build();
+if (document.fonts) document.fonts.ready.then(build);
+</script>
+</body>
+</html>

@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Ask for feedback, final</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  @font-face { font-family: "BarlowApp"; font-weight: 400; src: url("../../../app/src/main/res/font/barlow_regular.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 500; src: url("../../../app/src/main/res/font/barlow_medium.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 600; src: url("../../../app/src/main/res/font/barlow_semibold.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 700; src: url("../../../app/src/main/res/font/barlow_bold.ttf"); }
+  @font-face { font-family: "PlexApp"; font-weight: 700; src: url("../../../app/src/main/res/font/plexmono_bold.ttf"); }
+
+  /* OceanLight / OceanDark, ui/theme/Tokens.kt */
+  .light {
+    --bg:#F7FCFF; --text:#142F43; --text2:#203A4E; --text3:#223D50; --text4:#59758A;
+    --tabSelected:#2E4E66;
+    --glass:#F2F9FD; --glass2:#DFEDF6; --glassBorder:#B7D1E2; --glassBorderStrong:#789AAF;
+    --accent:#3A5B73; --onAccent:#FFFFFF; --accentInk:#22394B; --badgeFill:#3A5B73;
+    --tile:#DCE6EE; --tileInk:#3A5B73; --leafAccent:#3A5B73; --leafAccentSoft:rgba(74,114,144,.16);
+    --ok:#246B59; --okBg:rgba(36,107,89,.12); --warn:#8A611C; --warnBg:rgba(154,110,36,.12);
+    --bad:#9E3B2E; --badBg:rgba(158,59,46,.12);
+    --card:#F3F8FB; --cardLine:#E1ECF3; --sheet:#FFFFFF; --ring:rgba(20,47,67,.14); --track:#E4EEF4;
+    --flaskLiquid:#9279D6; --flaskGlass:#4A3B86; --sk:#E3EDF4;
+    --primary:var(--accent); --onPrimary:var(--onAccent); --onTone:#FFFFFF; --scrim:rgba(20,34,48,.46);
+  }
+  .dark {
+    --bg:#0F1011; --text:#ECEEF0; --text2:#BCC1C6; --text3:#9DA3A9; --text4:#757C82;
+    --tabSelected:#B6CCDC;
+    --glass:#1C1E20; --glass2:#292C2F; --glassBorder:#383C41; --glassBorderStrong:#666D74;
+    --accent:#4A7290; --onAccent:#FFFFFF; --accentInk:#93B3CA; --badgeFill:#4A7290;
+    --tile:#2A2D31; --tileInk:#A2BED2; --leafAccent:#93B3CA; --leafAccentSoft:#2A2D31;
+    --ok:#83D8C4; --okBg:rgba(131,216,196,.12); --warn:#D8B774; --warnBg:rgba(216,183,116,.14);
+    --bad:#E4938A; --badBg:rgba(228,147,138,.15);
+    --card:#1C1E20; --cardLine:#2D3034; --sheet:#1C1E20; --ring:rgba(255,255,255,.16); --track:#2D3034;
+    --flaskLiquid:#8C70D4; --flaskGlass:#CDBEF0; --sk:#212427;
+    --primary:var(--accentInk); --onPrimary:var(--bg); --onTone:#0F1011; --scrim:rgba(0,0,0,.6);
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #D9E0E5; font-family: "BarlowApp", "Barlow", system-ui, sans-serif; color: #1B2B36; }
+  body.dk { background: #2A3036; color: #E3E8EC; }
+  .top { position: sticky; top: 0; z-index: 9; display: flex; align-items: center; gap: 10px; padding: 12px 28px; background: inherit; border-bottom: 1px solid #C3CDD4; }
+  body.dk .top { border-color: #3A4249; }
+  .top h1 { margin: 0 14px 0 0; font-size: 20px; font-weight: 700; }
+  .top button { font: 600 15px/20px "BarlowApp", "Barlow", sans-serif; padding: 8px 18px; border-radius: 20px; border: 1px solid #B3C0C9; background: #F4F7F9; color: #2D4A5F; cursor: pointer; }
+  .top button.on { background: #2D4A5F; color: #fff; border-color: #2D4A5F; }
+  .doc { padding: 6px 28px 80px; }
+  .sec { font-size: 20px; font-weight: 700; margin: 30px 0 14px 4px; }
+  .row { display: flex; flex-wrap: wrap; gap: 30px 26px; align-items: flex-start; }
+  .state { display: flex; flex-direction: column; gap: 8px; }
+  .lbl { font-size: 15px; font-weight: 700; margin-left: 4px; display: flex; gap: 8px; align-items: center; }
+  .lbl .k { display: inline-grid; place-items: center; min-width: 24px; height: 24px; padding: 0 6px; border-radius: 8px; background: #2D4A5F; color: #fff; font-size: 13px; }
+  .lbl .k.old { background: #8A949C; }
+  body.dk .lbl .k { background: #93B3CA; color: #0F1011; }
+  body.dk .lbl .k.old { background: #5E666D; color: #fff; }
+
+  .phone { width: 412px; height: 880px; background: var(--bg); color: var(--text); border-radius: 28px; overflow: hidden; border: 1px solid #B9C5CE; position: relative; display: flex; flex-direction: column; }
+  .dark.phone { border-color: #3A4046; }
+  .phone.tall { height: auto; }
+  .tall .scroll { overflow: visible; }
+  .sbar { height: 24px; flex: none; }
+  .pbar { height: 64px; flex: none; display: flex; align-items: center; }
+  .pbar .back { width: 48px; height: 48px; display: grid; place-items: center; margin-left: 4px; color: var(--text); }
+  .pbar .ttl { margin-left: 4px; font-size: 22px; line-height: 28px; font-weight: 700; }
+  .scroll { flex: 1; overflow-y: auto; padding: 8px 16px 24px; scrollbar-width: none; position: relative; }
+  .scroll::-webkit-scrollbar { display: none; }
+  .gest { height: 22px; flex: none; display: grid; place-items: center; }
+  .gest i { width: 108px; height: 4px; border-radius: 2px; background: var(--text4); opacity: .55; }
+
+  svg.ic { display: block; flex: none; }
+  .inl { display: inline-block; vertical-align: -2px; margin-right: 6px; }
+  .inl svg { display: inline-block; }
+  .ai { display: grid; place-items: center; flex: none; overflow: hidden; box-shadow: inset 0 0 0 1px var(--ring); font-weight: 700; }
+  .light .nt { background: hsl(var(--h) 45% 89%); color: hsl(var(--h) 50% 32%); box-shadow: none; }
+  .dark .nt { background: hsl(var(--h) 30% 18%); color: hsl(var(--h) 55% 76%); box-shadow: none; }
+
+  /* compact app header: SeatAppHead without the rename */
+  .ah { display: flex; align-items: center; gap: 12px; }
+  .aic { position: relative; width: 52px; height: 52px; flex: none; }
+  .src { position: absolute; right: -5px; bottom: -5px; width: 20px; height: 20px; border-radius: 50%; background: var(--sheet); box-shadow: 0 0 0 2px var(--bg); display: grid; place-items: center; }
+  .ah .col { flex: 1; min-width: 0; }
+  .an { font-size: 16px; line-height: 19px; font-weight: 600; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .ad { margin-top: 2px; font-size: 12.5px; line-height: 14px; font-weight: 500; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* lines with the icon as their first glyph */
+  .il { font-size: 13px; line-height: 18px; color: var(--text2); position: relative; }
+  .il + .il { margin-top: 6px; }
+  .il .inl { color: var(--text3); }
+  .il.warn { color: var(--text); } .il.warn .inl { color: var(--warn); }
+  .ii { display: inline-grid; place-items: center; width: 22px; height: 18px; vertical-align: -3px; color: var(--text3); }
+  .ii.open span { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: color-mix(in srgb, var(--accentInk) 10%, transparent); color: var(--accentInk); }
+
+  /* callout under an (i) */
+  .co { position: absolute; left: -4px; right: -4px; top: calc(100% + 10px); z-index: 4; background: var(--sheet); border: 1px solid var(--glassBorder); border-radius: 14px; padding: 12px 14px; font-size: 13px; line-height: 18px; color: var(--text2); box-shadow: 0 8px 24px rgba(16,47,70,.16); }
+  .co::before { content: ""; position: absolute; top: -7px; left: var(--cx, 60%); width: 12px; height: 12px; background: var(--sheet); border-left: 1px solid var(--glassBorder); border-top: 1px solid var(--glassBorder); transform: rotate(45deg); }
+  .co b { color: var(--text); font-weight: 600; }
+
+  /* section heading: SeatHeading, with an end slot */
+  .sh { display: flex; align-items: center; gap: 8px; padding: 24px 0 10px; min-height: 19px; }
+  .sh .t { flex: 1; font-size: 16px; line-height: 19px; font-weight: 700; }
+  .sh .tag { font-size: 12px; line-height: 16px; font-weight: 600; color: var(--text3); background: var(--glass2); padding: 2px 9px; border-radius: 10px; }
+  .sh .val { display: inline-flex; align-items: center; gap: 6px; font-size: 16px; line-height: 19px; font-weight: 700; color: var(--accentInk); font-feature-settings: "tnum"; }
+
+  /* stepper on the heading's end */
+  .step { display: flex; align-items: center; gap: 4px; margin: -8px -4px -8px 0; }
+  .sb { width: 36px; height: 36px; border-radius: 50%; background: var(--tile); color: var(--accentInk); display: grid; place-items: center; }
+  .sb.off { color: var(--text4); opacity: .5; }
+  .sb.press { box-shadow: 0 0 0 6px color-mix(in srgb, var(--accentInk) 12%, transparent); }
+  .sv { min-width: 34px; text-align: center; font-size: 18px; line-height: 22px; font-weight: 700; font-feature-settings: "tnum"; }
+  .cnts { display: flex; gap: 8px; }
+  .cnt { flex: 1; height: 36px; border-radius: 18px; border: 1px solid var(--cardLine); display: grid; place-items: center; font-size: 14px; font-weight: 600; color: var(--text2); font-feature-settings: "tnum"; }
+  .cnt.on { background: var(--leafAccentSoft); border-color: transparent; color: var(--tabSelected); font-weight: 700; }
+
+  /* feedback level: three tiles, the chosen one washed like a picker's chosen row */
+  .lvs { display: flex; gap: 8px; }
+  .lv { flex: 1; position: relative; border: 1px solid var(--cardLine); border-radius: 14px; padding: 11px 12px 10px; background: var(--bg); }
+  .lv .g { color: var(--tileInk); }
+  .lv .n { margin-top: 6px; font-size: 15px; line-height: 18px; font-weight: 600; }
+  .lv .f { margin-top: 2px; font-size: 12px; line-height: 15px; color: var(--text3); font-feature-settings: "tnum"; }
+  .lv.on { background: var(--leafAccentSoft); border-color: transparent; }
+  .lv.on .n { font-weight: 700; color: var(--tabSelected); }
+  .lv.on .ck { position: absolute; top: 10px; right: 10px; color: var(--tabSelected); }
+  .lvl { margin-top: 8px; font-size: 13px; line-height: 18px; color: var(--text2); }
+
+  /* slider */
+  .sl { position: relative; height: 36px; margin: 0 2px; }
+  .sl .tr { position: absolute; left: 0; right: 0; top: 16px; height: 4px; border-radius: 2px; background: var(--track); }
+  .sl .ac { display: block; height: 100%; border-radius: 2px; background: var(--primary); }
+  .sl .th { position: absolute; top: 8px; width: 20px; height: 20px; margin-left: -10px; border-radius: 50%; background: var(--primary); box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+  .se { display: flex; justify-content: space-between; font-size: 12px; line-height: 14px; color: var(--text3); font-feature-settings: "tnum"; }
+
+  /* OutlinedField, 48dp notched */
+  .fld { position: relative; border: 1px solid var(--glassBorderStrong); border-radius: 10px; padding: 13px 14px 13px; font-size: 15px; line-height: 20px; font-weight: 500; color: var(--text); white-space: pre-wrap; }
+  .fld.x { padding-right: 40px; }
+  .fld.foc { border: 2px solid var(--primary); padding: 12px 13px; }
+  .fld.foc.x { padding-right: 39px; }
+  .fld.err { border-color: var(--bad); }
+  .fld .lab { position: absolute; top: -9px; left: 10px; padding: 0 4px; background: var(--bg); font-size: 12px; line-height: 16px; font-weight: 600; color: var(--text3); white-space: nowrap; }
+  .fld.foc .lab { color: var(--accentInk); left: 9px; top: -10px; }
+  .fld.err .lab { color: var(--bad); }
+  .fld .down { color: var(--text4); font-weight: 400; }
+  .fld .ph { color: var(--text4); font-weight: 400; }
+  .fld .cur { display: inline-block; width: 2px; height: 18px; background: var(--primary); vertical-align: -3px; }
+  .fld .rm { position: absolute; top: 6px; right: 4px; width: 36px; height: 36px; display: grid; place-items: center; color: var(--text4); }
+  .fld .txt { display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden; }
+  .ff { display: flex; gap: 8px; margin-top: 4px; font-size: 12px; line-height: 14px; }
+  .ff .fe { flex: 1; color: var(--bad); font-weight: 600; }
+  .ff .fc { margin-left: auto; color: var(--text4); font-size: 11.5px; font-feature-settings: "tnum"; }
+  .fgap { height: 18px; }
+
+  /* soft pill, ghost link */
+  .pill { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 7px 14px; border-radius: 16px; background: var(--tile); color: var(--accentInk); font-size: 13.5px; line-height: 16px; font-weight: 700; white-space: nowrap; }
+  .addr { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
+  .addr .of { font-size: 12.5px; color: var(--text3); font-feature-settings: "tnum"; }
+  .over { margin-top: 14px; font-size: 13px; line-height: 18px; color: var(--bad); font-weight: 600; }
+  .full { margin-top: 12px; font-size: 13px; line-height: 18px; color: var(--text3); }
+
+  /* total: SeatPrice */
+  .tot { display: flex; align-items: center; gap: 12px; min-height: 40px; }
+  .tot .tl { width: 40px; height: 40px; border-radius: 12px; background: var(--tile); color: var(--tileInk); display: grid; place-items: center; flex: none; }
+  .tot .col { flex: 1; min-width: 0; }
+  .tot .a { font-size: 16px; line-height: 19px; font-weight: 600; font-feature-settings: "tnum"; }
+  .tot .b { margin-top: 2px; font-size: 12.5px; line-height: 14px; font-weight: 500; color: var(--text3); font-feature-settings: "tnum"; }
+  .tot .b.short { color: var(--warn); font-weight: 600; }
+  .rule { display: flex; gap: 10px; margin-top: 14px; font-size: 13px; line-height: 18px; color: var(--text2); }
+  .rule::before { content: ""; flex: none; width: 4px; height: 4px; border-radius: 50%; background: var(--text3); margin-top: 7px; }
+  .rule b { color: var(--text); font-weight: 600; }
+
+  /* hint above the button, then the one filled button */
+  .hint { margin-top: 20px; text-align: center; font-size: 12.5px; line-height: 16px; font-weight: 600; color: var(--accentInk); }
+  .hint.warn { color: var(--warn); }
+  .pbtn { margin-top: 10px; height: 52px; border-radius: 26px; background: var(--primary); color: var(--onPrimary); display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 15px; font-weight: 700; }
+  .pbtn.off { background: color-mix(in srgb, var(--text) 12%, transparent); color: color-mix(in srgb, var(--text) 38%, transparent); }
+  .first { margin-top: 24px; }
+  .spin { width: 16px; height: 16px; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; }
+  .dis .sb, .dis .cnt, .dis .lv, .dis .sl, .dis .fld, .dis .pill { opacity: .45; }
+
+  /* PageMessage */
+  .pmsg { margin: 0 16px 6px; display: flex; align-items: center; gap: 10px; padding: 11px 10px 11px 14px; border-radius: 14px; background: var(--glass); border: 1px solid var(--glassBorder); font-size: 14px; line-height: 19px; flex: none; }
+  .pmsg .w { flex: 1; }
+  .pmsg .x, .pmsg .m { flex: none; display: grid; } .pmsg .x { color: var(--text3); }
+  .pmsg .m { color: var(--accentInk); } .pmsg .m.bad { color: var(--bad); }
+
+  /* skeleton */
+  .sk { display: block; background: var(--sk); border-radius: 6px; position: relative; overflow: hidden; }
+  .sk::after { content: ""; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 30%, color-mix(in srgb, var(--accentInk) 7%, transparent) 50%, transparent 70%); animation: sh 1.6s infinite; }
+  @keyframes sh { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+
+  /* robot state */
+  .rob { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 32px 60px; text-align: center; }
+  .rob .h { margin-top: 16px; font-size: 20px; line-height: 25px; font-weight: 700; }
+  .rob .b { margin-top: 6px; font-size: 14px; line-height: 20px; color: var(--text2); max-width: 300px; }
+  .rob .pill { margin-top: 18px; }
+
+  /* the app page after posting (app-page-final.html) */
+  .hero { display: flex; flex-direction: column; align-items: center; padding-top: 8px; }
+  .hn { margin-top: 12px; font-size: 22px; line-height: 26px; font-weight: 700; text-align: center; }
+  .hp { margin-top: 4px; font-size: 12px; line-height: 16px; color: var(--text3); text-align: center; }
+  .achips { display: flex; gap: 6px; margin-top: 12px; justify-content: center; }
+  .achip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 99px; font-size: 13px; line-height: 17px; font-weight: 600; }
+  .achip.n { background: var(--glass2); color: var(--text3); } .achip.ok { background: var(--okBg); color: var(--ok); }
+  .head { display: flex; align-items: center; gap: 5px; font-size: 16px; line-height: 19px; font-weight: 700; padding: 20px 0 10px; }
+  .head .when { margin-left: auto; font-size: 12px; line-height: 16px; font-weight: 600; color: var(--text3); background: var(--glass2); padding: 2px 9px; border-radius: 10px; }
+  .card { background: var(--bg); border: 1px solid var(--cardLine); border-radius: 14px; }
+  .p16 { padding: 16px; }
+  .th { display: flex; align-items: center; gap: 8px; }
+  .th .nm { flex: 1; font-size: 18px; line-height: 23px; font-weight: 600; }
+  .th .dt { font-size: 12px; line-height: 17px; color: var(--text3); }
+  .rv { display: flex; gap: 14px; margin-top: 12px; }
+  .rs { width: 36px; height: 36px; border-radius: 50%; border: 1.5px dashed var(--glassBorderStrong); }
+  .stand { margin-top: 12px; font-size: 15px; line-height: 20px; font-weight: 500; color: var(--text3); }
+  .stand .inl { color: var(--text3); }
+
+  /* ---------- the old page, rebuilt from AskScreen.kt ---------- */
+  .oldw { zoom: .62; }
+  .o .eb { font-size: 11px; letter-spacing: 1.5px; font-weight: 600; color: var(--accentInk); }
+  .o .hl { margin-top: 8px; font-size: 28px; line-height: 36px; font-weight: 600; }
+  .o .bd { margin-top: 8px; font-size: 14px; line-height: 20px; color: var(--text2); }
+  .o .fa { display: flex; align-items: center; gap: 13px; padding: 4px 0; }
+  .o .fa .nm { font-size: 14px; font-weight: 600; } .o .fa .dv { font-size: 12px; color: var(--text3); margin-top: 2px; }
+  .o .fa .ch { margin-left: auto; font-size: 12px; font-weight: 500; color: var(--accentInk); }
+  .o .nt2 { display: flex; gap: 10px; border: 1px solid color-mix(in srgb, var(--accentInk) 42%, transparent); border-radius: 12px; padding: 12px 13px; font-size: 12px; line-height: 16px; }
+  .o .nt2 .inl { color: var(--accentInk); margin: 1px 0 0; }
+  .o .st { font-size: 16px; font-weight: 600; } .o .ss { margin-top: 4px; font-size: 12px; color: var(--text2); }
+  .o .flab { font-size: 12px; font-weight: 600; color: var(--text4); margin-bottom: 4px; }
+  .o .dfl { border: 1px solid var(--glassBorderStrong); border-radius: 8px; min-height: 96px; padding: 16px; font-size: 15px; color: var(--text4); }
+  .o .sup { display: flex; margin-top: 4px; font-size: 11.5px; color: var(--text3); } .o .sup span:first-child { flex: 1; }
+  .o .t14 { font-size: 14px; font-weight: 500; } .o .s12 { font-size: 12px; line-height: 16px; color: var(--text2); }
+  .o .cbx { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 6px 0; }
+  .o .cbx i { width: 18px; height: 18px; border: 2px solid var(--glassBorderStrong); border-radius: 2px; margin: 0 3px; flex: none; }
+  .o .cbx i.on { background: var(--accent); border-color: var(--accent); }
+  .o .cbx b { display: block; font-size: 14px; font-weight: 600; } .o .cbx span { font-size: 12px; color: var(--text2); }
+  .o .nr { display: flex; align-items: center; } .o .nr .t14 { flex: 1; }
+  .o .sq { width: 32px; height: 32px; border-radius: 10px; background: var(--glass2); display: grid; place-items: center; margin: 8px; }
+  .o .fc2 { display: flex; gap: 8px; } .o .fc2 span { flex: 1; height: 32px; border: 1px solid var(--glassBorderStrong); border-radius: 8px; display: grid; place-items: center; font-size: 14px; font-weight: 500; }
+  .o .fc2 span.on { background: var(--container, var(--tile)); border-color: transparent; }
+  .o .tw { display: flex; justify-content: space-between; }
+</style>
+</head>
+<body>
+<div class="top"><h1>Ask for feedback, final</h1><button data-t="light" class="on">Light</button><button data-t="dark">Dark</button></div>
+<div class="doc" id="doc"></div>
+<script>
+const L = {
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  minus: '<path d="M5 12h14"/>',
+  plus: '<path d="M5 12h14"/><path d="M12 5v14"/>',
+  info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+  alert: '<circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>',
+  tri: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+  star: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+  text: '<path d="M15 18H3"/><path d="M17 6H3"/><path d="M21 12H3"/>',
+  file: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>',
+  coins: '<circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/><path d="m16.71 13.88.7.71-2.82 2.82"/>',
+  msq: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  flask: '<path d="M14 2v6a2 2 0 0 0 .245.96l5.51 10.08A2 2 0 0 1 18 22H6a2 2 0 0 1-1.755-2.96l5.51-10.08A2 2 0 0 0 10 8V2"/><path d="M6.453 15h11.094"/><path d="M8.5 2h7"/>',
+  globe: '<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>',
+  badgeCheck: '<path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/>',
+  pencil: '<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/>',
+  trash: '<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>',
+  dashed: '<path d="M10.1 2.182a10 10 0 0 1 3.8 0"/><path d="M13.9 21.818a10 10 0 0 1-3.8 0"/><path d="M17.609 3.721a10 10 0 0 1 2.69 2.7"/><path d="M2.182 13.9a10 10 0 0 1 0-3.8"/><path d="M20.279 17.609a10 10 0 0 1-2.7 2.69"/><path d="M21.818 10.1a10 10 0 0 1 0 3.8"/><path d="M3.721 6.391a10 10 0 0 1 2.7-2.69"/><path d="M6.391 20.279a10 10 0 0 1-2.69-2.7"/>',
+};
+const ic = (n, s = 16, w = 2) => `<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${L[n]}</svg>`;
+const inl = (n, s = 14, w = 2.2) => `<span class="inl">${ic(n, s, w)}</span>`;
+const BACK = `<svg width="22" height="22" viewBox="0 0 24 24" style="fill:currentColor"><path d="M17.77 3.77 16 2 6 12l10 10 1.77-1.77L9.54 12z"/></svg>`;
+const sp = (h) => `<div style="height:${h}px"></div>`;
+const TMARK = (s) => `<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" style="transform:rotate(-12deg)"><path d="M4.5 4.5H19.5a2.5 2.5 0 0 1 2.5 2.5V9a3 3 0 0 0 0 6v2a2.5 2.5 0 0 1-2.5 2.5H4.5A2.5 2.5 0 0 1 2 17v-2a3 3 0 0 0 0-6V7a2.5 2.5 0 0 1 2.5-2.5Z" fill="var(--card)" stroke="var(--leafAccent)" stroke-width="1.6" stroke-linejoin="round"/><path d="M16 7.4v.4M16 11.8v.4M16 16.2v.4" stroke="var(--leafAccent)" stroke-width="1.9" stroke-linecap="round"/></svg>`;
+const FLASK = `<svg width="12" height="12" viewBox="0 0 24 24"><path d="M9 2.5h6M10 2.5v6.2L4.6 18.6A2 2 0 0 0 6.4 21.5h11.2a2 2 0 0 0 1.8-2.9L14 8.7V2.5" fill="none" stroke="var(--flaskGlass)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/><path d="M6.6 15h10.8l1.6 3.4a1.2 1.2 0 0 1-1.1 1.7H6.1A1.2 1.2 0 0 1 5 18.4Z" fill="var(--flaskLiquid)"/></svg>`;
+const PLAY = `<svg width="12" height="12" viewBox="0 0 24 24"><path d="M3.6 1.8 13.4 12 3.6 22.2c-.4-.2-.6-.6-.6-1.1V2.9c0-.5.2-.9.6-1.1Z" fill="#00A0FF"/><path d="M16.8 8.6 13.4 12 3.6 1.8c.3-.2.8-.2 1.2 0Z" fill="#00F076"/><path d="M16.8 15.4 4.8 22.2c-.4.2-.9.2-1.2 0L13.4 12Z" fill="#FF3A44"/><path d="m16.8 8.6 3.6 2a1.6 1.6 0 0 1 0 2.8l-3.6 2L13.4 12Z" fill="#FFCE00"/></svg>`;
+
+/* app art, as app-page-final.html */
+const BLUEFY = { n: 'Bluefy: BT Keyboard & Mouse', p: 'com.eazyverse.bluefy', dev: 'EazyVerse', art: 'bluefy' };
+const LIVEAPP = { n: 'Auto Silent: Volume Scheduler', p: 'com.eazyverse.soundscheduler', dev: 'EazyVerse', art: 'silent' };
+const NEWAPP = { n: 'Pocket Budget', p: 'com.pocketbudget.app', dev: 'com.pocketbudget.app', h: 150 };
+function art(a, s) {
+  const base = `width:${s}px;height:${s}px;border-radius:${Math.round(s * 0.3)}px;`;
+  const g = Math.round(s * 0.62);
+  const sv = (body) => `<svg width="${g}" height="${g}" viewBox="0 0 24 24">${body}</svg>`;
+  switch (a.art) {
+    case 'bluefy': return `<span class="ai" style="${base}background:linear-gradient(160deg,#EEF6FB,#D3E7F3)">${sv('<ellipse cx="12" cy="13.5" rx="7" ry="9" style="fill:#45C3E2"/><rect x="11.2" y="3.5" width="1.6" height="7" rx=".8" style="fill:#1E2B36"/>')}</span>`;
+    case 'silent': return `<span class="ai" style="${base}background:#F3F4F6">${sv('<circle cx="11" cy="12" r="8" style="fill:none;stroke:#2B3A4A;stroke-width:2"/><path d="M11 7v5h3" style="fill:none;stroke:#2B3A4A;stroke-width:2;stroke-linecap:round"/>')}</span>`;
+    default: return `<span class="ai nt" style="${base}--h:${a.h};font-size:${Math.round(s * 0.45)}px">${a.n[0]}</span>`;
+  }
+}
+const ROBOT = `<svg width="132" height="120" viewBox="0 0 132 120">
+    <line x1="60" y1="10" x2="60" y2="26" style="stroke:var(--tileInk);stroke-width:3"/><circle cx="60" cy="9" r="5" style="fill:var(--warn)"/>
+    <rect x="26" y="26" width="68" height="52" rx="18" style="fill:var(--tile);stroke:var(--tileInk);stroke-width:3"/>
+    <rect x="36" y="38" width="48" height="28" rx="13" style="fill:var(--bg)"/>
+    <circle cx="50" cy="52" r="4" style="fill:var(--text)"/><circle cx="70" cy="52" r="4" style="fill:var(--text)"/>
+    <rect x="36" y="82" width="48" height="28" rx="10" style="fill:var(--tile);stroke:var(--tileInk);stroke-width:3"/>
+    <path d="M96 84l8-18" style="stroke:var(--tileInk);stroke-width:3;stroke-linecap:round"/><path d="M98 58a9 9 0 0 1 14 3l-7 9z" style="fill:#F4B6C8;stroke:var(--tileInk);stroke-width:2"/></svg>`;
+
+/* rules (FeedRules) */
+const R = { MIN: 20, MAX: 200, MAX_REVIEWS: 50, ASK_MAX: 200, WRITTEN_MAX: 600, CLOSED_MIN: 2 };
+const LV = {
+  stars: { icon: 'star', name: 'Stars', least: 20, chars: 0, line: 'A star rating only.' },
+  written: { icon: 'text', name: 'Written', least: 35, chars: 100, line: 'A star rating and at least 100 characters.' },
+  detailed: { icon: 'file', name: 'Detailed', least: 50, chars: 250, line: 'A star rating and at least 250 characters.' },
+};
+const plain = (t) => t.trim().split(/\s+/).join(' ').length;
+const READY1 = 'I use Bluefy to control my TV box from the sofa and it paired on the first try. The keyboard keeps up when I type fast and the touch pad feels smooth. A bigger scroll strip on tablets would help, but for everyday use it does what I need without any fuss at all.';
+const READY2 = 'Works well with my laptop. Pairing took a minute, but after that the mouse was smooth and typing had no lag.';
+const ii = (open) => `<span class="ii${open ? ' open' : ''}"><span>${ic('info', 14)}</span></span>`;
+const callout = (html, cx) => `<div class="co" style="--cx:${cx}">${html}</div>`;
+
+/* ---------- pieces ---------- */
+function appHead(a, live) {
+  return `<div class="ah"><span class="aic">${art(a, 52)}<span class="src">${live ? PLAY : FLASK}</span></span>
+    <div class="col"><div class="an">${a.n}</div><div class="ad">${a.dev}</div></div></div>`;
+}
+function trackLines(o) {
+  let h = '';
+  if (o.live) {
+    h += `<div class="il">${inl('star')}Testers use it on two days, then rate and review it on Google Play.</div>`;
+    h += `<div class="il warn">${inl('tri')}Google doesn't allow rewarding reviews and may remove ones it doubts.${ii(o.co === 'live')}
+      ${o.co === 'live' ? callout('So the reviews come in slowly, the way real users leave them. Whether to ask is <b>your decision</b>.', '88%') : ''}</div>`;
+  } else {
+    h += `<div class="il">${inl('msq')}Testers use it for ${R.CLOSED_MIN} minutes, then send private feedback on Google Play. You get a picture of it here.</div>`;
+  }
+  if (o.unv) {
+    h += `<div class="il warn">${inl('alert')}Not checked on Play yet.${ii(o.co === 'unv')}
+      ${o.co === 'unv' ? callout('Add <b>testtrack-testers@googlegroups.com</b> to your closed track\'s testers, or reviewers can\'t install it.', '43%') : ''}</div>`;
+  }
+  return h;
+}
+function count(n, o = {}) {
+  const step = `<div class="step"><b class="sb${n <= 1 ? ' off' : ''}${o.press === '-' ? ' press' : ''}">${ic('minus', 18, 2.4)}</b><span class="sv">${n}</span><b class="sb${n >= R.MAX_REVIEWS ? ' off' : ''}${o.press === '+' ? ' press' : ''}">${ic('plus', 18, 2.4)}</b></div>`;
+  return `<div class="sh first"><span class="t">Reviews</span>${step}</div>
+    <div class="cnts">${[3, 5, 10, 20, 50].map((c) => `<span class="cnt${c === n ? ' on' : ''}">${c}</span>`).join('')}</div>`;
+}
+function level(k) {
+  const tiles = Object.entries(LV).map(([key, v]) => `<div class="lv${key === k ? ' on' : ''}">
+      <span class="g">${ic(v.icon, 18)}</span>${key === k ? `<span class="ck">${ic('check', 15, 2.6)}</span>` : ''}
+      <div class="n">${v.name}</div><div class="f">From ${v.least} tix</div></div>`).join('');
+  return `<div class="sh"><span class="t">Each review has</span></div><div class="lvs">${tiles}</div><div class="lvl">${LV[k].line}</div>`;
+}
+function pay(r, k) {
+  const least = LV[k].least, pct = ((r - least) / (R.MAX - least)) * 100;
+  return `<div class="sh"><span class="t">Each review pays</span><span class="val">${TMARK(16)}${r} tix</span></div>
+    <div class="sl"><span class="tr"><span class="ac" style="width:${pct}%"></span></span><span class="th" style="left:${pct}%"></span></div>
+    <div class="se"><span>${least}</span><span>${R.MAX}</span></div>`;
+}
+function field(label, value, o = {}) {
+  const has = !!(value && value.length);
+  const lines = o.lines || 1;
+  const minH = Math.max(48, lines * 20 + 26);
+  let inner;
+  if (has) inner = `<span class="txt">${value}${o.focus ? '<span class="cur"></span>' : ''}</span>`;
+  else if (o.focus) inner = `<span class="cur"></span>${o.ph ? `<span class="ph">${o.ph}</span>` : ''}`;
+  else inner = `<span class="down">${label}</span>`;
+  const lab = has || o.focus ? `<span class="lab">${label}</span>` : '';
+  const cls = `fld${o.focus ? ' foc' : ''}${o.err ? ' err' : ''}${o.rm ? ' x' : ''}`;
+  const rm = o.rm ? `<span class="rm">${ic('x', 18)}</span>` : '';
+  const foot = (o.err || o.max) ? `<div class="ff">${o.err ? `<span class="fe">${inl('alert', 13, 2.4)}${o.err}</span>` : ''}${o.max ? `<span class="fc">${has ? value.length : 0}/${o.max}</span>` : ''}</div>` : '';
+  return `<div id="${o.id || ''}"><div class="${cls}" style="min-height:${minH}px">${lab}${inner}${rm}</div>${foot}</div>`;
+}
+function notes(o) {
+  let h = `<div class="sh"><span class="t">For testers</span><span class="tag">Optional</span></div>`;
+  h += sp(6) + field('What to look at', o.ask || '', { lines: 3, max: R.ASK_MAX, focus: o.askFocus, ph: 'Example: is the monthly total easy to read?' });
+  if (o.k === 'detailed') {
+    const list = o.ready || [];
+    const max = o.n;
+    h += `<div class="il" style="margin-top:18px" id="ready">${inl('pencil')}Ready reviews give a reviewer a text to start from.${ii(o.co === 'ready')}
+      ${o.co === 'ready' ? callout('Reviewers don\'t have to use these. Each one goes to <b>one reviewer only</b>, who can use it, change it or write their own.', '92%') : ''}</div>`;
+    list.forEach((r, i) => {
+      const len = plain(r.v || '');
+      let err = r.err;
+      if (!err && r.v && len < 250) err = `${len} of at least 250 characters`;
+      h += sp(i ? 16 : 18) + field(`Ready review ${i + 1}`, r.v || '', { lines: 3, max: R.WRITTEN_MAX, rm: true, err, focus: r.focus, ph: 'At least 250 characters', id: `rr${i + 1}` });
+    });
+    if (list.length > max) h += `<div class="over">${inl('alert', 13, 2.4)}Remove ${list.length - max}. There can be one for each review you ask for.</div>`;
+    else if (list.length < max) h += `<div class="addr"><span class="pill">${ic('plus', 15, 2.4)}Add a ready review</span><span class="of">${list.length} of ${max}</span></div>`;
+    else h += `<div class="full">One for each review you asked for.</div>`;
+  }
+  return h;
+}
+function total(n, r, have, o = {}) {
+  const cost = n * r;
+  const short = have != null && cost > have;
+  const line = have == null ? '<span class="sk" style="width:110px;height:12px;margin-top:3px"></span>'
+    : `<div class="b${short ? ' short' : ''}">${short ? `You have ${have} tix, ${cost - have} short` : `You have ${have} tix`}</div>`;
+  return `<div class="tot first" id="total"><span class="tl">${ic('coins', 20)}</span><div class="col"><div class="a">${n} ${n === 1 ? 'review' : 'reviews'}, ${cost} tix</div>${line}</div>${short ? '<span class="pill">Open Circle</span>' : ''}</div>
+    <div class="rule">Paid now. Close the request early and the tix for open reviews come back.</div>`;
+}
+function foot(o) {
+  let h = '';
+  if (o.hint) h += `<div class="hint ${o.hint[0]}">${inl(o.hint[1], 14)}${o.hint[2]}</div>`;
+  const off = o.blocked && !o.busy;
+  h += `<div class="pbtn${off ? ' off' : ''}${o.hint ? '' : ' first'}" id="btn">${o.busy ? '<span class="spin"></span>' : ''}Ask for feedback</div>`;
+  return h;
+}
+function askBody(o) {
+  let b = appHead(o.app, o.live) + sp(16) + trackLines(o);
+  b += count(o.n, o) + level(o.k) + pay(o.r, o.k) + notes(o) + total(o.n, o.r, o.have, o) + foot(o);
+  return `<div class="${o.busy ? 'dis' : ''}">${b}</div>`;
+}
+function msgLine(m) {
+  return m ? `<div class="pmsg"><span class="m${m.bad ? ' bad' : ''}">${ic(m.bad ? 'alert' : 'info', 17)}</span><span class="w">${m.t}</span><span class="x">${ic('x', 16)}</span></div>` : '';
+}
+function phone(th, inner, o = {}) {
+  return `<div class="phone ${th}${o.tall ? ' tall' : ''}"><div class="sbar"></div>
+    <div class="pbar"><span class="back">${BACK}</span>${o.title === false ? '' : `<span class="ttl">${o.title || 'Ask for feedback'}</span>`}</div>
+    ${msgLine(o.msg)}${o.raw ? inner : `<div class="scroll" data-to="${o.to || ''}">${inner}</div>`}<div class="gest"><i></i></div></div>`;
+}
+const ask = (th, o) => phone(th, askBody(o), o);
+
+/* loading: the page in its own shapes */
+function loading(th) {
+  const s = (w, h, r = 6, m = '') => `<span class="sk" style="width:${w};height:${h}px;border-radius:${r}px;${m}"></span>`;
+  const b = `<div class="ah">${s('52px', 52, 16)}<div class="col">${s('170px', 15)}${sp(7)}${s('90px', 11)}</div></div>${sp(18)}
+    ${s('100%', 12)}${sp(7)}${s('72%', 12)}
+    <div class="sh first"><span class="t">${s('80px', 15)}</span>${s('112px', 36, 18)}</div>
+    <div class="cnts">${s('100%', 36, 18)}</div>
+    <div class="sh"><span class="t">${s('120px', 15)}</span></div>
+    <div class="lvs">${s('33%', 78, 14)}${s('33%', 78, 14)}${s('33%', 78, 14)}</div>${sp(10)}${s('60%', 12)}
+    <div class="sh"><span class="t">${s('130px', 15)}</span>${s('60px', 15)}</div>${sp(8)}${s('100%', 4, 2)}${sp(30)}
+    ${s('100%', 86, 10)}${sp(24)}
+    <div class="tot">${s('40px', 40, 12)}<div class="col">${s('150px', 15)}${sp(6)}${s('100px', 11)}</div></div>${sp(24)}
+    ${s('100%', 52, 26)}`;
+  return phone(th, b, {});
+}
+function robot(th, h, t, btn) {
+  return phone(th, `<div class="rob">${ROBOT}<div class="h">${h}</div><div class="b">${t}</div><span class="pill">${btn}</span></div>`, { raw: true });
+}
+
+/* posted: back on the app page, the new request on top of Feedback */
+function posted(th) {
+  const a = BLUEFY;
+  const b = `<div class="hero">${art(a, 88)}<div class="hn">${a.n}</div><div class="hp">${a.p}</div>
+      <div class="achips"><span class="achip n">${ic('flask', 14)}Closed test</span><span class="achip ok">${ic('badgeCheck', 14)}Verified on Play</span></div></div>
+    <div class="head">Feedback<span class="when">Any time</span></div>
+    <div class="card p16"><div class="th"><span class="nm">No reviews in yet</span><span class="dt">On Circle</span></div>
+      <div class="rv">${'<span class="rs"></span>'.repeat(5)}</div>
+      <div class="stand">Testers are on it</div></div>`;
+  return phone(th, b, { title: false, msg: { t: 'Your request is on Circle.' } });
+}
+
+/* ---------- the old page, from AskScreen.kt as it is ---------- */
+function oldPage(th) {
+  const a = BLUEFY;
+  const b = `<div class="o">
+    <div style="display:flex;align-items:flex-start;gap:10px"><div style="flex:1"><div class="eb">FROM OTHER DEVELOPERS</div><div class="hl">Get your app<br>tried and reviewed.</div></div>
+      <div style="width:90px;height:90px;flex:none;display:grid;place-items:center"><div style="transform:scale(.68)">${ROBOT}</div></div></div>
+    <div class="bd">Developers on TestTrack try your app and send you feedback on Google Play. You pay each one in tix.</div>${sp(20)}
+    <div class="fa">${art(a, 48)}<div><div class="nm">${a.n}</div><div class="dv">${a.dev}</div></div><span class="ch">Change</span></div>${sp(12)}
+    <div class="nt2">${inl('info', 16)}<span>Testers send you private feedback on Google Play after trying your app for 2 minutes. It reaches you in Play Console, and a screenshot of it comes here.</span></div>${sp(16)}
+    <div class="st">Your feedback request</div><div class="ss">Choose how many reviews to request</div>${sp(16)}
+    <div class="flab">Feedback focus (optional)</div><div class="dfl">Is the monthly total readable at a glance?</div>
+    <div class="sup"><span>Leave blank for general feedback, or suggest something specific to try.</span><span>0/200</span></div>${sp(16)}
+    <div class="t14">What reviewers write</div><div class="s12" style="margin-top:4px">Every review has a star rating. Tick a box to ask for written feedback as well.</div>${sp(6)}
+    <div class="cbx"><i class="on"></i><div><b>Written feedback</b><span>At least 100 characters. From 35 tix a review.</span></div></div>
+    <div class="cbx"><i></i><div><b>Detailed feedback</b><span>At least 250 characters. From 50 tix a review.</span></div></div>${sp(16)}
+    <div class="nr"><span class="t14">Number of reviews</span><span class="sq">${ic('minus', 18)}</span><b style="width:24px;text-align:center;font-size:16px">3</b><span class="sq">${ic('plus', 18)}</span></div>
+    <div class="fc2"><span class="on">3</span><span>5</span><span>10</span><span>20</span></div>
+    <div class="s12" style="margin-top:4px">Choose between 1 and 50 reviews.</div>${sp(20)}
+    <div class="tw"><span class="t14">Reward per review</span><span class="t14" style="color:var(--primary)">35 tix</span></div>
+    <div class="sl"><span class="tr"><span class="ac" style="width:0%"></span></span><span class="th" style="left:0%"></span></div>
+    <div class="tw s12"><span>35 tix</span><span>200 tix</span></div>${sp(20)}
+    <div class="tw"><span class="t14">Request total</span><span class="t14" style="color:var(--accentInk);font-weight:700">105 tix</span></div>
+    <div class="s12" style="margin-top:6px">3 reviews. Your balance is 120 tix.</div>${sp(16)}
+    <div class="pbtn" style="margin-top:0">Ask for feedback</div></div>`;
+  return `<div class="oldw">${phone(th, b, { tall: true })}</div>`;
+}
+
+/* ---------- the frames ---------- */
+const base = { app: BLUEFY, live: false, n: 5, k: 'written', r: 35, have: 320 };
+const FULL = { ...base, ask: 'Does the touch pad feel smooth on your TV box?', tall: true };
+const STATES = [
+  ['2', 'Loading', null, loading],
+  ['3', 'Editing counts', { ...base, n: 12, r: 40, have: 640, press: '+', to: '#total' }],
+  ['4', 'Stars only, app not checked on Play yet', { ...base, app: NEWAPP, unv: true, co: 'unv', n: 3, k: 'stars', r: 20, have: 120 }],
+  ['5', 'Written', { ...base, to: '#total' }],
+  ['6', 'Detailed, one ready review', { ...base, n: 3, k: 'detailed', r: 50, have: 320, ready: [{ v: READY1 }], co: 'ready', to: '#ready' }],
+  ['7', 'Not enough tix', { ...base, n: 10, r: 35, have: 120, hint: ['warn', 'tri', '230 tix short'], blocked: true, to: '#btn' }],
+  ['8', 'Ready reviews need fixing', { ...base, n: 2, k: 'detailed', r: 50, have: 320,
+    ready: [{ v: READY1 }, { v: READY2, focus: true }, { v: READY1, err: 'Same as ready review 1' }],
+    hint: ['', 'alert', 'Fix the ready reviews'], blocked: true, to: '#rr2' }],
+  ['9', 'Server said no', { ...base, msg: { bad: true, t: "Couldn't send your request. That app already has a feedback request open." }, to: '#btn' }],
+  ['10', 'Busy posting', { ...base, busy: true, to: '#btn' }],
+  ['11', 'Posted, back on the app page', null, posted],
+  ['12', 'Live app, (i) open', { ...base, app: LIVEAPP, live: true, co: 'live' }],
+  ['13', "App isn't on My apps", null, (th) => robot(th, "This app isn't on My apps", 'It may have been deleted on another phone.', 'Back')],
+  ['14', "Couldn't load", null, (th) => robot(th, "Couldn't load your apps", 'Check your connection, then try again.', 'Try again')],
+];
+
+const F = (k, label, html, old) => `<div class="state"><div class="lbl"><span class="k${old ? ' old' : ''}">${k}</span>${label}</div>${html}</div>`;
+function show(th) {
+  let h = `<div class="sec">Ask for feedback</div><div class="row">`;
+  h += F('1', 'Full page', ask(th, FULL));
+  h += F('Old', 'Today', oldPage(th), true);
+  h += `</div><div class="sec">Every state</div><div class="row">`;
+  for (const [k, label, o, fn] of STATES) h += F(k, label, fn ? fn(th) : ask(th, o));
+  h += `</div>`;
+  document.getElementById('doc').innerHTML = h;
+  document.body.classList.toggle('dk', th === 'dark');
+  document.querySelectorAll('.top button').forEach((b) => b.classList.toggle('on', b.dataset.t === th));
+  document.querySelectorAll('.scroll[data-to]').forEach((s) => {
+    const sel = s.dataset.to; if (!sel) return;
+    const t = s.querySelector(sel); if (!t) return;
+    s.scrollTop = sel === '#btn' ? s.scrollHeight : Math.max(0, t.offsetTop - (sel === '#total' ? 420 : 120));
+  });
+  history.replaceState(null, '', '#' + th);
+}
+document.querySelectorAll('.top button').forEach((b) => b.addEventListener('click', () => show(b.dataset.t)));
+show(location.hash === '#dark' ? 'dark' : 'light');
+if (document.fonts) document.fonts.ready.then(() => show(document.body.classList.contains('dk') ? 'dark' : 'light'));
+</script>
+</body>
+</html>

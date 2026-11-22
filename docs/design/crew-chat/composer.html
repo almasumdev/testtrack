@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Crew chat composer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:TtBarlow;src:url(../../../app/src/main/res/font/barlow_regular.ttf);font-weight:400}
+@font-face{font-family:TtBarlow;src:url(../../../app/src/main/res/font/barlow_medium.ttf);font-weight:500}
+@font-face{font-family:TtBarlow;src:url(../../../app/src/main/res/font/barlow_semibold.ttf);font-weight:600}
+@font-face{font-family:TtBarlow;src:url(../../../app/src/main/res/font/barlow_bold.ttf);font-weight:700}
+@font-face{font-family:TtMono;src:url(../../../app/src/main/res/font/plexmono_medium.ttf);font-weight:400 500}
+@font-face{font-family:TtMono;src:url(../../../app/src/main/res/font/plexmono_semibold.ttf);font-weight:600}
+@font-face{font-family:TtMono;src:url(../../../app/src/main/res/font/plexmono_bold.ttf);font-weight:700}
+
+:root{--photo:#000;--onPhoto:#fff;--photoScrim:rgba(0,0,0,.5);--photoBad:#FF8A80}
+[data-theme=light]{
+  --bg:#F7FCFF;--text:#142F43;--text2:#203A4E;--text3:#223D50;--text4:#59758A;
+  --glass:#F2F9FD;--glass2:#DFEDF6;--glassBorder:#B7D1E2;--glassBorderStrong:#789AAF;
+  --accent:#3A5B73;--onAccent:#fff;--accentInk:#22394B;--badgeFill:#3A5B73;--tile:#DCE6EE;--tileInk:#3A5B73;
+  --bad:#9E3B2E;--badBg:rgba(158,59,46,.12);--badBorder:rgba(158,59,46,.24);
+  --field:#F7FCFF;--fieldBorder:#789AAF;--surface3:#C7DEED;--inverse:#172F42;--onInverse:#EFF7FC;--card:#F3F8FB;--cardLine:#E1ECF3;
+  --skTint:rgba(34,57,75,.07);--skHi:rgba(242,249,253,.8);
+  --pageBg:#D9E1E7;--pageInk:#1d2b36;
+}
+[data-theme=dark]{
+  --bg:#0F1011;--text:#ECEEF0;--text2:#BCC1C6;--text3:#9DA3A9;--text4:#757C82;
+  --glass:#1C1E20;--glass2:#292C2F;--glassBorder:#383C41;--glassBorderStrong:#666D74;
+  --accent:#4A7290;--onAccent:#fff;--accentInk:#93B3CA;--badgeFill:#4A7290;--tile:#2A2D31;--tileInk:#A2BED2;
+  --bad:#E4938A;--badBg:rgba(228,147,138,.15);--badBorder:rgba(228,147,138,.3);
+  --field:#141618;--fieldBorder:#666D74;--surface3:#2E3236;--inverse:#E8EBEE;--onInverse:#15181A;--card:#1C1E20;--cardLine:#2D3034;
+  --skTint:rgba(147,179,202,.07);--skHi:rgba(28,30,32,.8);
+  --pageBg:#2a2c2f;--pageInk:#e6e8ea;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#C9D2D9;color:#1d2b36;font-family:TtBarlow,Barlow,sans-serif;padding:0 24px 80px}
+.top{display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:50;background:#C9D2D9;padding:14px 0 12px}
+.top h1{font-size:22px;font-weight:700}
+.toggle{display:flex;border-radius:99px;overflow:hidden;border:1px solid #789AAF}
+.toggle button{font:600 14px TtBarlow,Barlow,sans-serif;padding:7px 16px;border:0;background:transparent;color:#1d2b36;cursor:pointer}
+.toggle button.on{background:#3A5B73;color:#fff}
+.nav-links{display:flex;gap:14px;font-size:14px;font-weight:700}
+.nav-links a{color:#1d2b36;text-decoration:none;opacity:.8}
+h2{font-size:21px;font-weight:700;margin:30px 0 12px;display:flex;align-items:center;gap:10px}
+h2 .let{width:34px;height:34px;border-radius:10px;background:#3A5B73;color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px}
+h2 .let.today{background:#59758A}
+h2 .pick{font-size:13px;font-weight:700;background:#246B59;color:#fff;border-radius:99px;padding:4px 12px;display:inline-flex;align-items:center;gap:6px}
+.strip{display:flex;gap:22px;overflow-x:auto;padding:18px 18px 22px;background:var(--pageBg);border-radius:18px;margin-bottom:12px}
+body.only-light .strip[data-theme=dark],body.only-dark .strip[data-theme=light]{display:none}
+.item{display:flex;flex-direction:column;gap:8px;flex:none}
+.lab{font-size:14px;font-weight:700;color:var(--pageInk)}
+
+.phone{width:392px;height:480px;background:var(--bg);border-radius:22px;overflow:hidden;position:relative;box-shadow:0 0 0 6px #111,0 10px 26px rgba(0,0,0,.22);display:flex;flex-direction:column;color:var(--text)}
+.sbar{height:24px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 18px;font:500 12px TtBarlow,sans-serif;color:var(--text)}
+svg.ic{display:block;flex:none}
+.pbar{height:56px;flex:none;display:flex;align-items:center;padding:0 4px}
+.pbar .nav{width:48px;height:48px;display:flex;align-items:center;justify-content:center}
+.pbar .title{flex:1;font:700 22px/28px TtBarlow,sans-serif;color:var(--text);margin-left:4px}
+.ibtn{width:48px;height:48px;display:flex;align-items:center;justify-content:center;margin-right:12px}
+
+.thread{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;padding:4px 12px 10px}
+.row{display:flex;align-items:flex-end;width:100%}
+.row.mine{justify-content:flex-end}
+.col{display:flex;flex-direction:column;align-items:flex-start;min-width:0}
+.row.mine .col{align-items:flex-end}
+.who{font:600 12px/16px TtBarlow,sans-serif;letter-spacing:.25px;color:var(--text3);padding:0 0 2px 12px}
+.bub{max-width:270px;padding:7px 10px 6px 12px;position:relative;overflow:hidden}
+.words{position:relative;font:400 15px/20px TtBarlow,sans-serif;letter-spacing:.25px;word-wrap:break-word}
+.msp{display:inline-block;height:1px}
+.meta{position:absolute;right:0;bottom:-2px;display:flex;align-items:center;gap:3px;height:14px}
+.time{font:500 10.5px/14px TtMono,'IBM Plex Mono',monospace;white-space:nowrap}
+.mme{font-weight:700;background:var(--tile);color:var(--tileInk)}
+.avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--tile);color:var(--tileInk);font:600 14px TtBarlow,sans-serif;flex:none}
+.daychip{display:flex;justify-content:center;padding:6px 0 0}
+.daychip span{border-radius:99px;background:var(--glass2);padding:3px 10px;font:600 11.5px/15px TtBarlow,sans-serif;color:var(--text3)}
+.note{display:flex;align-items:center;gap:4px;padding:3px 4px 0;font:500 11.5px/15px TtBarlow,sans-serif;color:var(--text3)}
+.note.bad{color:var(--bad);font-size:12px}
+.quote{display:flex;align-items:center;border-radius:8px;padding:4px 8px 5px 11px;position:relative;overflow:hidden;min-width:0}
+.quote::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--qbar)}
+.qw{font:700 12px/16px TtBarlow,sans-serif;letter-spacing:.25px;color:var(--qbar);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qt{font:400 13px/17px TtBarlow,sans-serif;letter-spacing:.25px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.skel{background:linear-gradient(var(--skTint),var(--skTint)),var(--glass2);position:relative;overflow:hidden;flex:none}
+.skel::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,var(--skHi) 50%,transparent 70%);background-size:300% 100%;animation:sh 2.2s linear infinite}
+@keyframes sh{from{background-position:150% 0}to{background-position:-150% 0}}
+
+/* shared composer bits */
+.crow{display:flex;align-items:flex-end;gap:8px}
+.rb{border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none;position:relative}
+.ib{display:flex;align-items:center;justify-content:center;flex:none;position:relative}
+.mb{position:absolute;top:6px;right:3px;min-width:17px;height:17px;border-radius:9px;background:var(--badgeFill);color:var(--onAccent);font:700 10px/17px TtMono,monospace;text-align:center;padding:0 4px}
+.tx{flex:1;min-width:0;font:400 15px/20px TtBarlow,sans-serif;letter-spacing:.25px;color:var(--text);padding:14px 0}
+.ph{flex:1;min-width:0;font:400 15px/20px TtBarlow,sans-serif;letter-spacing:.25px;color:var(--text4);padding:14px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.caret{display:inline-block;width:2px;height:18px;background:var(--accentInk);vertical-align:-3px;margin-left:1px}
+.mn{color:var(--accentInk);font-weight:600}
+.left{font:500 12px/20px TtMono,'IBM Plex Mono',monospace;color:var(--text4);white-space:nowrap;padding:14px 0;flex:none}
+.cline{display:flex;gap:6px;padding:7px 8px 0;font:400 13px/17px TtBarlow,sans-serif;letter-spacing:.25px;color:var(--bad)}
+.thumb{overflow:hidden;position:relative;flex:none}
+.xdot{position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;background:var(--photoScrim);display:flex;align-items:center;justify-content:center}
+
+/* today */
+.f0{flex:none;background:var(--bg);border-top:1px solid var(--cardLine);padding:6px 12px 12px;position:relative}
+.field0{flex:1;min-height:48px;border-radius:24px;background:var(--bg);padding:0 16px;display:flex;align-items:flex-end;gap:8px;min-width:0}
+.pb0{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:9px;background:var(--badgeFill);box-shadow:0 0 0 1.5px var(--bg);padding:0 4px;display:flex;align-items:center;justify-content:center;font:700 10.5px/13px TtMono,monospace;color:var(--onAccent)}
+.closed0{display:flex;align-items:center;gap:10px;border-radius:14px;background:var(--glass2);padding:12px 14px;font:400 13.5px/18px TtBarlow,sans-serif;letter-spacing:.25px;color:var(--text2)}
+
+/* A */
+.fA{flex:none;padding:6px 10px 12px}
+.pillA{flex:1;min-width:0;border-radius:24px;display:flex;flex-direction:column}
+.rowA{display:flex;align-items:flex-end;min-height:48px}
+.closedA{display:flex;align-items:center;gap:10px;border-radius:24px;background:var(--glass2);min-height:48px;padding:10px 18px;font:400 13.5px/18px TtBarlow,sans-serif;letter-spacing:.25px;color:var(--text2)}
+.editA{position:absolute;left:6px;bottom:6px;height:24px;border-radius:12px;background:var(--photoScrim);display:flex;align-items:center;gap:4px;padding:0 8px 0 6px;font:600 12px/16px TtBarlow,sans-serif;color:#fff}
+
+/* B */
+.fB{flex:none;background:var(--bg);border-top:1px solid var(--cardLine);padding:4px 6px 10px}
+.fieldB{flex:1;min-width:0;min-height:48px;border-radius:24px;background:var(--glass2);padding:0 14px 0 16px;display:flex;align-items:flex-end;gap:8px}
+.bandB{display:flex;align-items:center;padding:6px 0 6px 12px;margin:0 2px 4px;border-left:3px solid var(--accentInk)}
+.bandB .bw{font:400 12.5px/16px TtBarlow,sans-serif;color:var(--text3)}
+.bandB .bw b{font-weight:700;color:var(--text)}
+.bandB .bt{font:400 13.5px/18px TtBarlow,sans-serif;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.closedB{flex:none;border-top:1px solid var(--cardLine);padding:16px 28px 18px;text-align:center;font:400 13.5px/19px TtBarlow,sans-serif;color:var(--text3)}
+.closedB svg{display:inline-block;vertical-align:-2px;margin-right:4px}
+
+/* C */
+.fC{flex:none;background:var(--bg);padding:8px 12px 12px}
+.cardC{border-radius:20px;display:flex;flex-direction:column;overflow:hidden}
+.tbC{display:flex;align-items:center;height:48px;padding:0 6px 0 2px;gap:0}
+.sendC{height:40px;border-radius:20px;padding:0 14px 0 16px;display:flex;align-items:center;gap:8px;font:700 14.5px TtBarlow,sans-serif;letter-spacing:.2px;flex:none}
+.closedC{display:flex;align-items:center;gap:10px;border-radius:20px;background:var(--glass2);padding:13px 16px;font:400 13.5px/18px TtBarlow,sans-serif;letter-spacing:.25px;color:var(--text2)}
+
+/* D */
+.fD{flex:none;background:var(--glass);position:relative;padding:3px 0 8px}
+.meter{position:absolute;left:0;right:0;top:0;height:3px;background:var(--glass2)}
+.meter i{position:absolute;left:0;top:0;bottom:0;display:block}
+.rowD{display:flex;align-items:flex-end;min-height:52px;padding:0 4px}
+.stripD{display:flex;align-items:center;border-bottom:1px solid var(--cardLine);min-height:52px;padding:0 0 0 0}
+.stripD .qD{flex:1;min-width:0;border-left:2px solid var(--accentInk);padding:1px 0 1px 10px}
+.closedD{display:flex;align-items:center;gap:10px;padding:16px 18px;font:400 13.5px/18px TtBarlow,sans-serif;letter-spacing:.25px;color:var(--text2)}
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>Crew chat composer</h1>
+  <div class="toggle"><button data-m="both" class="on">Both</button><button data-m="light">Light</button><button data-m="dark">Dark</button></div>
+  <div class="nav-links"><a href="#o0">Today</a><a href="#oA">A</a><a href="#oB">B</a><a href="#oC">C</a><a href="#oD">D</a></div>
+</div>
+<div id="app"></div>
+<script>
+/* Lucide icons */
+const ICONS = {
+  'image-plus': '<path d="M16 5h6"/><path d="M19 2v6"/><path d="M21 11.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7.5"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/><circle cx="9" cy="9" r="2"/>',
+  'image': '<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>',
+  'send': '<path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/>',
+  'x': '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  'lock': '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  'circle-alert': '<circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>',
+  'at-sign': '<circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8"/>',
+  'chevron-right': '<path d="m9 18 6-6-6-6"/>',
+  'reply': '<polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/>',
+  'pencil': '<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/>',
+  'clock': '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  'ellipsis-vertical': '<circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/>',
+  'crop': '<path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/>',
+  'type': '<polyline points="4 7 4 4 20 4 20 7"/><line x1="9" x2="15" y1="20" y2="20"/><line x1="12" x2="12" y1="4" y2="20"/>',
+  'undo-2': '<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11"/>',
+};
+const ic = (n, s, c, sw = 2) => `<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${ICONS[n]}</svg>`;
+const v = n => `var(--${n})`;
+const back = () => `<svg class="ic" width="24" height="24" viewBox="0 0 24 24"><path fill="var(--text)" d="M17.77,3.77L16,2L6,12l10,10l1.77,-1.77L9.54,12z"/></svg>`;
+const sk = (w, h, r, extra = '') => `<div class="skel" style="width:${w};height:${h}px;border-radius:${r}px;${extra}"></div>`;
+const shot = () => `<svg viewBox="0 0 300 400" preserveAspectRatio="xMidYMid slice" width="100%" height="100%"><rect width="300" height="400" fill="#EEF5F1"/><rect width="300" height="70" fill="#2F7A5F"/><rect x="18" y="30" width="120" height="14" rx="7" fill="#fff" opacity=".9"/><circle cx="268" cy="37" r="12" fill="#fff" opacity=".35"/>${[0, 1, 2, 3].map(i => `<rect x="16" y="${88 + i * 74}" width="268" height="62" rx="12" fill="#fff"/><circle cx="46" cy="${119 + i * 74}" r="16" fill="${['#F2B544', '#5BB37F', '#5E9BD6', '#E07A6A'][i]}"/><rect x="72" y="${108 + i * 74}" width="${150 - i * 18}" height="10" rx="5" fill="#2B3B35" opacity=".8"/><rect x="72" y="${124 + i * 74}" width="${100 + i * 10}" height="8" rx="4" fill="#2B3B35" opacity=".35"/>`).join('')}</svg>`;
+
+/* words on screen */
+const CREW = 'Crew 7';
+const MN = '<span class="mn">@Maya Chen</span>';
+const TYPED = `Thanks ${MN}, found it. Sign in ran twice because the token saved late. Fixed in build 14, can you check tonight?`;
+const REPLY = { who: 'Maya Chen', text: '@Sam Park your app asked me to sign in twice.' };
+const REPLY_TEXT = 'Which screen was it on?';
+const CAPTION = 'This is the screen after sign in';
+const LINK = 'Beta is at pixclean.app/beta';
+const PROBLEM_TODAY = "Links can't be sent here. Take it out to send. To point at an app, type @ and pick it.";
+const PROBLEM = "Links can't be sent. Type @ to point at an app.";
+const CLOSED = `${CREW} has ended, so this chat is read only.`;
+const caret = '<span class="caret"></span>';
+const tx = h => `<div class="tx">${h}${caret}</div>`;
+const ph = t => `<div class="ph">${t}</div>`;
+
+/* small parts */
+const round = (icon, size, isz, fill, ink, extra = '') => `<div class="rb" style="width:${size}px;height:${size}px;background:${fill}">${ic(icon, isz, ink)}${extra}</div>`;
+const btn = (icon, ink, o = {}) => `<div class="ib" style="width:${o.w || 44}px;height:${o.h || 48}px">${ic(icon, o.s || 21, ink)}${o.badge ? `<span class="mb" style="box-shadow:0 0 0 1.5px ${o.ring || v('bg')}">${o.badge}</span>` : ''}</div>`;
+const xdot = `<div class="xdot">${ic('x', 14, '#fff', 2.4)}</div>`;
+const thumb = (w, h, r, extra = '') => `<div class="thumb" style="width:${w}px;height:${h}px;border-radius:${r}px">${shot()}${extra}</div>`;
+const quote = (who, text, fill) => `<div class="quote" style="--qbar:${v('accentInk')};background:${fill};flex:1"><div style="min-width:0"><div class="qw">${who}</div><div class="qt" style="color:${v('text2')}">${text}</div></div></div>`;
+const probLine = t => `<div class="cline">${ic('circle-alert', 15, v('bad'))}<span>${t}</span></div>`;
+
+/* thread */
+function shape(mine, first, last) { const t = first ? 18 : 4, b = last ? 18 : 4; return mine ? `18px ${t}px ${b}px 18px` : `${t}px 18px 18px ${b}px`; }
+function msg(o) {
+  const mine = !!o.mine, first = o.first !== false, last = o.last !== false, time = o.time || '8:15 AM';
+  const fill = mine ? v('accent') : v('glass2'), ink = mine ? '#fff' : v('text'), metaInk = mine ? 'rgba(255,255,255,.72)' : v('text4');
+  let edge = '';
+  if (o.note === 'failed') edge = `box-shadow:inset 0 0 0 1.5px ${v('badBorder')};`;
+  else if (o.you) edge = `box-shadow:inset 0 0 0 1.5px ${v('accent')};`;
+  const q = o.quote ? `<div style="padding-bottom:5px;display:flex">${quote(o.quote.who, o.quote.text, v('bg'))}</div>` : '';
+  const mw = 8 + time.length * 6.3 + (o.note === 'sending' ? 14 : 0);
+  const clock = o.note === 'sending' ? ic('clock', 11, metaInk) : '';
+  const b = `<div class="bub" style="border-radius:${shape(mine, first, last)};background:${fill};color:${ink};${edge}">${q}<div class="words">${o.html}<span class="msp" style="width:${mw}px"></span><span class="meta"><span class="time" style="color:${metaInk}">${time}</span>${clock}</span></div></div>`;
+  const lead = mine ? '' : (last ? `<span class="avatar">${o.who[0]}</span>` : '<span style="width:28px;flex:none"></span>') + '<span style="width:8px;flex:none"></span>';
+  const name = !mine && first ? `<div class="who">${o.who}</div>` : '';
+  let note = '';
+  if (o.note === 'sent') note = `<div class="note">Sent</div>`;
+  if (o.note === 'sending') note = `<div class="note">${ic('clock', 12, v('text3'))}Sending</div>`;
+  if (o.note === 'failed') note = `<div class="note bad">${ic('circle-alert', 14, v('bad'))}Not sent. Tap to retry</div>`;
+  return `<div class="row ${mine ? 'mine' : ''}" style="padding-top:${first ? 10 : 2}px">${lead}<div class="col">${name}${b}${note}</div></div>`;
+}
+function thread(kind) {
+  if (kind === 'loading') {
+    const rows = [[0, .62], [1, .5], [0, .7], [0, .44], [1, .56]];
+    return rows.map(([m, s]) => `<div class="row ${m ? 'mine' : ''}" style="padding-top:14px">${m ? '' : sk('28px', 28, 14) + '<span style="width:8px;flex:none"></span>'}${sk(`${Math.round((m ? 368 : 330) * s)}px`, 38, 18)}</div>`).join('');
+  }
+  const rows = [
+    `<div class="daychip"><span>Today</span></div>`,
+    msg({ who: 'Arif Rahman', html: 'Pix Clean froze on the second screen for anyone else?', time: '8:02 AM' }),
+    msg({ who: 'Lena Novak', quote: { who: 'Arif Rahman', text: 'Pix Clean froze on the second screen for anyone else?' }, html: 'Works for me. Try clearing its cache.', time: '8:10 AM' }),
+    msg({ who: 'Maya Chen', you: true, html: '<span class="mme">@Sam Park</span> your app asked me to sign in twice.', time: '8:14 AM' }),
+  ];
+  if (kind === 'send') {
+    rows.push(msg({ mine: true, first: true, last: false, html: 'Thanks, looking at it now.', time: '8:15 AM', note: 'failed' }));
+    rows.push(msg({ mine: true, first: false, last: true, html: 'Fixed in the next build.', time: '8:16 AM', note: 'sending' }));
+  } else if (kind !== 'closed') {
+    rows.push(msg({ mine: true, html: 'Thanks, looking at it now.', time: '8:15 AM', note: 'sent' }));
+  }
+  return rows.join('');
+}
+function phone(state, comp) {
+  if (comp.screen) return comp.screen;
+  const kind = state === 'loading' ? 'loading' : state === 'send' ? 'send' : state === 'closed' ? 'closed' : 'base';
+  const menu = state === 'loading' ? '' : ic('ellipsis-vertical', 20, v('text2'));
+  return `<div class="phone"><div class="sbar"><span>9:41</span><span>5G</span></div><div class="pbar"><div class="nav">${back()}</div><div class="title">${CREW} chat</div><div class="ibtn">${menu}</div></div><div class="thread">${thread(kind)}</div>${comp}</div>`;
+}
+
+/* 0. today, as built */
+function T(s) {
+  if (s === 'loading') return `<div class="f0"><div class="crow">${round('image-plus', 48, 21, v('glass2'), v('text4'))}<div class="field0" style="box-shadow:inset 0 0 0 1.2px ${v('glassBorderStrong')}"></div>${round('send', 48, 20, v('glass2'), v('text4'))}</div></div>`;
+  if (s === 'closed') return `<div class="f0"><div class="closed0">${ic('lock', 18, v('text2'))}<span>${CLOSED}</span></div></div>`;
+  if (s === 'picture') return { screen: editorScreen() };
+  const open = s !== 'out', bad = s === 'problem';
+  const focused = ['typing', 'reply', 'problem'].includes(s);
+  const canSend = ['typing', 'reply'].includes(s);
+  const badge = bad ? `<div class="pb0">1</div>` : '';
+  const pic = round('image-plus', 48, 21, open ? v('tile') : v('glass2'), open ? v('tileInk') : v('text4'), badge);
+  const border = bad ? `1.6px ${v('bad')}` : focused ? `1.6px ${v('text')}` : !open ? `1.2px ${v('glassBorder')}` : `1.2px ${v('glassBorderStrong')}`;
+  const body = { typing: tx(TYPED), reply: tx(REPLY_TEXT), problem: tx(LINK) }[s] || ph(open ? `Message ${CREW}` : 'No messages left today');
+  const count = bad ? `<span class="left">2 left</span>` : '';
+  const field = `<div class="field0" style="box-shadow:inset 0 0 0 ${border};${count ? 'padding-right:12px' : ''}">${body}${count}</div>`;
+  const send = round('send', 48, 20, canSend ? v('accent') : v('glass2'), canSend ? v('onAccent') : v('text4'));
+  const reply = s === 'reply' ? `<div style="display:flex;align-items:center;padding:0 2px 8px;gap:8px">${quote(`Replying to ${REPLY.who}`, REPLY.text, v('glass2'))}${round('x', 32, 15, v('glass2'), v('text2'))}</div>` : '';
+  return `<div class="f0">${reply}<div class="crow">${pic}${field}${send}</div>${bad ? probLine(PROBLEM_TODAY) : ''}</div>`;
+}
+function editorScreen() {
+  const eb = icon => `<div style="width:44px;height:44px;border-radius:50%;background:${v('photoScrim')};display:flex;align-items:center;justify-content:center">${ic(icon, 21, '#fff')}</div>`;
+  return `<div class="phone" style="background:#000"><div class="sbar" style="color:#fff"><span>9:41</span><span>5G</span></div>
+    <div style="display:flex;align-items:center;padding:8px 12px;gap:8px">${eb('x')}<span style="flex:1"></span>${eb('crop')}${eb('pencil')}${eb('type')}${eb('undo-2')}</div>
+    <div style="flex:1;position:relative;overflow:hidden"><div style="position:absolute;left:66px;right:66px;top:6px;bottom:6px">${shot()}</div></div>
+    <div style="padding:8px 12px 12px;display:flex;align-items:flex-end;gap:8px"><div style="flex:1;min-height:48px;border-radius:24px;background:rgba(255,255,255,.14);padding:14px 16px;font:400 15px/20px TtBarlow,sans-serif;letter-spacing:.25px;color:#fff">${CAPTION}<span class="caret" style="background:#fff"></span></div>${round('send', 48, 20, v('accent'), '#fff')}</div></div>`;
+}
+
+/* A. Send pops in */
+function A(s) {
+  if (s === 'loading') return `<div class="fA">${sk('100%', 48, 24)}</div>`;
+  if (s === 'closed') return `<div class="fA"><div class="closedA">${ic('lock', 18, v('text2'))}<span>${CLOSED}</span></div></div>`;
+  const out = s === 'out', bad = s === 'problem';
+  const focused = ['typing', 'reply', 'picture', 'problem'].includes(s);
+  const border = bad ? `1.6px ${v('bad')}` : focused ? `1.6px ${v('text')}` : out ? `1px ${v('glassBorder')}` : `1.2px ${v('glassBorderStrong')}`;
+  const bg = out ? v('glass2') : v('field');
+  let top = '';
+  if (s === 'reply') top = `<div style="display:flex;align-items:center;gap:4px;padding:6px 4px 0 6px">${quote(REPLY.who, REPLY.text, v('glass2'))}${btn('x', v('text2'), { w: 36, h: 36, s: 17 })}</div>`;
+  if (s === 'picture') top = `<div style="display:flex;padding:8px 8px 0">${thumb(84, 112, 16, xdot + `<div class="editA">${ic('pencil', 13, '#fff')}Edit</div>`)}</div>`;
+  const imgInk = out || s === 'picture' ? v('text4') : v('tileInk');
+  const body = { typing: tx(TYPED), reply: tx(REPLY_TEXT), picture: tx(CAPTION), problem: tx(LINK) }[s] || ph(out ? 'No messages left today' : `Message ${CREW}`);
+  const count = bad ? `<span class="left" style="margin-left:6px">2 left</span>` : '';
+  const at = out ? '<span style="width:16px;flex:none"></span>' : btn('at-sign', v('text3'), { w: 44, s: 20 });
+  const row = `<div class="rowA">${btn('image-plus', imgInk, { w: 48, badge: bad ? '1' : '', ring: bg })}${body}${count}${at}</div>`;
+  const showSend = ['typing', 'reply', 'picture', 'problem'].includes(s);
+  const send = showSend ? round('send', 48, 20, bad ? v('glass2') : v('accent'), bad ? v('text4') : v('onAccent')) : '';
+  return `<div class="fA"><div class="crow"><div class="pillA" style="box-shadow:inset 0 0 0 ${border};background:${bg}">${top}${row}</div>${send}</div>${bad ? probLine(PROBLEM) : ''}</div>`;
+}
+
+/* B. Tools fold away */
+function B(s) {
+  if (s === 'loading') return `<div class="fB"><div class="crow" style="align-items:center;padding:0 6px">${sk('26px', 26, 8)}<span style="width:6px"></span>${sk('26px', 26, 13)}<span style="width:4px"></span>${sk('100%', 48, 24, 'flex:1')}<span style="width:6px"></span>${sk('26px', 26, 13)}</div></div>`;
+  if (s === 'closed') return `<div class="closedB">${ic('lock', 15, v('text3'))}${CLOSED}</div>`;
+  const out = s === 'out', bad = s === 'problem';
+  const folded = ['typing', 'reply', 'picture', 'problem'].includes(s);
+  const canSend = ['typing', 'reply', 'picture'].includes(s);
+  const toolInk = out ? v('text4') : v('accentInk');
+  const tools = folded
+    ? btn('chevron-right', v('accentInk'), { w: 40, s: 24 })
+    : btn('image-plus', toolInk, { w: 42, s: 22 }) + btn('at-sign', toolInk, { w: 40, s: 21 });
+  const body = { typing: tx(TYPED), reply: tx(REPLY_TEXT), picture: tx(CAPTION), problem: tx(LINK) }[s] || ph(out ? 'No messages left today' : `Message ${CREW}`);
+  const count = bad ? `<span class="left">2 left</span>` : '';
+  const field = `<div class="fieldB" style="${bad ? `box-shadow:inset 0 0 0 1.6px ${v('bad')};` : ''}${out ? 'opacity:.75;' : ''}">${body}${count}</div>`;
+  const send = btn('send', canSend ? v('accentInk') : v('text4'), { w: 46, s: 22 });
+  let above = '';
+  if (s === 'reply') above = `<div class="bandB"><div style="flex:1;min-width:0"><div class="bw">Replying to <b>${REPLY.who}</b></div><div class="bt">${REPLY.text}</div></div>${btn('x', v('text2'), { w: 44, h: 40, s: 18 })}</div>`;
+  if (s === 'picture') above = `<div style="display:flex;padding:6px 10px 8px">${thumb(76, 76, 14, xdot)}</div>`;
+  return `<div class="fB">${above}<div class="crow" style="gap:4px">${tools}${field}${send}</div>${bad ? `<div style="padding-left:40px">${probLine(PROBLEM)}</div>` : ''}</div>`;
+}
+
+/* C. Card with toolbar */
+function C(s) {
+  if (s === 'loading') return `<div class="fC">${sk('100%', 48, 20)}</div>`;
+  if (s === 'closed') return `<div class="fC"><div class="closedC">${ic('lock', 18, v('text2'))}<span>${CLOSED}</span></div></div>`;
+  const out = s === 'out', bad = s === 'problem';
+  if (s === 'empty' || s === 'send' || out) {
+    const right = out
+      ? `<span class="left" style="padding-right:16px">After midnight</span>`
+      : `${btn('image-plus', v('tileInk'), { w: 44 })}${btn('at-sign', v('text3'), { w: 40, s: 20 })}<span style="width:6px"></span>`;
+    return `<div class="fC"><div class="cardC" style="background:${out ? v('glass2') : v('field')};box-shadow:inset 0 0 0 ${out ? `1px ${v('glassBorder')}` : `1.2px ${v('glassBorderStrong')}`}"><div style="display:flex;align-items:flex-end;padding-left:16px">${ph(out ? 'No messages left today' : `Message ${CREW}`)}${right}</div></div></div>`;
+  }
+  const border = bad ? `1.6px ${v('bad')}` : `1.6px ${v('text')}`;
+  let top = '';
+  if (s === 'reply') top = `<div style="display:flex;align-items:center;gap:2px;padding:6px 2px 0 6px">${quote(REPLY.who, REPLY.text, v('glass2'))}${btn('x', v('text2'), { w: 40, h: 36, s: 17 })}</div>`;
+  if (s === 'picture') top = `<div style="display:flex;padding:8px 8px 0">${thumb(72, 72, 14, xdot)}</div>`;
+  const body = { typing: TYPED, reply: REPLY_TEXT, picture: CAPTION, problem: LINK }[s];
+  const text = `<div class="tx" style="padding:12px 16px 4px">${body}${caret}</div>`;
+  const prob = bad ? `<div style="padding:0 8px 2px">${probLine(PROBLEM)}</div>` : '';
+  const canSend = !bad;
+  const count = bad ? `<span class="left" style="padding:0 10px 0 0">2 left today</span>` : '';
+  const imgInk = s === 'picture' ? v('text4') : v('tileInk');
+  const sendPill = `<div class="sendC" style="background:${canSend ? v('accent') : v('glass2')};color:${canSend ? v('onAccent') : v('text4')}">Send${ic('send', 16, canSend ? v('onAccent') : v('text4'))}</div>`;
+  const tb = `<div class="tbC">${btn('image-plus', imgInk, { w: 44, badge: bad ? '1' : '', ring: v('field') })}${btn('at-sign', v('text3'), { w: 44, s: 20 })}<span style="flex:1"></span>${count}${sendPill}</div>`;
+  return `<div class="fC"><div class="cardC" style="background:${v('field')};box-shadow:inset 0 0 0 ${border}">${top}${text}${prob}${tb}</div></div>`;
+}
+
+/* D. Flat bar, day meter */
+function D(s) {
+  const meter = (pct, col) => `<div class="meter"><i style="width:${pct}%;background:${col}"></i></div>`;
+  if (s === 'loading') return `<div class="fD">${meter(0, '')}<div class="rowD" style="align-items:center;padding:0 14px;gap:12px">${sk('24px', 24, 6)}${sk('100%', 18, 9, 'flex:1')}${sk('24px', 24, 12)}</div></div>`;
+  if (s === 'closed') return `<div class="fD" style="padding:0"><div class="closedD">${ic('lock', 18, v('text2'))}<span>${CLOSED}</span></div></div>`;
+  const out = s === 'out', bad = s === 'problem';
+  const hasText = ['typing', 'reply', 'picture', 'problem'].includes(s);
+  const pct = out ? 0 : bad ? 18 : 70;
+  let strip = '';
+  if (s === 'reply') strip = `<div class="stripD">${btn('reply', v('accentInk'), { w: 52, s: 20 })}<div class="qD"><div class="qw" style="color:${v('accentInk')}">${REPLY.who}</div><div class="qt" style="color:${v('text2')}">${REPLY.text}</div></div>${btn('x', v('text3'), { w: 48, s: 18 })}</div>`;
+  if (s === 'picture') strip = `<div class="stripD">${btn('image', v('accentInk'), { w: 52, s: 20 })}${thumb(38, 38, 8)}<div style="flex:1;min-width:0;padding-left:10px"><div class="qw" style="color:${v('accentInk')}">Picture</div><div class="qt" style="color:${v('text3')}">Tap to edit</div></div>${btn('x', v('text3'), { w: 48, s: 18 })}</div>`;
+  const body = { typing: tx(TYPED), reply: tx(REPLY_TEXT), picture: tx(CAPTION), problem: tx(LINK) }[s] || ph(out ? 'No messages left today' : `Message ${CREW}`);
+  const imgInk = out || s === 'picture' ? v('text4') : v('text3');
+  const count = bad ? `<span class="left" style="padding:16px 4px 16px 6px">2 left</span>` : '';
+  const at = out ? '' : btn('at-sign', v('text3'), { w: 44, h: 52, s: 20 });
+  const send = hasText ? `<div class="ib" style="width:48px;height:52px">${round('send', 40, 18, bad ? v('glass2') : v('accent'), bad ? v('text4') : v('onAccent'))}</div>` : '';
+  const row = `<div class="rowD">${btn('image-plus', imgInk, { w: 48, h: 52, badge: bad ? '1' : '', ring: v('glass') })}<div style="flex:1;min-width:0;display:flex;padding:2px 4px 0">${body}</div>${count}${at}${send}</div>`;
+  return `<div class="fD">${meter(pct, bad ? v('bad') : v('accent'))}${strip}${row}${bad ? `<div style="padding:0 12px 4px 44px">${probLine(PROBLEM)}</div>` : ''}</div>`;
+}
+
+/* page */
+const STATES = [['empty', 'Empty'], ['typing', 'Typing'], ['reply', 'Replying'], ['picture', 'Picture'], ['problem', 'Few left, link'], ['send', 'Sending, failed'], ['out', 'None left today'], ['closed', 'Read only'], ['loading', 'Loading']];
+const OPTIONS = [
+  { id: '0', name: 'Today, as built', fn: T, today: true },
+  { id: 'A', name: 'Send pops in', fn: A, pick: true },
+  { id: 'B', name: 'Tools fold away', fn: B },
+  { id: 'C', name: 'Card with toolbar', fn: C },
+  { id: 'D', name: 'Flat bar, day meter', fn: D },
+];
+const labOf = (o, k, l) => (o.today && k === 'picture' ? 'Picture (editor)' : l);
+document.getElementById('app').innerHTML = OPTIONS.map(o => {
+  const strip = th => `<div class="strip" data-theme="${th}">${STATES.map(([k, l]) => `<div class="item"><div class="lab">${labOf(o, k, l)}</div>${phone(k, o.fn(k))}</div>`).join('')}</div>`;
+  return `<h2 id="o${o.id}"><span class="let ${o.today ? 'today' : ''}">${o.id}</span>${o.name}${o.pick ? '<span class="pick">My pick</span>' : ''}</h2>${strip('light')}${strip('dark')}`;
+}).join('');
+document.querySelectorAll('.toggle button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.toggle button').forEach(x => x.classList.toggle('on', x === b));
+  document.body.className = b.dataset.m === 'both' ? '' : `only-${b.dataset.m}`;
+});
+</script>
+</body>
+</html>

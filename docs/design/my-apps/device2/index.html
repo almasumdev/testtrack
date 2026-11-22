@@ -1,0 +1,14 @@
+<!doctype html><html><head><meta charset="utf-8"><title>My apps app page, device shots</title>
+<style>body{margin:0;background:#1b1e20;color:#ecf0f2;font:15px system-ui,sans-serif;padding:24px}
+h2{margin:28px 0 10px}.g{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+figure{margin:0}figcaption{font-size:12px;color:#9aa;margin-top:4px}
+img{width:360px;border-radius:12px;border:1px solid #3a3f44;cursor:zoom-in;display:block}
+#z{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);overflow:auto;z-index:9;cursor:zoom-out}
+#z img{width:auto;max-width:none;height:auto;margin:0 auto;border-radius:0;border:0}</style></head><body>
+<h1>My apps, app page on the Samsung (dark)</h1>
+<script>
+const G=[["Budget Buddy (running)",["budget-buddy_01"]],["Daily Quotes (lobby)",["daily-quotes_01"]],["Photo Frames (taken out)",["photo-frames_01"]],["Tide Times (finished)",["tide-times_01"]],["Quick Notes Lite (not verified)",["quick-notes-lite_01","quick-notes-lite_02"]],["Metro Map (live)",["metro-map_01"]],["Circle: To check",["circle-to-check_01"]]];
+document.write(G.map(([t,a])=>`<h2>${t}</h2><div class="g">${a.map(n=>`<figure><img src="${n}.png"><figcaption>${n}.png</figcaption></figure>`).join("")}</div>`).join(""));
+document.write('<div id="z"><img></div>');
+const z=document.getElementById('z');document.querySelectorAll('figure img').forEach(i=>i.onclick=()=>{z.firstChild.src=i.src;z.style.display='block'});z.onclick=()=>z.style.display='none';
+</script></body></html>

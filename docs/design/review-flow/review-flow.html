@@ -1,0 +1,1037 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Review flow: now and new</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  @font-face { font-family: "BarlowApp"; font-weight: 400; src: url("../../../app/src/main/res/font/barlow_regular.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 500; src: url("../../../app/src/main/res/font/barlow_medium.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 600; src: url("../../../app/src/main/res/font/barlow_semibold.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 700; src: url("../../../app/src/main/res/font/barlow_bold.ttf"); }
+  @font-face { font-family: "PlexApp"; font-weight: 700; src: url("../../../app/src/main/res/font/plexmono_bold.ttf"); }
+
+  /* OceanLight / OceanDark, ui/theme/Tokens.kt */
+  .light {
+    --bg:#F7FCFF; --text:#142F43; --text2:#203A4E; --text3:#223D50; --text4:#59758A;
+    --tabSelected:#2E4E66;
+    --glass:#F2F9FD; --glass2:#DFEDF6; --glassBorder:#B7D1E2; --glassBorderStrong:#789AAF;
+    --accent:#3A5B73; --onAccent:#FFFFFF; --accentInk:#22394B; --badgeFill:#3A5B73;
+    --tile:#DCE6EE; --tileInk:#3A5B73; --leafAccent:#3A5B73; --leafAccentSoft:rgba(74,114,144,.16);
+    --ok:#246B59; --okBg:rgba(36,107,89,.12); --warn:#8A611C; --warnBg:rgba(154,110,36,.12);
+    --bad:#9E3B2E; --badBg:rgba(158,59,46,.12);
+    --card:#F3F8FB; --cardLine:#E1ECF3; --sheet:#FFFFFF; --ring:rgba(20,47,67,.14); --track:#E4EEF4; --sk:#E3EDF4;
+    --flaskLiquid:#9279D6; --flaskGlass:#4A3B86; --dock:#E8F3FA; --dockInk:#304C60;
+    --primary:var(--accent); --onPrimary:var(--onAccent); --onTone:#FFFFFF; --scrim:rgba(20,34,48,.46);
+  }
+  .dark {
+    --bg:#0F1011; --text:#ECEEF0; --text2:#BCC1C6; --text3:#9DA3A9; --text4:#757C82;
+    --tabSelected:#B6CCDC;
+    --glass:#1C1E20; --glass2:#292C2F; --glassBorder:#383C41; --glassBorderStrong:#666D74;
+    --accent:#4A7290; --onAccent:#FFFFFF; --accentInk:#93B3CA; --badgeFill:#4A7290;
+    --tile:#2A2D31; --tileInk:#A2BED2; --leafAccent:#93B3CA; --leafAccentSoft:#2A2D31;
+    --ok:#83D8C4; --okBg:rgba(131,216,196,.12); --warn:#D8B774; --warnBg:rgba(216,183,116,.14);
+    --bad:#E4938A; --badBg:rgba(228,147,138,.15);
+    --card:#1C1E20; --cardLine:#2D3034; --sheet:#1C1E20; --ring:rgba(255,255,255,.16); --track:#2D3034; --sk:#212427;
+    --flaskLiquid:#8C70D4; --flaskGlass:#CDBEF0; --dock:#1C1E20; --dockInk:#BCC1C6;
+    --primary:var(--accentInk); --onPrimary:var(--bg); --onTone:#0F1011; --scrim:rgba(0,0,0,.6);
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #D9E0E5; font-family: "BarlowApp", "Barlow", system-ui, sans-serif; color: #1B2B36; }
+  body.dk { background: #2A3036; color: #E3E8EC; }
+  .top { position: sticky; top: 0; z-index: 9; display: flex; align-items: center; gap: 10px; padding: 12px 28px; background: inherit; border-bottom: 1px solid #C3CDD4; }
+  body.dk .top { border-color: #3A4249; }
+  .top h1 { margin: 0 14px 0 0; font-size: 20px; font-weight: 700; }
+  .top button, .top a { font: 600 15px/20px "BarlowApp", "Barlow", sans-serif; padding: 8px 18px; border-radius: 20px; border: 1px solid #B3C0C9; background: #F4F7F9; color: #2D4A5F; cursor: pointer; text-decoration: none; }
+  .top button.on { background: #2D4A5F; color: #fff; border-color: #2D4A5F; }
+  .top .sp { flex: 1; }
+  .doc { padding: 6px 28px 80px; }
+  .page { font-size: 26px; font-weight: 700; margin: 40px 0 4px 4px; }
+  .from { margin: 0 0 6px 4px; font-size: 15px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .from b { font-weight: 700; }
+  .from span { background: #F4F7F9; border: 1px solid #C3CDD4; border-radius: 14px; padding: 3px 12px; font-weight: 600; }
+  body.dk .from span { background: #343B42; border-color: #4A535B; }
+  .from span.mv { background: #2D4A5F; color: #fff; border-color: #2D4A5F; }
+  .pair { margin-top: 30px; }
+  .pl { font-size: 17px; font-weight: 700; margin: 0 0 10px 4px; display: flex; gap: 8px; align-items: center; }
+  .pl .k { display: inline-grid; place-items: center; min-width: 30px; height: 26px; padding: 0 7px; border-radius: 8px; background: #2D4A5F; color: #fff; font-size: 13px; }
+  body.dk .pl .k { background: #93B3CA; color: #0F1011; }
+  .two { display: flex; flex-wrap: wrap; gap: 22px; align-items: flex-start; }
+  .state { display: flex; flex-direction: column; gap: 6px; }
+  .tag { font-size: 13px; font-weight: 700; margin-left: 4px; letter-spacing: .4px; display: flex; gap: 6px; align-items: center; }
+  .tag i { font-style: normal; padding: 2px 9px; border-radius: 7px; background: #8A949C; color: #fff; }
+  .tag i.new { background: #246B59; }
+  .tag em { font-style: normal; font-weight: 600; color: #6A7680; }
+  body.dk .tag em { color: #9AA3AA; }
+  .cap { width: 412px; height: 892px; border-radius: 28px; border: 1px solid #3A4046; display: block; object-fit: cover; object-position: top; background: #0F1011; }
+  .gap { width: 30px; }
+
+  /* phone */
+  .phone { width: 412px; height: 880px; background: var(--bg); color: var(--text); border-radius: 28px; overflow: hidden; border: 1px solid #B9C5CE; position: relative; display: flex; flex-direction: column; }
+  .dark.phone { border-color: #3A4046; }
+  .phone.tall { height: auto; }
+  .tall .scroll { overflow: visible; flex: none; }
+  .sbar { height: 24px; flex: none; }
+  .pbar { height: 64px; flex: none; display: flex; align-items: center; }
+  .pbar .back { width: 48px; height: 48px; display: grid; place-items: center; margin-left: 4px; color: var(--text); flex: none; }
+  .pbar .ttl { margin-left: 4px; font-size: 22px; line-height: 28px; font-weight: 700; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pbar .pr { margin-right: 4px; min-width: 48px; height: 48px; display: grid; place-items: center; color: var(--text2); font-size: 14px; font-weight: 700; font-feature-settings: "tnum"; padding: 0 8px; }
+  .scroll { flex: 1; overflow-y: auto; padding: 8px 16px 20px; scrollbar-width: none; position: relative; }
+  .scroll::-webkit-scrollbar { display: none; }
+  .foot { flex: none; padding: 10px 16px 6px; }
+  .gest { height: 22px; flex: none; display: grid; place-items: center; }
+  .gest i { width: 108px; height: 4px; border-radius: 2px; background: var(--text4); opacity: .55; }
+
+  svg.ic { display: block; flex: none; }
+  .inl { display: inline-block; vertical-align: -2px; margin-right: 6px; }
+  .inl svg { display: inline-block; }
+  .ai { display: grid; place-items: center; flex: none; overflow: hidden; box-shadow: inset 0 0 0 1px var(--ring); font-weight: 700; }
+  .light .nt { background: hsl(var(--h) 45% 89%); color: hsl(var(--h) 50% 32%); box-shadow: none; }
+  .dark .nt { background: hsl(var(--h) 30% 18%); color: hsl(var(--h) 55% 76%); box-shadow: none; }
+
+  /* app header (ask-final .ah) with the reward at its end */
+  .ah { display: flex; align-items: center; gap: 12px; }
+  .aic { position: relative; width: 52px; height: 52px; flex: none; }
+  .src { position: absolute; right: -5px; bottom: -5px; width: 20px; height: 20px; border-radius: 50%; background: var(--sheet); box-shadow: 0 0 0 2px var(--bg); display: grid; place-items: center; }
+  .ah .col { flex: 1; min-width: 0; }
+  .an { font-size: 16px; line-height: 19px; font-weight: 600; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .ad { margin-top: 2px; font-size: 12.5px; line-height: 15px; font-weight: 500; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 6px; }
+  .rw { flex: none; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 52px; }
+  .rw .f { display: flex; align-items: center; gap: 5px; font-size: 18px; line-height: 20px; font-weight: 600; color: var(--tabSelected); font-feature-settings: "tnum"; }
+  .rw .h { font-size: 11.5px; line-height: 14px; font-weight: 700; color: var(--warn); }
+  .rw .u { font-size: 11.5px; line-height: 14px; color: var(--text3); }
+
+  /* step dots: the My reviews ticket's own */
+  .strip { display: flex; align-items: center; gap: 6px; margin-top: 16px; }
+  .dot { width: 11px; height: 11px; border-radius: 50%; flex: none; }
+  .dot.d { background: var(--accentInk); }
+  .dot.c { box-shadow: inset 0 0 0 2px var(--accentInk); }
+  .dot.f { border: 1.5px dashed var(--text4); }
+  .strip .stl { margin-left: 6px; font-size: 13px; line-height: 16px; font-weight: 600; color: var(--text2); }
+
+  /* blocks */
+  .card { background: var(--bg); border: 1px solid var(--cardLine); border-radius: 14px; position: relative; }
+  .p16 { padding: 16px; }
+  .p14 { padding: 12px 14px; }
+  .sh { display: flex; align-items: center; gap: 8px; padding: 22px 0 10px; }
+  .sh .t { flex: 1; font-size: 16px; line-height: 19px; font-weight: 700; }
+  .sh .tg { font-size: 12px; line-height: 16px; font-weight: 600; color: var(--text3); background: var(--glass2); padding: 2px 9px; border-radius: 10px; }
+  .ct { font-size: 16px; line-height: 20px; font-weight: 700; }
+  .ct .inl { color: var(--tileInk); }
+  .il { font-size: 13.5px; line-height: 19px; color: var(--text2); position: relative; }
+  .il + .il { margin-top: 8px; }
+  .il .inl { color: var(--text3); }
+  .il b { color: var(--text); font-weight: 600; }
+  .il.warn { color: var(--text); } .il.warn .inl { color: var(--warn); }
+  .il.bad .inl { color: var(--bad); } .il.ok .inl { color: var(--ok); }
+  .il.sm { font-size: 12.5px; line-height: 17px; color: var(--text3); }
+  .ii { display: inline-grid; place-items: center; width: 22px; height: 18px; vertical-align: -3px; color: var(--text3); }
+  .ii.open span { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: color-mix(in srgb, var(--accentInk) 10%, transparent); color: var(--accentInk); }
+  .co { position: absolute; left: -4px; right: -4px; top: calc(100% + 10px); z-index: 4; background: var(--sheet); border: 1px solid var(--glassBorder); border-radius: 14px; padding: 12px 14px; font-size: 13px; line-height: 18px; color: var(--text2); box-shadow: 0 8px 24px rgba(16,47,70,.16); }
+  .co::before { content: ""; position: absolute; top: -7px; left: var(--cx, 60%); width: 12px; height: 12px; background: var(--sheet); border-left: 1px solid var(--glassBorder); border-top: 1px solid var(--glassBorder); transform: rotate(45deg); }
+  .co b { color: var(--text); font-weight: 600; }
+  .ns { margin-top: 10px; }
+  .ns .n { font-size: 14px; line-height: 20px; color: var(--text2); }
+  .ns .n + .n { margin-top: 8px; }
+  .ns .n b { color: var(--text); font-weight: 600; }
+  .nb { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--tile); color: var(--tileInk); font-size: 12px; font-weight: 700; margin-right: 8px; vertical-align: 0; line-height: 20px; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 99px; font-size: 12.5px; line-height: 16px; font-weight: 700; white-space: nowrap; }
+  .chip.ok { background: var(--okBg); color: var(--ok); } .chip.warn { background: var(--warnBg); color: var(--warn); }
+  .chip.bad { background: var(--badBg); color: var(--bad); } .chip.quiet { background: var(--glass2); color: var(--text2); }
+
+  .pill { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 34px; padding: 7px 14px; border-radius: 17px; background: var(--tile); color: var(--accentInk); font-size: 13.5px; line-height: 16px; font-weight: 700; white-space: nowrap; }
+  .pill.fill { background: var(--primary); color: var(--onPrimary); }
+  .ia { display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 8px; font-size: 14px; font-weight: 700; color: var(--accentInk); border-radius: 16px; }
+  .ia.bad { color: var(--bad); } .ia.off { color: var(--text4); }
+  .pbtn { height: 52px; border-radius: 26px; background: var(--primary); color: var(--onPrimary); display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 15px; font-weight: 700; }
+  .pbtn.off { background: color-mix(in srgb, var(--text) 12%, transparent); color: color-mix(in srgb, var(--text) 38%, transparent); }
+  .pbtn.bad { background: var(--bad); color: var(--onTone); }
+  .spin { width: 16px; height: 16px; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; }
+  .ta { display: flex; justify-content: center; align-items: center; gap: 2px; min-height: 44px; font-size: 13px; color: var(--text3); }
+  .ta .ia { min-height: 44px; }
+
+  /* field: OutlinedField, notched */
+  .fld { position: relative; border: 1px solid var(--glassBorderStrong); border-radius: 10px; padding: 13px 14px; font-size: 15px; line-height: 20px; font-weight: 500; color: var(--text); white-space: pre-wrap; }
+  .fld.foc { border: 2px solid var(--primary); padding: 12px 13px; }
+  .fld .lab { position: absolute; top: -9px; left: 10px; padding: 0 4px; background: var(--fb, var(--bg)); font-size: 12px; line-height: 16px; font-weight: 600; color: var(--text3); white-space: nowrap; }
+  .fld.foc .lab { color: var(--accentInk); }
+  .fld .ph, .fld .down { color: var(--text4); font-weight: 400; }
+  .fld .cur { display: inline-block; width: 2px; height: 18px; background: var(--primary); vertical-align: -3px; }
+  .fld .txt { display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden; }
+  .fld.drop::after { content: ""; position: absolute; right: 16px; top: 21px; border: 5px solid transparent; border-top-color: var(--text3); }
+  .ff { display: flex; gap: 8px; margin-top: 4px; font-size: 12px; line-height: 14px; color: var(--text3); }
+  .ff .fc { margin-left: auto; color: var(--text4); font-size: 11.5px; font-feature-settings: "tnum"; }
+  .ff .okc { color: var(--ok); font-weight: 600; }
+
+  /* proof */
+  .pf { display: flex; gap: 12px; align-items: flex-start; }
+  .thumb { width: 72px; height: 128px; border-radius: 10px; flex: none; overflow: hidden; position: relative; }
+  .thumb.empty { border: 1.5px dashed var(--glassBorderStrong); display: grid; place-items: center; color: var(--text4); }
+  .pf .acts { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; padding-top: 2px; }
+
+  /* the reviewer's Play screenshot: their content, not the palette */
+  .shot { background: #fff; position: relative; overflow: hidden; font-family: Roboto, system-ui, sans-serif; }
+  .shot .s0 { height: 9%; background: #E8EAED; }
+  .shot .s1 { display: flex; gap: 6%; align-items: center; padding: 7% 8% 4%; }
+  .shot .s1 i { width: 24%; aspect-ratio: 1; border-radius: 22%; background: var(--sa, #F4A261); }
+  .shot .s1 b { flex: 1; height: 7px; border-radius: 4px; background: #3C4043; }
+  .shot .s2 { margin: 4% 8%; height: 5px; border-radius: 3px; background: #DADCE0; }
+  .shot .s3 { margin: 6% 6% 0; border: 1px solid #DADCE0; border-radius: 8px; padding: 6%; }
+  .shot .st { color: #01875F; font-size: 9px; letter-spacing: 1px; line-height: 10px; }
+  .shot .sl { height: 4px; border-radius: 2px; background: #BDC1C6; margin-top: 6%; }
+  .shot .sl.w { width: 70%; }
+  .shot .sb { margin: 6% 8% 0; height: 14%; border-radius: 8px; background: #01875F; }
+  .shot .sx { margin: 6% 8% 0; font: 600 8px/10px system-ui; color: #5F6368; }
+  .shot .sbox { margin: 6% 6% 0; border: 1.5px solid #01875F; border-radius: 8px; height: 14%; }
+
+  /* chat bubbles (CrewChatBubble) */
+  .thr { display: flex; flex-direction: column; gap: 10px; }
+  .m { display: flex; gap: 8px; align-items: flex-end; }
+  .m.r { justify-content: flex-end; }
+  .m .col { max-width: 82%; display: flex; flex-direction: column; align-items: flex-start; min-width: 0; }
+  .m.r .col { align-items: flex-end; }
+  .who { font-size: 12px; font-weight: 600; color: var(--text3); margin: 0 12px 3px; }
+  .bub { background: var(--glass2); color: var(--text); border-radius: 18px 18px 18px 6px; padding: 7px 12px; font-size: 14.5px; line-height: 20px; }
+  .m.r .bub { border-radius: 18px 18px 6px 18px; }
+  .m.mine .bub { background: var(--accent); color: var(--onAccent); }
+  .m.side .bub { background: var(--tile); color: var(--text); }
+  .bub.haspic { padding: 4px 4px 7px; }
+  .bub .pic { width: 156px; height: 232px; border-radius: 14px; overflow: hidden; margin-bottom: 6px; }
+  .bub.onlypic { padding: 4px; } .bub.onlypic .pic { margin: 0; }
+  .bub .tx { padding: 0 8px; display: block; max-width: 290px; }
+  .bub.haspic .tx { max-width: 156px; }
+  .mt { font-size: 11.5px; line-height: 15px; color: var(--text4); margin: 3px 10px 0; display: flex; align-items: center; gap: 4px; }
+  .fav { width: 28px; height: 28px; border-radius: 50%; background: var(--tile); color: var(--tileInk); display: grid; place-items: center; flex: none; }
+  .fav.dev { background: var(--glass2); color: var(--text2); }
+  .sys { align-self: center; display: flex; align-items: center; gap: 6px; padding: 3px 12px; border-radius: 99px; background: var(--glass2); color: var(--text2); font-size: 12.5px; line-height: 17px; }
+  .sys.warn { background: var(--warnBg); color: var(--warn); font-weight: 600; }
+
+  /* reviewer face (feedback-card faces) */
+  .rs { position: relative; width: 40px; height: 40px; flex: none; }
+  .rs .av { width: 40px; height: 40px; border-radius: 50%; background: var(--tile); color: var(--tileInk); display: grid; place-items: center; }
+  .rs.chk .av { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--warn); }
+  .rs.prog .av { opacity: .5; }
+  .rs .mk { position: absolute; right: -4px; bottom: -4px; width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--bg); display: grid; place-items: center; color: var(--onTone); }
+  .rs .mk.ok { background: var(--ok); } .rs .mk.chk { background: var(--warn); } .rs .mk.prog { background: var(--text4); } .rs .mk.bad { background: var(--bad); }
+  .rr { display: flex; align-items: center; gap: 12px; }
+  .rr .col { flex: 1; min-width: 0; }
+  .rr .t { font-size: 16px; line-height: 20px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rr .s { margin-top: 2px; font-size: 12.5px; line-height: 16px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rr .s.warn { color: var(--warn); font-weight: 600; } .rr .s.ok { color: var(--ok); } .rr .s.bad { color: var(--bad); }
+  .rlist .card + .card { margin-top: 8px; }
+
+  /* status + timeline on a finished review */
+  .stt { display: flex; align-items: center; gap: 14px; margin-top: 22px; }
+  .stt .tl { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; flex: none; }
+  .stt .tl.ok { background: var(--okBg); color: var(--ok); } .stt .tl.now { background: var(--tile); color: var(--tileInk); }
+  .stt .tl.bad { background: var(--badBg); color: var(--bad); } .stt .tl.q { background: var(--glass2); color: var(--text3); }
+  .stt .t { font-size: 20px; line-height: 24px; font-weight: 700; }
+  .stt .l { margin-top: 2px; font-size: 13.5px; line-height: 18px; color: var(--text2); }
+  .tml { margin-top: 16px; padding: 14px 16px; }
+  .tr { display: flex; gap: 12px; align-items: flex-start; position: relative; }
+  .tr + .tr { margin-top: 14px; }
+  .tr + .tr::before { content: ""; position: absolute; left: 11px; top: -12px; width: 2px; height: 10px; background: var(--cardLine); }
+  .td { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; flex: none; color: var(--onTone); }
+  .td.ok { background: var(--ok); } .td.now { background: var(--accent); color: var(--onAccent); } .td.later { background: var(--glass2); } .td.bad { background: var(--bad); }
+  .tr .t { font-size: 15px; line-height: 19px; font-weight: 600; }
+  .tr .d { font-size: 12.5px; line-height: 16px; color: var(--text3); margin-top: 1px; }
+  .tr.later .t { color: var(--text2); font-weight: 500; }
+
+  /* usage bar, return countdown */
+  .ub { margin-top: 14px; height: 46px; border-radius: 11px; background: var(--track); position: relative; overflow: hidden; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; font-size: 13px; color: var(--text2); }
+  .ub i { position: absolute; left: 0; top: 0; bottom: 0; background: color-mix(in srgb, var(--accent) 24%, var(--track)); }
+  .ub span { position: relative; } .ub b { font-family: "PlexApp", monospace; font-weight: 700; color: var(--text); font-size: 13.5px; }
+  .cd { margin-top: 14px; display: flex; align-items: baseline; justify-content: space-between; }
+  .cd .v { font-family: "PlexApp", monospace; font-size: 26px; line-height: 30px; font-weight: 700; color: var(--accentInk); }
+  .cd .w { font-size: 13px; color: var(--text3); }
+
+  /* choice tiles (ask-final .lv) */
+  .lvs { display: flex; gap: 8px; }
+  .lv { flex: 1; position: relative; border: 1px solid var(--cardLine); border-radius: 14px; padding: 11px 12px 10px; background: var(--bg); }
+  .lv .g { color: var(--tileInk); }
+  .lv .n { margin-top: 6px; font-size: 15px; line-height: 18px; font-weight: 600; }
+  .lv .f { margin-top: 2px; font-size: 12px; line-height: 15px; color: var(--text3); }
+  .lv.on { background: var(--leafAccentSoft); border-color: transparent; }
+  .lv.on .n { font-weight: 700; color: var(--tabSelected); }
+  .lv .ck { position: absolute; top: 10px; right: 10px; color: var(--tabSelected); }
+  .lv.off { opacity: .45; }
+
+  /* checkbox rows */
+  .cb { display: flex; align-items: center; gap: 14px; min-height: 44px; font-size: 14.5px; line-height: 19px; }
+  .cb i { width: 18px; height: 18px; border: 2px solid var(--glassBorderStrong); border-radius: 3px; flex: none; margin-left: 3px; display: grid; place-items: center; color: var(--onAccent); }
+  .cb i.on { background: var(--accent); border-color: var(--accent); }
+
+  /* PageMessage */
+  .pmsg { margin: 0 16px 6px; display: flex; align-items: center; gap: 10px; padding: 11px 10px 11px 14px; border-radius: 14px; background: var(--glass); border: 1px solid var(--glassBorder); font-size: 14px; line-height: 19px; flex: none; }
+  .pmsg .w { flex: 1; } .pmsg .x { color: var(--text3); } .pmsg .m0 { color: var(--accentInk); } .pmsg .m0.bad { color: var(--bad); }
+
+  /* sheet (PickerSheet) and dialog */
+  .scrimL { position: absolute; inset: 0; background: var(--scrim); }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--sheet); border-radius: 22px 22px 0 0; padding: 10px 16px 18px; --fb: var(--sheet); max-height: 88%; overflow: hidden; }
+  .sheet .hd { width: 38px; height: 4px; border-radius: 2px; background: var(--text4); opacity: .5; margin: 0 auto 16px; }
+  .sheet .stl { display: flex; align-items: center; gap: 12px; font-size: 17px; line-height: 22px; font-weight: 700; margin-bottom: 12px; }
+  .sheet .stl .t2 { width: 36px; height: 36px; border-radius: 11px; background: var(--tile); color: var(--tileInk); display: grid; place-items: center; flex: none; }
+  .prow { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 12px; margin: 0 -6px; border-radius: 13px; font-size: 15px; line-height: 19px; }
+  .prow .c { width: 18px; flex: none; color: var(--tabSelected); }
+  .prow.on { background: var(--leafAccentSoft); font-weight: 700; color: var(--tabSelected); }
+  .prow span.tx { flex: 1; }
+  .dlg { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 324px; background: var(--sheet); border-radius: 28px; padding: 24px; --fb: var(--sheet); }
+  .dlg .t { font-size: 20px; line-height: 26px; font-weight: 700; }
+  .dlg .b { margin-top: 12px; font-size: 14px; line-height: 20px; color: var(--text2); }
+  .dlg .bt { display: flex; justify-content: flex-end; gap: 4px; margin: 20px -8px -8px 0; }
+
+  .sk { display: block; background: var(--sk); border-radius: 6px; position: relative; overflow: hidden; }
+  .sk::after { content: ""; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 30%, color-mix(in srgb, var(--accentInk) 7%, transparent) 50%, transparent 70%); animation: sh 1.6s infinite; }
+  @keyframes sh { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+  .rob { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 32px 60px; text-align: center; }
+  .rob .h { margin-top: 16px; font-size: 20px; line-height: 25px; font-weight: 700; }
+  .rob .b { margin-top: 6px; font-size: 14px; line-height: 20px; color: var(--text2); max-width: 300px; }
+
+  /* lists: To check, feedback card */
+  .seg { display: flex; margin: 6px 16px 0; padding: 4px; border: 1px solid var(--cardLine); background: var(--card); border-radius: 22px; gap: 2px; flex: none; }
+  .seg span { flex: 1; height: 34px; border-radius: 17px; display: flex; align-items: center; justify-content: center; gap: 5px; font-size: 14px; font-weight: 500; color: var(--text2); white-space: nowrap; }
+  .seg span.on { background: var(--leafAccentSoft); color: var(--tabSelected); font-weight: 600; }
+  .seg b { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--tile); color: var(--tileInk); font: 700 11px/18px "BarlowApp", "Barlow"; text-align: center; }
+  .clist { flex: 1; overflow-y: auto; padding: 23.5px 0 16px; }
+  .chh { display: flex; align-items: center; gap: 5px; padding: 0 16px 10px; font-size: 16px; line-height: 19px; font-weight: 700; }
+  .chh.gap { padding-top: 20px; }
+  .cbn { min-width: 22px; height: 22px; padding: 0 7px; border-radius: 11px; background: var(--badgeFill); color: var(--onAccent); font: 700 12px/22px "PlexApp", monospace; text-align: center; display: inline-block; }
+  .tkw { padding: 4px 16px; }
+  .tk { position: relative; height: 76px; display: flex; }
+  .tk > svg.shape { position: absolute; inset: 0; overflow: visible; }
+  .tk .main { position: relative; flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 12px 8px 12px 12px; }
+  .tk .col { flex: 1; min-width: 0; }
+  .tk .tt { font-size: 16px; line-height: 19px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tk .nt2 { margin-top: 3px; font-size: 12.5px; line-height: 14px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 4px; }
+  .tk .nt2.warn { color: var(--warn); }
+  .tk .stub { position: relative; width: 58px; flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .tk .fig { margin-top: 3px; font-size: 18px; line-height: 20px; font-weight: 600; color: var(--tabSelected); font-feature-settings: "tnum"; }
+  .bar { flex: none; border-top: 1px solid var(--cardLine); background: var(--dock); display: flex; height: 64px; }
+  .bar span { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 12px; font-weight: 500; color: var(--dockInk); }
+  .bar span .ib { width: 52px; height: 32px; border-radius: 8px; display: grid; place-items: center; }
+  .bar span.on { color: var(--tabSelected); font-weight: 600; } .bar span.on .ib { background: var(--leafAccentSoft); }
+  .th2 { display: flex; align-items: center; gap: 8px; }
+  .th2 .nm { flex: 1; font-size: 18px; line-height: 23px; font-weight: 600; }
+  .th2 .dt { font-size: 12px; line-height: 17px; color: var(--text3); }
+  .rv { display: flex; gap: 14px; flex-wrap: wrap; }
+  .stand { display: flex; align-items: center; gap: 12px; }
+  .stand .hl { flex: 1; font-size: 15px; line-height: 20px; font-weight: 500; }
+  .hero { display: flex; flex-direction: column; align-items: center; padding-top: 8px; }
+  .hn { margin-top: 12px; font-size: 22px; line-height: 26px; font-weight: 700; text-align: center; }
+  .hp { margin-top: 4px; font-size: 12px; line-height: 16px; color: var(--text3); text-align: center; }
+  .head { display: flex; align-items: center; gap: 5px; font-size: 16px; line-height: 19px; font-weight: 700; padding: 20px 0 10px; }
+  .head .when { margin-left: auto; font-size: 12px; line-height: 16px; font-weight: 600; color: var(--text3); background: var(--glass2); padding: 2px 9px; border-radius: 10px; }
+  .hl-tap { box-shadow: 0 0 0 3px var(--warn); border-radius: 17px; }
+
+  /* ---------- the old look, rebuilt from the code ---------- */
+  .o-ttl { margin-left: 4px; font-size: 24px; font-weight: 700; flex: 1; }
+  .o-tix { margin-right: 16px; padding: 6px 14px; border-radius: 99px; background: var(--glass2); font-size: 15px; font-weight: 600; color: var(--text2); white-space: nowrap; }
+  .o-app { display: flex; align-items: center; gap: 12px; }
+  .o-app .nm { font-size: 17px; line-height: 21px; font-weight: 600; } .o-app .pk { font-size: 12.5px; color: var(--text3); }
+  .o-route { display: flex; margin-top: 24px; position: relative; }
+  .o-route::before { content: ""; position: absolute; left: 12.5%; right: 12.5%; top: 23px; height: 3px; background: var(--glassBorder); border-radius: 2px; }
+  .o-route .s { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; position: relative; font-size: 12.5px; font-weight: 500; color: var(--text4); }
+  .o-route .c { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; background: var(--bg); }
+  .o-route .c i { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--glassBorder); display: grid; place-items: center; color: var(--text4); }
+  .o-route .s.now { color: var(--text); font-weight: 600; } .o-route .s.now .c { border: 1.5px solid var(--accentInk); }
+  .o-route .s.now .c i { width: 38px; height: 38px; background: var(--accent); color: var(--onAccent); border: 0; }
+  .o-route .s.done { color: var(--accentInk); } .o-route .s.done .c i { background: var(--leafAccentSoft); color: var(--accentInk); border: 0; }
+  .o-sec { margin-top: 24px; }
+  .o-st { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 700; }
+  .o-st .q { width: 28px; height: 28px; border-radius: 9px; background: var(--tile); color: var(--tileInk); display: grid; place-items: center; }
+  .o-b { display: flex; gap: 10px; margin: 8px 0 0 12px; font-size: 14px; line-height: 19px; color: var(--text2); }
+  .o-b::before { content: ""; width: 4px; height: 4px; border-radius: 50%; background: var(--text3); margin-top: 8px; flex: none; }
+  .o-b b { color: var(--text); font-weight: 600; }
+  .o-btn { height: 52px; border-radius: 26px; background: var(--primary); color: var(--onPrimary); display: flex; align-items: center; justify-content: center; font-size: 15.5px; font-weight: 700; gap: 10px; }
+  .o-btn.off { background: var(--glass2); color: var(--text4); }
+  .o-btn.sec { background: var(--glass2); color: var(--text); }
+  .o-btn.badsec { background: var(--badBg); color: var(--bad); }
+  .o-rec { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 8px; min-height: 40px; font-size: 13px; color: var(--text3); }
+  .o-rec u { color: var(--accentInk); font-weight: 600; font-size: 14px; }
+  .o-done { display: flex; flex-direction: column; align-items: center; text-align: center; padding-top: 30px; }
+  .o-done .t { margin-top: 18px; font-size: 24px; font-weight: 700; } .o-done .l { margin-top: 6px; font-size: 14px; line-height: 20px; color: var(--text2); max-width: 300px; }
+  .o-stg { margin-top: 22px; width: 100%; text-align: left; background: var(--glass); border: 1px solid var(--glassBorder); border-radius: 18px; padding: 14px 16px; }
+  .o-stats { display: flex; gap: 8px; margin-top: 12px; }
+  .o-stats div { flex: 1; background: var(--glass); border: 1px solid var(--glassBorder); border-radius: 14px; padding: 8px 10px; }
+  .o-stats div.w { background: var(--warnBg); }
+  .o-stats small { display: block; font-size: 10.5px; letter-spacing: .5px; font-weight: 600; color: var(--text3); }
+  .o-stats b { font-size: 14.5px; } .o-stats div.w b { color: var(--warn); }
+  .o-kind { display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 9px 0 7px; border-radius: 11px; background: var(--glass2); color: var(--text2); font-size: 12px; font-weight: 600; margin-top: 4px; }
+  .o-kind.w { background: var(--warnBg); color: var(--warn); }
+  .o-said { margin-top: 14px; background: var(--glass); border: 1px solid var(--glassBorder); border-radius: 18px; padding: 14px; }
+  .o-said small { display: block; font-size: 12px; font-weight: 700; color: var(--text3); }
+  .o-said div { margin-top: 6px; font-size: 14.5px; line-height: 21px; }
+  .o-lab { margin-top: 14px; font-size: 12.5px; color: var(--text3); }
+  .o-shot { margin-top: 6px; height: 520px; border-radius: 14px; overflow: hidden; }
+  .o-note { margin-top: 12px; font-size: 13px; line-height: 18px; color: var(--text3); }
+  .o-notice { margin-top: 12px; display: flex; gap: 10px; background: var(--warnBg); border-radius: 14px; padding: 12px; font-size: 13px; line-height: 18px; }
+  .o-notice .inl { color: var(--warn); }
+  .o-ghost { display: inline-flex; align-items: center; min-height: 34px; padding: 0 14px; border-radius: 17px; border: 1.5px solid var(--glassBorderStrong); color: var(--accentInk); font-size: 14px; font-weight: 700; }
+  .o-soft { display: inline-flex; align-items: center; min-height: 34px; padding: 0 14px; border-radius: 17px; background: var(--tile); color: var(--accentInk); font-size: 14px; font-weight: 700; }
+  .o-q { display: flex; align-items: center; gap: 10px; margin-top: 14px; font-size: 13px; color: var(--text3); }
+  .o-pa { margin-top: 24px; background: var(--glass); border: 1px solid var(--glassBorder); border-radius: 18px; padding: 10px; display: flex; gap: 12px; }
+  .o-pa .nt3 { flex: 1; height: 128px; border-radius: 10px; background: color-mix(in srgb, var(--glass2) 55%, transparent); padding: 10px 12px; font-size: 14.5px; line-height: 20px; color: var(--text3); }
+  .o-pa .nt3.has { color: var(--text); }
+  .o-pb { display: flex; gap: 8px; margin-top: 10px; }
+  .o-pb span { flex: 1; height: 48px; border-radius: 24px; background: var(--glass2); color: var(--accentInk); display: flex; align-items: center; justify-content: center; gap: 7px; font-size: 13.5px; font-weight: 600; }
+  .o-row { background: var(--glass); border: 1px solid var(--glassBorder); border-radius: 18px; padding: 12px 14px; }
+  .o-row + .o-row { margin-top: 10px; }
+  .o-row .h { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; }
+  .o-row .h span.n { flex: 1; }
+  .o-wording { margin-top: 8px; border-radius: 10px; background: color-mix(in srgb, var(--glass2) 55%, transparent); padding: 12px; font-size: 14px; line-height: 20px; }
+</style>
+</head>
+<body>
+<div class="top"><h1>Review flow: now and new</h1><a href="#A">A. Your review</a><a href="#B">B. Check a review</a><a href="#C">C. Decide a case</a><span class="sp"></span><button data-t="light" class="on">Light</button><button data-t="dark">Dark</button></div>
+<div class="doc" id="doc"></div>
+<script>
+const L = {
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  plus: '<path d="M5 12h14"/><path d="M12 5v14"/>',
+  info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+  alert: '<circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>',
+  tri: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+  star: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+  text: '<path d="M15 18H3"/><path d="M17 6H3"/><path d="M21 12H3"/>',
+  clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  camera: '<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>',
+  image: '<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>',
+  imagePlus: '<path d="M16 5h6"/><path d="M19 2v6"/><path d="M21 11.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7.5"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/><circle cx="9" cy="9" r="2"/>',
+  download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/>',
+  phone: '<rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/>',
+  msq: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  help: '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>',
+  user: '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  scale: '<path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/>',
+  eye: '<path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/>',
+  eyeOff: '<path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/>',
+  lock: '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  hourglass: '<path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>',
+  send: '<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>',
+  shield: '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>',
+  flag: '<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/>',
+  copy: '<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+  calendar: '<rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/>',
+  quote: '<path d="M16 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z"/><path d="M5 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z"/>',
+  chevR: '<path d="m9 18 6-6-6-6"/>', chevD: '<path d="m6 9 6 6 6-6"/>', chevU: '<path d="m18 15-6-6-6 6"/>',
+  msg: '<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>',
+  grid: '<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>',
+  trophy: '<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>',
+  trash: '<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>',
+  rotate: '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
+};
+const ic = (n, s = 16, w = 2) => `<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${L[n]}</svg>`;
+const inl = (n, s = 14, w = 2.2) => `<span class="inl">${ic(n, s, w)}</span>`;
+const BACK = `<svg width="22" height="22" viewBox="0 0 24 24" style="fill:currentColor"><path d="M17.77 3.77 16 2 6 12l10 10 1.77-1.77L9.54 12z"/></svg>`;
+const sp = (h) => `<div style="height:${h}px"></div>`;
+const TMARK = (s) => `<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" style="transform:rotate(-12deg)"><path d="M4.5 4.5H19.5a2.5 2.5 0 0 1 2.5 2.5V9a3 3 0 0 0 0 6v2a2.5 2.5 0 0 1-2.5 2.5H4.5A2.5 2.5 0 0 1 2 17v-2a3 3 0 0 0 0-6V7a2.5 2.5 0 0 1 2.5-2.5Z" fill="var(--card)" stroke="var(--leafAccent)" stroke-width="1.6" stroke-linejoin="round"/><path d="M16 7.4v.4M16 11.8v.4M16 16.2v.4" stroke="var(--leafAccent)" stroke-width="1.9" stroke-linecap="round"/></svg>`;
+const FLASK = `<svg width="12" height="12" viewBox="0 0 24 24"><path d="M9 2.5h6M10 2.5v6.2L4.6 18.6A2 2 0 0 0 6.4 21.5h11.2a2 2 0 0 0 1.8-2.9L14 8.7V2.5" fill="none" stroke="var(--flaskGlass)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/><path d="M6.6 15h10.8l1.6 3.4a1.2 1.2 0 0 1-1.1 1.7H6.1A1.2 1.2 0 0 1 5 18.4Z" fill="var(--flaskLiquid)"/></svg>`;
+const PLAY = `<svg width="12" height="12" viewBox="0 0 24 24"><path d="M3.6 1.8 13.4 12 3.6 22.2c-.4-.2-.6-.6-.6-1.1V2.9c0-.5.2-.9.6-1.1Z" fill="#00A0FF"/><path d="M16.8 8.6 13.4 12 3.6 1.8c.3-.2.8-.2 1.2 0Z" fill="#00F076"/><path d="M16.8 15.4 4.8 22.2c-.4.2-.9.2-1.2 0L13.4 12Z" fill="#FF3A44"/><path d="m16.8 8.6 3.6 2a1.6 1.6 0 0 1 0 2.8l-3.6 2L13.4 12Z" fill="#FFCE00"/></svg>`;
+const ROBOT = `<svg width="120" height="110" viewBox="0 0 132 120">
+  <line x1="60" y1="10" x2="60" y2="26" style="stroke:var(--tileInk);stroke-width:3"/><circle cx="60" cy="9" r="5" style="fill:var(--warn)"/>
+  <rect x="26" y="26" width="68" height="52" rx="18" style="fill:var(--tile);stroke:var(--tileInk);stroke-width:3"/>
+  <rect x="36" y="38" width="48" height="28" rx="13" style="fill:var(--bg)"/>
+  <circle cx="50" cy="52" r="4" style="fill:var(--text)"/><circle cx="70" cy="52" r="4" style="fill:var(--text)"/>
+  <rect x="36" y="82" width="48" height="28" rx="10" style="fill:var(--tile);stroke:var(--tileInk);stroke-width:3"/>
+  <path d="M96 84l8-18" style="stroke:var(--tileInk);stroke-width:3;stroke-linecap:round"/><rect x="98" y="52" width="16" height="12" rx="3" style="fill:var(--warn)"/></svg>`;
+
+/* ---------- apps (the dev server's demo data) ---------- */
+const A = {
+  nept: { n: 'Nept Track: Habit & Budget', p: 'com.AhmedReFu.NeptTrack', art: 'nept' },
+  chef: { n: 'Pocket Chef', p: 'dev.seedmyreviews.claimed', h: 110 },
+  habits: { n: 'Daily Habits', p: 'dev.seedmyreviews.installed_live', h: 20 },
+  run: { n: 'Run Tracker Lite', p: 'dev.seedmyreviews.used_ready', h: 35 },
+  tide: { n: 'Tide Pool', p: 'dev.seedmyreviews.used_live', h: 265 },
+  wave: { n: 'Wave Weather', p: 'dev.seedmyreviews.checking', h: 240 },
+  study: { n: 'Study Cards', p: 'dev.seedmyreviews.submitted', h: 210 },
+  sky: { n: 'Sky Notes', p: 'dev.seedmyreviews.nobox', h: 190 },
+  pets: { n: 'Pixel Pets', p: 'dev.seedmyreviews.disputed', h: 8 },
+  mate: { n: 'Budget Mate', p: 'dev.seedmyreviews.approved', h: 150 },
+  lantern: { n: 'Lantern Reader', p: 'dev.seedmyreviews.rejected', h: 45 },
+  copper: { n: 'Copper Coins', p: 'dev.seedmyreviews.abandoned', h: 28 },
+  timer: { n: 'Quiet Timer', p: 'dev.seedmyreviews.expired', h: 300 },
+  buddy: { n: 'Budget Buddy', p: 'dev.seedshowcase.owner.run', art: 'buddy' },
+  tides: { n: 'Tide Times', p: 'dev.seedshowcase.tides', h: 200 },
+};
+function art(a, s) {
+  const base = `width:${s}px;height:${s}px;border-radius:${Math.round(s * 0.3)}px;`;
+  if (a.art === 'nept') return `<span class="ai" style="${base}background:#FF6A00;color:#fff;font-size:${Math.round(s * 0.5)}px">N</span>`;
+  if (a.art === 'buddy') return `<span class="ai" style="${base}background:linear-gradient(150deg,#1F6E8C,#2E9C8F)"><span style="width:${s * .5}px;height:${s * .42}px;border-radius:${s * .1}px;background:#fff;display:grid;grid-template-columns:1fr 1fr;gap:2px;padding:${s * .07}px"><i style="background:#7BB6FF;border-radius:2px"></i><i style="background:#6EE0B8;border-radius:2px"></i><i style="background:#FFD166;border-radius:2px"></i><i style="background:#C59BFF;border-radius:2px"></i></span></span>`;
+  return `<span class="ai nt" style="${base}--h:${a.h};font-size:${Math.round(s * 0.45)}px">${a.n[0]}</span>`;
+}
+/* a Play screenshot, small: review (stars and text), feedback (private feedback sent), nobox (no review box), dev (the owner's view, theirs missing) */
+function shot(kind, color) {
+  const top = `<div class="s0"></div><div class="s1"><i style="--sa:${color || '#F4A261'}"></i><b></b></div><div class="s2"></div><div class="s2" style="width:50%"></div>`;
+  let b = '';
+  if (kind === 'review') b = `<div class="s3"><div class="st">★★★★★</div><div class="sl"></div><div class="sl"></div><div class="sl w"></div></div>`;
+  if (kind === 'feedback') b = `<div class="s3"><div class="sx">Feedback sent</div><div class="sl"></div><div class="sl"></div><div class="sl w"></div></div>`;
+  if (kind === 'nobox') b = `<div class="sb"></div><div class="sx">Ratings and reviews</div><div class="s2" style="width:40%"></div>`;
+  if (kind === 'dev') b = `<div class="sx">Ratings and reviews</div><div class="s3"><div class="sl"></div><div class="sl w"></div></div><div class="s3"><div class="sl"></div><div class="sl w"></div></div>`;
+  return `<div class="shot" style="width:100%;height:100%">${top}${b}</div>`;
+}
+
+/* ---------- new: pieces ---------- */
+const ii = (open) => `<span class="ii${open ? ' open' : ''}"><span>${ic('info', 14)}</span></span>`;
+const co = (html, cx) => `<div class="co" style="--cx:${cx}">${html}</div>`;
+const il = (icon, text, cls = '', more = '') => `<div class="il ${cls}">${inl(icon)}${text}${more}</div>`;
+const chip = (t, tone, icon) => `<span class="chip ${tone}">${icon ? ic(icon, 13, 2.4) : ''}${t}</span>`;
+const pill = (t, icon, cls = '') => `<span class="pill ${cls}">${icon ? ic(icon, 15, 2.3) : ''}${t}</span>`;
+const ia = (t, cls = '', icon) => `<span class="ia ${cls}">${icon ? ic(icon, 15, 2.3) : ''}${t}</span>`;
+const pbtn = (t, o = {}) => `<div class="pbtn${o.off ? ' off' : ''}${o.bad ? ' bad' : ''}">${o.busy ? '<span class="spin"></span>' : ''}${t}</div>`;
+const ta = (q, a, cls = '') => `<div class="ta">${q ? `<span>${q}</span>` : ''}${ia(a, cls)}</div>`;
+const sh = (t, tg) => `<div class="sh"><span class="t">${t}</span>${tg ? `<span class="tg">${tg}</span>` : ''}</div>`;
+const nsteps = (arr) => `<div class="ns">${arr.map((t, i) => `<div class="n"><span class="nb">${i + 1}</span>${t}</div>`).join('')}</div>`;
+const task = (icon, title, inner, mt = 16) => `<div class="card p16" style="margin-top:${mt}px"><div class="ct">${inl(icon, 16)}${title}</div>${inner}</div>`;
+function strip(n, label) {
+  let d = '';
+  for (let i = 1; i <= 4; i++) d += `<span class="dot ${i < n ? 'd' : i === n ? 'c' : 'f'}"></span>`;
+  return `<div class="strip">${d}<span class="stl">${n > 4 ? 'All 4 steps done' : `Step ${n} of 4: ${label}`}</span></div>`;
+}
+function revHead(a, o = {}) {
+  const sub = o.sub || (o.live ? 'Live app' : 'Closed test');
+  const end = o.reward == null ? '' : `<span class="rw"><span class="f">${TMARK(18)}${o.reward}</span>${o.half ? '<span class="h">Half pay</span>' : o.under ? `<span class="u">${o.under}</span>` : ''}</span>`;
+  return `<div class="ah"><span class="aic">${art(a, 52)}<span class="src">${o.live ? PLAY : FLASK}</span></span>
+    <div class="col"><div class="an">${a.n}</div><div class="ad">${sub}${o.offline ? `<span class="chip quiet" style="padding:1px 8px;font-size:11.5px">Offline</span>` : ''}</div></div>${end}</div>`;
+}
+function field(label, value, o = {}) {
+  const has = !!(value && value.length);
+  const lines = o.lines || 1;
+  const minH = Math.max(48, lines * 20 + 26);
+  let inner;
+  if (has) inner = `<span class="txt">${value}${o.focus ? '<span class="cur"></span>' : ''}</span>`;
+  else if (o.focus) inner = `<span class="cur"></span>${o.ph ? `<span class="ph">${o.ph}</span>` : ''}`;
+  else inner = `<span class="down">${o.ph || label}</span>`;
+  const lab = has || o.focus || o.ph ? `<span class="lab">${label}</span>` : '';
+  const foot = o.foot || o.max ? `<div class="ff">${o.foot || ''}${o.max ? `<span class="fc">${has ? value.length : 0}/${o.max}</span>` : ''}</div>` : '';
+  return `<div><div class="fld${o.focus ? ' foc' : ''}${o.drop ? ' drop' : ''}" style="min-height:${minH}px">${lab}${inner}</div>${foot}</div>`;
+}
+function face(k = '', s = 40) {
+  const mk = k === 'ok' ? `<span class="mk ok">${ic('check', 10, 3.4)}</span>` : k === 'chk' ? `<span class="mk chk">${ic('eye', 10, 2.8)}</span>`
+    : k === 'prog' ? `<span class="mk prog">${ic('clock', 10, 2.8)}</span>` : k === 'bad' ? `<span class="mk bad">${ic('x', 10, 3.4)}</span>` : '';
+  return `<span class="rs ${k}" style="width:${s}px;height:${s}px"><span class="av" style="width:${s}px;height:${s}px">${ic('user', Math.round(s * .48), 2)}</span>${mk}</span>`;
+}
+/* one message: side l|r, who, text, pic kind, tone mine|side, meta under */
+function M(o) {
+  const av = o.side === 'r' ? '' : `<span class="fav${o.dev ? ' dev' : ''}">${ic(o.dev ? 'grid' : 'user', 15, 2)}</span>`;
+  const pic = o.pic ? `<div class="pic">${shot(o.pic, o.color)}</div>` : '';
+  const cls = `bub${o.pic ? (o.text ? ' haspic' : ' onlypic') : ''}`;
+  return `<div class="m ${o.side || 'l'} ${o.tone || ''}">${av}<div class="col">${o.who ? `<div class="who">${o.who}</div>` : ''}<div class="${cls}">${pic}${o.text ? `<span class="tx">${o.text}</span>` : ''}</div>${o.meta ? `<div class="mt">${o.meta}</div>` : ''}</div></div>`;
+}
+const SYS = (t, warn) => `<div class="sys${warn ? ' warn' : ''}">${t}</div>`;
+function stt(tone, icon, title, line) {
+  return `<div class="stt"><span class="tl ${tone}">${ic(icon, 22)}</span><div class="col"><div class="t">${title}</div>${line ? `<div class="l">${line}</div>` : ''}</div></div>`;
+}
+function tml(rows) {
+  const dot = (k) => k === 'ok' ? ic('check', 13, 3) : k === 'now' ? ic('hourglass', 12, 2.4) : k === 'bad' ? ic('x', 13, 3) : '';
+  return `<div class="card tml">${rows.map(([k, t, d]) => `<div class="tr ${k}"><span class="td ${k}">${dot(k)}</span><div><div class="t">${t}</div>${d ? `<div class="d">${d}</div>` : ''}</div></div>`).join('')}</div>`;
+}
+function pmsg(m) {
+  return `<div class="pmsg"><span class="m0${m.bad ? ' bad' : ''}">${ic(m.bad ? 'alert' : 'info', 17)}</span><span class="w">${m.t}</span><span class="x">${ic('x', 16)}</span></div>`;
+}
+function phone(th, o) {
+  const bar = o.nobar ? '' : `<div class="pbar"><span class="back">${BACK}</span><span class="ttl">${o.title || ''}</span>${o.right ? `<span class="pr">${o.right}</span>` : ''}</div>`;
+  return `<div class="phone ${th}${o.tall ? ' tall' : ''}"><div class="sbar"></div>${bar}${o.msg ? pmsg(o.msg) : ''}
+    ${o.raw ? o.body : `<div class="scroll">${o.body}</div>`}${o.foot ? `<div class="foot">${o.foot}</div>` : ''}<div class="gest"><i></i></div>${o.over || ''}</div>`;
+}
+const sheet = (title, icon, body) => `<div class="scrimL"></div><div class="sheet"><div class="hd"></div><div class="stl">${icon ? `<span class="t2">${ic(icon, 19)}</span>` : ''}${title}</div>${body}</div>`;
+const dlg = (t, b, no, yes, cls = '', extra = '') => `<div class="scrimL"></div><div class="dlg"><div class="t">${t}</div><div class="b">${b}</div>${extra}<div class="bt">${ia(no)}${ia(yes, cls)}</div></div>`;
+const S = (w, h, r = 6, m = '') => `<span class="sk" style="width:${w};height:${h}px;border-radius:${r}px;${m}"></span>`;
+
+/* ---------- old look: pieces, from the code ---------- */
+const OICON = { 1: 'download', 2: 'phone', 3: 'msq', 4: 'camera' };
+function ophone(th, o) {
+  return `<div class="phone ${th}"><div class="sbar"></div><div class="pbar"><span class="back">${BACK}</span><span class="o-ttl">${o.title}</span>${o.pill ? `<span class="o-tix">${o.pill}</span>` : ''}</div>
+    ${o.msg ? pmsg(o.msg) : ''}${o.raw ? o.body : `<div class="scroll">${o.body}</div>`}${o.foot ? `<div class="foot">${o.foot}</div>` : ''}<div class="gest"><i></i></div>${o.over || ''}</div>`;
+}
+function oapp(a, live) {
+  return `<div class="o-app"><span class="aic" style="width:60px;height:60px">${art(a, 60)}<span class="src">${live ? PLAY : FLASK}</span></span><div><div class="nm">${a.n}</div><div class="pk">${a.p}</div></div></div>`;
+}
+function oroute(n, live) {
+  const names = ['Install', 'Use app', live ? 'Review' : 'Feedback', 'Send proof'];
+  return `<div class="o-route">${names.map((nm, i) => {
+    const k = i + 1 < n ? 'done' : i + 1 === n ? 'now' : '';
+    const icon = k === 'done' ? 'check' : (i === 2 && live ? 'star' : OICON[i + 1]);
+    return `<div class="s ${k}"><span class="c"><i>${ic(icon, 18)}</i></span>${i + 1}. ${nm}</div>`;
+  }).join('')}</div>`;
+}
+const osec = (icon, title, buls, extra = '') => `<div class="o-sec"><div class="o-st"><span class="q">${ic(icon, 16)}</span>${title}</div>${buls.map((b) => `<div class="o-b"><span>${b}</span></div>`).join('')}${extra}</div>`;
+const obtn = (t, cls = '', busy) => `<div class="o-btn ${cls}">${busy ? '<span class="spin"></span>' : t}</div>`;
+const orec = (q, a) => `<div class="o-rec">${q}<u>${a}</u></div>`;
+function ostages(rows) {
+  const dot = (k) => k === 'ok' ? `<span class="td ok" style="width:28px;height:28px">${ic('check', 14, 3)}</span>` : k === 'now' ? `<span class="td now" style="width:28px;height:28px">${ic('hourglass', 13, 2.4)}</span>` : k === 'bad' ? `<span class="td bad" style="width:28px;height:28px">${ic('x', 14, 3)}</span>` : `<span class="td later" style="width:28px;height:28px"></span>`;
+  return `<div class="o-stg">${rows.map(([k, t, d], i) => `${i ? '<div style="width:2px;height:12px;margin:3px 0 3px 13px;background:var(--glassBorder)"></div>' : ''}<div style="display:flex;gap:12px;align-items:center">${dot(k)}<div><div style="font-size:15px;font-weight:600">${t}</div><div style="font-size:12.5px;color:var(--text3)">${d}</div></div></div>`).join('')}</div>`;
+}
+const odone = (title, line, rows, extra = '') => `<div class="o-done">${ROBOT}<div class="t">${title}</div><div class="l">${line}</div>${ostages(rows)}</div>${extra}`;
+const ostats = (arr) => `<div class="o-stats">${arr.map(([l, v, w]) => `<div class="${w ? 'w' : ''}"><small>${l.toUpperCase()}</small><b>${v}</b></div>`).join('')}</div>`;
+const osaid = (who, words) => `<div class="o-said"><small>${inl('quote', 13)}${who}</small><div>${words}</div></div>`;
+const oshot = (kind, label, color) => `${label ? `<div class="o-lab">${label}</div>` : ''}<div class="o-shot">${shot(kind, color)}</div>`;
+const ohead = (a, kind, warn) => `<div class="o-app"><span style="width:48px;height:48px;flex:none">${art(a, 48)}</span><div><div class="nm">${a.n}</div><span class="o-kind${warn ? ' w' : ''}">${ic(warn ? 'scale' : kind === 'Live app' ? 'star' : 'text', 12)}${kind}</span></div></div>`;
+const onote = (t) => `<div class="o-note">${inl('info', 13)}${t}</div>`;
+const olines = (arr) => `<div style="display:flex;flex-direction:column;gap:2px">${arr.join('')}</div>`;
+
+/* ---------- copy ---------- */
+const TXT_TIDE = 'Simple and calm. The tide chart loads fast and the widget is handy. I would like a dark map, but it already does what I need every morning.';
+const TXT_BUDDY = 'Adding an expense takes two taps and the monthly chart is easy to read. The category list was long on my small phone, so a search box would help.';
+const TXT_NOBOX = 'Play shows no review box for me. The app opens fast and the notes sync well. Search could be quicker on long lists, and a widget would be nice.';
+const READY = 'I check the tide times every morning before my walk. The chart is clear and it loads fast, even on slow data.';
+const REASON = 'I could not find your review on the Play page after two checks.';
+const ANSWER = 'It is there, under my name. Google sometimes hides a new review for a few hours.';
+
+/* ==================== PAGE A: your review ==================== */
+const RISK = (open) => il('tri', 'Lose a dispute and you aren\'t paid, and up to <b>15 tix</b> go.', 'warn');
+const PAY = (n, open) => il('star', `Earn <b>${n} tix</b> once it's accepted.`, '', ii(open) + (open ? co('Keep the app installed until the follow-up check. If Play shows no review box, sending it here pays half.', '58%') : ''));
+const ASKS_DEV = (t) => `${sh('The developer asks')}<div class="thr">${M({ dev: true, who: 'Developer', text: t })}</div>`;
+const GIVEUP = ta("Can't finish?", 'Give it up');
+
+const AN = {
+  new: (th) => phone(th, { title: 'Review', body:
+      revHead(A.nept, { live: true, reward: 35 }) + strip(1, 'Install') +
+      sh('What you do') +
+      il('clock', 'Use it <b>3 minutes</b> on two days, 20 hours apart.') +
+      il('star', 'Rate it <b>5 stars</b> and write <b>100+ characters</b> on Play.') +
+      il('camera', 'Send a screenshot within <b>72 hours</b>.') +
+      `<div style="position:relative">${PAY(35, true)}</div>${sp(96)}` + RISK() +
+      ASKS_DEV('Is the habit list easy to reorder?') + sp(18) +
+      `<div class="cb"><i></i>I agree to the rules and this request.</div>`,
+    foot: pbtn('Start and open Google Play', { off: true }) + sp(8) }),
+  install: (th) => phone(th, { title: 'Feedback', body:
+      revHead(A.chef, { reward: 25 }) + strip(1, 'Install') +
+      task('download', 'Install it', nsteps(['Tap <b>Get it on Play</b>.', 'Install it there.', 'Come back here.'])) +
+      sh('What you send') +
+      il('msq', 'Private feedback on Play: what worked and what to improve.') + RISK() +
+      ASKS_DEV('Is the main screen clear on a small phone?'),
+    foot: pbtn('Get it on Play') + ta("Can't install?", 'Report it') }),
+  sideload: (th) => phone(th, { title: 'Review', body:
+      revHead(A.habits, { live: true, reward: 40 }) + strip(1, 'Install') +
+      task('download', 'Install it from Google Play', il('tri', 'This copy didn\'t come from Play, so it can\'t count. Your progress is saved.', 'warn') + nsteps(['Tap <b>Open Google Play</b>.', 'Uninstall, then install it there.', 'Come back here.'])) +
+      sh('What you send') + il('star', 'A 5-star rating on Play.'),
+    foot: pbtn('Open Google Play') + GIVEUP }),
+  use: (th) => phone(th, { title: 'Feedback', body:
+      revHead(A.run, { reward: 60 }) + strip(2, 'Use it') +
+      task('phone', 'Use it for 2 minutes', `<div class="ub"><i style="width:60%"></i><span><b>1:12</b> used</span><span><b>0:48</b> left</span></div>` +
+        nsteps(['Tap <b>Open the app</b>.', 'Keep it on screen until the bar is full.', 'Come back here.'])) +
+      sh('What you send') + il('msq', 'Private feedback on Play, <b>250+ characters</b>: what worked and what to improve.') +
+      ASKS_DEV('Does the route map keep up when you run?'),
+    foot: pbtn('Open the app') + GIVEUP }),
+  usage: (th) => phone(th, { title: 'Feedback', body:
+      revHead(A.run, { reward: 60 }) + strip(2, 'Use it') +
+      task('lock', 'Let TestTrack count your time', nsteps(['Tap <b>Allow usage access</b>.', 'Turn on <b>TestTrack</b>.', 'Come back here.']) + sp(10) +
+        il('info', 'It only counts time in the app you review.', 'sm')),
+    foot: pbtn('Allow usage access') + GIVEUP }),
+  ret: (th) => phone(th, { title: 'Review', body:
+      revHead(A.habits, { live: true, reward: 40 }) + strip(2, 'Use it') +
+      task('clock', 'Come back another day', `<div class="cd"><span class="v">6h 12m</span><span class="w">Opens tomorrow at 2:10 PM</span></div>` + sp(10) +
+        il('check', 'Day one is done.', 'ok') + il('phone', 'Open the app again then. That counts your second day.')) +
+      sh('What you send') + il('star', 'A 5-star rating on Play.'),
+    foot: pbtn('Opens tomorrow 2:10 PM', { off: true }) + GIVEUP }),
+  leave: (th) => phone(th, { title: 'Review', tall: true, body:
+      revHead(A.tide, { live: true, reward: 45 }) + strip(3, 'Review it') +
+      task('star', 'Review it on Google Play', nsteps(['Tap <b>Open Google Play</b>.', 'Rate it 5 stars and write <b>100+ characters</b>.', 'Tap the <b>camera button</b> once it\'s posted.']) +
+        `<div style="margin:6px 0 -8px -8px">${ia("I'll take the screenshot myself")}</div>`) +
+      sh('A ready review', 'Optional') +
+      `<div class="thr">${M({ dev: true, who: 'Developer', text: READY })}</div>` + sp(8) +
+      `<div style="display:flex;gap:8px">${pill('Copy', 'copy')}</div>` + sp(18) +
+      il('help', 'No review box on Play?', '', `<span style="margin-left:6px">${ia('See fixes')}</span>`),
+    foot: pbtn('Open Google Play') + GIVEUP }),
+  nobox: (th) => phone(th, { title: 'Review', body:
+      revHead(A.tide, { live: true, reward: 45 }) + strip(3, 'Review it'),
+    over: sheet('No review box on Play?', 'help',
+      `<div class="ns" style="margin-top:0">${['Use the Google account you installed it with.', 'If Play lists you as a tester, leave the test and wait a few minutes.', '"Edit your review" means you reviewed it before. That doesn\'t count.', 'Update the Play Store, then open the page again.'].map((t, i) => `<div class="n"><span class="nb">${i + 1}</span>${t}</div>`).join('')}</div>` +
+      sp(20) + pbtn('Still no review box') + ta('', 'Keep trying on Play')) }),
+  nobox2: (th) => phone(th, { title: 'Review', body:
+      revHead(A.tide, { live: true, reward: 45 }) + strip(3, 'Review it'),
+    over: sheet('Send it here instead', 'msq',
+      il('info', 'Pays <b>22 tix</b>, half, once it\'s accepted. Nothing goes on Play.') +
+      nsteps(['Capture the Play page with no review box.', 'Write <b>100+ characters</b> for the developer here.']) +
+      sp(20) + pbtn('Capture on Play') + ta('', 'Back to fixes')) }),
+  proof: (th) => phone(th, { title: 'Review', body:
+      revHead(A.tide, { live: true, reward: 45 }) + strip(4, 'Send proof') + sp(16) +
+      `<div class="pf"><span class="thumb empty">${ic('image', 22)}</span><div class="acts">${pill('Capture on Play', 'camera')}${pill('Gallery', 'image')}</div></div>` + sp(18) +
+      field('Your review text', '', { lines: 3, ph: 'The same words you posted on Play', foot: '<span>0 of 100 characters</span>', max: 600 }) + sp(6) +
+      `<div style="margin-left:-8px">${ia('Put the ready review in')}</div>` + sp(10) +
+      il('eyeOff', 'The developer sees this picture. Hide anything personal.', '', ii()),
+    foot: pbtn('Send the proof', { off: true }) + GIVEUP }),
+  proofBusy: (th) => phone(th, { title: 'Review', body:
+      revHead(A.tide, { live: true, reward: 45 }) + strip(4, 'Send proof') + sp(16) +
+      `<div class="pf"><span class="thumb">${shot('review', '#7A5AF8')}</span><div class="acts">${pill('Capture again', 'camera')}${pill('Gallery', 'image')}${ia('Hide details', '', 'eyeOff')}</div></div>` + sp(18) +
+      field('Your review text', TXT_TIDE, { lines: 4, foot: `<span class="okc">${TXT_TIDE.length} characters, enough</span>`, max: 600 }) + sp(16) +
+      il('eyeOff', 'The developer sees this picture. Hide anything personal.', '', ii(true) + co('If they dispute it, three members and the TestTrack team see it too.', '84%')),
+    foot: pbtn('Sending', { busy: true }) + ta("Can't finish?", 'Give it up', 'off') }),
+  half: (th) => phone(th, { title: 'Review', body:
+      revHead(A.tide, { live: true, reward: 22, half: true }) + strip(4, 'Send it here') +
+      il('info', 'Play showed no review box, so this pays half.', '', '') + sp(14) +
+      `<div class="pf"><span class="thumb">${shot('nobox', '#7A5AF8')}</span><div class="acts">${pill('Capture again', 'camera')}${pill('Gallery', 'image')}${ia('Hide details', '', 'eyeOff')}</div></div>` + sp(18) +
+      field('Your feedback for the developer', 'The tide chart is clear and quick. The widget', { lines: 4, focus: true, foot: '<span>44 of 100 characters</span>', max: 600 }),
+    foot: pbtn('Send for half', { off: true }) }),
+  checking: (th) => phone(th, { title: 'Review', body:
+      revHead(A.wave, { live: true, reward: 35, under: 'Held' }) + strip(4, 'New screenshot') +
+      task('camera', 'Show your review again', il('tri', 'The developer couldn\'t find it on Play.', 'warn') + il('clock', 'Send it by <b>Saturday at 2:10 PM</b>.', 'warn') +
+        nsteps(['Tap <b>Capture on Play</b>.', 'Find your review on the app\'s page.', 'Tap the <b>camera button</b>.'])) + sp(16) +
+      `<div class="pf"><span class="thumb empty">${ic('image', 22)}</span><div class="acts">${pill('Capture on Play', 'camera')}${il('info', 'It has to be taken now, on Play.', 'sm')}</div></div>`,
+    foot: pbtn('Send the new screenshot', { off: true }) }),
+  sent: (th) => phone(th, { title: 'Feedback', body:
+      revHead(A.study, { reward: 55 }) + strip(5) +
+      stt('now', 'send', 'Sent to the developer', 'Thanks for reviewing.') +
+      tml([['ok', 'Sent with your screenshot', 'Your part is done'], ['now', 'The developer checks it', 'Up to a day, then it accepts itself'], ['later', '55 tix', 'Paid once it\'s accepted']]) +
+      sh('What you sent') + `<div class="thr">${M({ side: 'r', tone: 'mine', pic: 'feedback', text: 'Cards flip smoothly and the spaced review works. The import from a sheet failed once.', meta: 'Sent on 20 Nov' })}</div>` }),
+  sentHalf: (th) => phone(th, { title: 'Review', body:
+      revHead(A.sky, { live: true, reward: 20, half: true }) + strip(5) +
+      stt('now', 'send', 'Sent to the developer', 'Sent here, so it pays half.') +
+      tml([['ok', 'Sent with your screenshot', 'Your part is done'], ['now', 'The developer checks it', 'They can accept it any time'], ['later', 'Keep the app installed', 'If they don\'t answer, we check after a day and pay you'], ['later', '20 tix', 'Paid once it\'s accepted']]) +
+      sh('What you sent') + `<div class="thr">${M({ side: 'r', tone: 'mine', pic: 'nobox', color: '#3D8BFD', text: TXT_NOBOX, meta: 'Sent on 20 Nov' })}</div>` }),
+  disputeOpen: (th) => phone(th, { title: 'Review', body:
+      revHead(A.pets, { live: true, reward: 70, under: 'Held' }) + strip(5) +
+      stt('now', 'scale', 'Being decided', 'The developer refused it. Three members decide.') +
+      sh('The case') + `<div class="thr">${M({ side: 'r', tone: 'mine', pic: 'review', color: '#E86A5C', meta: 'You sent this, 18 Nov' })}${SYS('Refused on 19 Nov', true)}${M({ dev: true, who: 'Developer', text: REASON })}${M({ dev: true, pic: 'dev', color: '#E86A5C' })}</div>` + sp(12) +
+      il('info', 'You can answer once. The members see it.', 'sm'),
+    foot: pbtn('Answer the developer') }),
+  disputeAns: (th) => phone(th, { title: 'Review', tall: true, body:
+      revHead(A.pets, { live: true, reward: 70, under: 'Held' }) + strip(5) +
+      stt('now', 'scale', 'Being decided', 'The developer refused it. Three members decide.') +
+      tml([['ok', 'Sent with your screenshot', 'Your part is done'], ['now', 'Three members decide', 'You answered once'], ['later', '70 tix', 'Paid if the review stands']]) +
+      sh('The case') + `<div class="thr">${SYS('Refused on 19 Nov', true)}${M({ dev: true, who: 'Developer', text: REASON })}${M({ dev: true, pic: 'dev', color: '#E86A5C' })}${M({ side: 'r', tone: 'mine', text: ANSWER })}${M({ side: 'r', tone: 'mine', pic: 'review', color: '#E86A5C', meta: 'Your answer, 19 Nov' })}</div>` }),
+  answerSheet: (th) => phone(th, { title: 'Review', body: revHead(A.pets, { live: true, reward: 70, under: 'Held' }) + strip(5),
+    over: sheet('Answer the developer', 'msq',
+      il('info', 'You can answer once. The members and the developer see it.', 'sm') + sp(18) +
+      field('Your answer', 'It is there, under my name. Google sometimes hides a new review for a', { lines: 3, focus: true, max: 280 }) + sp(14) +
+      `<div class="pf"><span class="thumb" style="width:54px;height:96px">${shot('review', '#E86A5C')}</span><div class="acts">${pill('Change screenshot', 'imagePlus')}${ia('Remove', '')}</div></div>` + sp(20) +
+      pbtn('Send answer')) }),
+  approved: (th) => phone(th, { title: 'Feedback', body:
+      revHead(A.mate, { reward: 50 }) + strip(5) +
+      stt('ok', 'check', 'Approved', '50 tix are yours.') +
+      tml([['ok', 'Sent with your screenshot', 'Your part is done'], ['ok', 'The developer approved it', 'Your review counts'], ['ok', '50 tix', 'Paid on 20 Nov']]) }),
+  rejected: (th) => phone(th, { title: 'Review', body:
+      revHead(A.lantern, { live: true, reward: 30, under: 'Not paid' }) + strip(5) +
+      stt('bad', 'x', 'Not paid', 'The members sided with the developer. Their fee came from your tix.') +
+      tml([['ok', 'Sent with your screenshot', 'Your part is done'], ['bad', 'Decided against', 'The members agreed with the developer'], ['bad', '30 tix', 'Not paid']]) +
+      sh('Why') + `<div class="thr">${M({ dev: true, who: 'Developer', text: 'The screenshot shows a different app, not this one\'s Play page.' })}</div>` }),
+  gaveup: (th) => phone(th, { title: 'Feedback', body:
+      revHead(A.copper, { reward: 25, under: 'Not paid' }) + strip(2, 'Use it') +
+      stt('q', 'flag', 'Given up', 'The slot went to somebody else.') +
+      tml([['bad', 'You gave it up', 'The slot went back'], ['bad', '25 tix', 'Not paid']]) }),
+  given: (th) => phone(th, { title: 'Feedback', body:
+      revHead(A.chef, { reward: 25, under: 'Not paid' }) + strip(1, 'Install') +
+      stt('q', 'flag', 'Given back', 'You told the developer it wouldn\'t install.') +
+      tml([['ok', 'Report sent', 'Without your name'], ['ok', 'Nothing counts against you', 'The slot went back']]) }),
+  expired: (th) => phone(th, { title: 'Feedback', body:
+      revHead(A.timer, { reward: 20, under: 'Not paid' }) + strip(2, 'Use it') +
+      stt('q', 'clock', 'Ran out', 'It sat unfinished for a day.') +
+      tml([['bad', 'Not finished within a day', 'The slot went back'], ['bad', '20 tix', 'Not paid']]) }),
+  loading: (th) => phone(th, { title: 'Review', body:
+      `<div class="ah">${S('52px', 52, 16)}<div class="col">${S('170px', 15)}${sp(7)}${S('80px', 11)}</div>${S('44px', 20)}</div>${sp(18)}
+      <div style="display:flex;gap:6px;align-items:center">${S('11px', 11, 6)}${S('11px', 11, 6)}${S('11px', 11, 6)}${S('11px', 11, 6)}${S('110px', 12, 6, 'margin-left:6px')}</div>${sp(16)}
+      ${S('100%', 150, 14)}${sp(24)}${S('120px', 15)}${sp(14)}${S('100%', 12)}${sp(8)}${S('75%', 12)}`,
+    foot: S('100%', 52, 26) + sp(8) }),
+  failed: (th) => phone(th, { title: 'Review', raw: true, body: `<div class="rob">${ROBOT}<div class="h">Can't open this review</div><div class="b">Check your connection, then try again.</div></div>`,
+    foot: pbtn('Try again') + sp(8) }),
+  report: (th) => phone(th, { title: 'Feedback', body: revHead(A.chef, { reward: 25 }) + strip(1, 'Install'),
+    over: sheet("Why won't it install?", 'download',
+      ['The testers link doesn\'t let me in', 'Play says it isn\'t available for my phone or country', 'Play says the app can\'t be found', 'It needs a newer Android or another phone', 'It installs but crashes when it opens'].map((t) => `<div class="prow"><span class="tx">${t}</span><span class="c"></span></div>`).join('') +
+      `<div class="prow on"><span class="tx">Something else</span><span class="c">${ic('check', 18, 2.6)}</span></div>` + sp(14) +
+      field('What happened', 'Install is greyed out on the Play page', { lines: 3, focus: true, max: 280 }) + sp(12) +
+      il('lock', 'The developer is told why, without your name. Nothing counts against you.', 'sm', ii()) + sp(14) + pbtn('Send report')) }),
+  giveupDlg: (th) => phone(th, { title: 'Feedback', body: revHead(A.run, { reward: 60 }) + strip(2, 'Use it'),
+    over: dlg('Give this review up?', 'Your slot goes to somebody else and nothing is paid.', 'Cancel', 'Give it up', 'bad') }),
+};
+
+/* old look for the states the phone couldn't show */
+const AO = {
+  use: (th) => ophone(th, { title: 'Feedback', pill: '+60 tix', body: oapp(A.run, false) + oroute(2, false) +
+      osec('phone', 'Use time', [], `<div class="ub" style="margin-top:12px"><i style="width:60%"></i><span><b>1:12</b> used</span><span><b>0:48</b> left</span></div><div style="text-align:center;font-size:12.5px;color:var(--text3);margin-top:8px">2 minutes of app use required</div><div class="o-b"><span>Keep the app open in the <b>foreground</b>.</span></div>`) +
+      osec('help', 'Developer asks', ['<b>Private feedback to the developer.</b>', 'Describe <b>what worked</b> and <b>what needs improving</b>.', 'At least <b>250 characters</b>.']),
+    foot: obtn('Open the app') + orec("Can't finish?", 'Give up review') }),
+  usage: (th) => ophone(th, { title: 'Feedback', pill: '+60 tix', body: oapp(A.run, false) + oroute(2, false) +
+      osec('phone', 'Usage access', ['<b>Enable TestTrack</b> in Android\'s Usage access settings.']) +
+      osec('help', 'Developer asks', ['<b>Private feedback to the developer.</b>', 'At least <b>250 characters</b>.']),
+    foot: obtn('Allow usage access') + orec("Can't finish?", 'Give up review') }),
+  ret: (th) => ophone(th, { title: 'Review', pill: '+40 tix', body: oapp(A.habits, true) + oroute(2, true) +
+      osec('clock', 'Return visit', [], `<div style="margin-top:10px;background:var(--tile);border-radius:11px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center"><span style="color:var(--text2)">Review opens in</span><span style="font-size:22px;color:var(--accentInk)">6h 12m</span></div><div style="text-align:center;margin-top:8px;font-weight:600;color:var(--accentInk)">Opens tomorrow at 2:10 PM</div><div class="o-b"><span>Open the app again <b>when the timer ends</b>.</span></div>`) +
+      osec('help', 'Developer asks', ['<b>Star rating only.</b>']),
+    foot: obtn('Opens tomorrow at 2:10 PM', 'off') + orec("Can't finish?", 'Give up review') }),
+  leave: (th) => ophone(th, { title: 'Review', pill: '+45 tix', body: oapp(A.tide, true) + oroute(3, true) +
+      osec('msq', 'What to do', ['Leave <b>5-star rating and review</b> on <b>Google Play</b>.', '<b>Capture what you posted</b> before returning here.'], `<div style="margin-top:6px;font-weight:600;color:var(--accentInk);padding:8px 10px">I'll take the screenshot myself</div>`) +
+      osec('help', 'Developer asks', ['<b>Star rating + written feedback.</b>', 'At least <b>100 characters</b>.']) +
+      osec('msq', 'Suggested wording', ['<b>Optional</b>. Edit it to match <b>your experience</b>.'], `<div class="o-wording">${READY}</div><div style="margin-top:8px"><span class="o-soft">Copy</span></div>`) +
+      osec('help', 'No review option on Play?', ['Feedback sent here pays <b>22 tix</b> (<b>half reward</b>), if accepted.'], `<div style="margin-top:8px"><span class="o-soft">Check fixes</span></div>`),
+    foot: obtn('Open Google Play') + orec("Can't finish?", 'Give up review') }),
+  nobox: (th) => ophone(th, { title: 'Review', pill: '+45 tix', body: oapp(A.tide, true) + oroute(3, true),
+    over: sheet('No review option on Play?', 'help', `<div style="font-size:14px;color:var(--text2)">Try these fixes before sending feedback here.</div>` +
+      ['Google account', 'Tester status', 'Existing review', 'Play Store update'].map((t, i) => `<div style="margin-top:12px;font-weight:600"><span class="nb">${i + 1}</span>${t}</div><div style="margin-left:28px;font-size:12.5px;color:var(--text2)">${['Use the account you installed this app with.', 'If Play lists you as a tester, leave the test and wait a few minutes.', '"Edit your review" means you reviewed it before. It does not count as a new review.', 'Update the Play Store, then reopen the app\'s page.'][i]}</div>`).join('') +
+      sp(18) + obtn('Still no review option') + `<div class="o-rec"><u style="text-decoration:none">Keep trying on Play</u></div>`) }),
+  proof: (th) => ophone(th, { title: 'Review', pill: '+45 tix', body: oapp(A.tide, true) + oroute(4, true) +
+      osec('camera', 'What to do', ['<b>Attach a screenshot</b> of what you posted.', 'Paste the <b>same feedback</b> here.']) +
+      osec('help', 'Developer asks', ['<b>Star rating + written feedback.</b>', 'At least <b>100 characters</b>.']) +
+      osec('msq', 'Suggested wording', ['<b>Optional</b>. Edit it to match <b>your experience</b>.'], `<div class="o-wording">${READY}</div><div style="margin-top:8px;display:flex;gap:8px"><span class="o-soft">Copy</span><span class="o-ghost">Put it in the box</span></div>`) +
+      `<div class="o-pa"><span class="thumb empty">${ic('image', 22)}</span><div class="nt3">Your feedback for the developer</div></div><div style="font-size:12.5px;color:var(--text3);margin-top:6px">0 of at least 100 characters.</div>
+       <div class="o-pb"><span>${ic('camera', 16)}Capture on Play</span><span>${ic('image', 16)}Gallery</span></div>
+       <div class="o-b" style="margin-top:14px"><span>The app's owner sees this picture. If they dispute it, a few reviewers and the TestTrack team see it too. <b>Hide anything personal first.</b></span></div>`,
+    foot: obtn('Send the proof', 'off') + orec("Can't finish?", 'Give up review') }),
+  proofBusy: (th) => ophone(th, { title: 'Review', pill: '+45 tix', body: oapp(A.tide, true) + oroute(4, true) +
+      osec('camera', 'What to do', ['Paste the <b>same feedback</b> here.', 'Check the screenshot and <b>hide private details</b> before sending.']) +
+      `<div class="o-pa"><span class="thumb">${shot('review', '#7A5AF8')}</span><div class="nt3 has" style="overflow:hidden">${TXT_TIDE}</div></div><div style="font-size:12.5px;color:var(--ok);margin-top:6px">${TXT_TIDE.length} characters. Enough.</div>
+       <div class="o-pb"><span>${ic('camera', 16)}Capture again</span><span>${ic('image', 16)}Gallery</span></div>
+       <div style="padding:12px 0;font-weight:600;color:var(--accentInk)">Inspect and hide personal details</div>`,
+    foot: obtn('', '', true) + orec("Can't finish?", 'Give up review') }),
+  half: (th) => ophone(th, { title: 'Review', pill: 'Half · +22 tix', body: oapp(A.tide, true) + oroute(4, true) +
+      osec('camera', 'No review option on Play', ['Show the Play page with <b>no review option</b>.', 'Write at least <b>100 characters</b> here.', 'Pays <b>22 tix</b>, <b>half the reward</b>.']) +
+      `<div class="o-pa"><span class="thumb">${shot('nobox', '#7A5AF8')}</span><div class="nt3 has">The tide chart is clear and quick. The widget</div></div><div style="font-size:12.5px;color:var(--text3);margin-top:6px">44 of at least 100 characters.</div>
+       <div class="o-pb"><span>${ic('camera', 16)}Capture again</span><span>${ic('image', 16)}Gallery</span></div>`,
+    foot: obtn('Send for half', 'off') }),
+  checking: (th) => ophone(th, { title: 'Review', pill: '+35 tix', body: oapp(A.wave, true) + oroute(4, true) +
+      osec('camera', 'New proof needed', ['Capture a <b>fresh screenshot</b> on Google Play.', 'Send it by <b>on Saturday at 2:10 PM</b>.']) +
+      `<div class="o-pa"><span class="thumb empty">${ic('image', 22)}</span></div><div class="o-pb"><span>${ic('camera', 16)}Capture on Play</span></div>
+       <div class="o-b" style="margin-top:14px"><span>The app's owner sees this picture. If they dispute it, a few reviewers and the TestTrack team see it too. <b>Hide anything personal first.</b></span></div>`,
+    foot: obtn('Send the new screenshot', 'off') }),
+  disputeOpen: (th) => ophone(th, { title: 'Review', pill: '+70 tix', body: oapp(A.pets, true) +
+      odone('Being decided', 'The developer disputed it. Three members are deciding.', [['ok', 'Sent with your screenshot', 'Your part is done'], ['now', 'Three members decide', 'The developer disputed it'], ['later', '+70 tix', 'Paid when it is approved']],
+        `<div class="o-lab">Why it was refused</div><div style="font-size:15px;font-weight:500;margin-top:4px">${REASON}</div><div class="o-lab">The developer's screenshot</div><div class="o-shot" style="height:300px">${shot('dev', '#E86A5C')}</div>
+        <div style="margin-top:12px"><span class="o-soft">Answer the developer</span></div><div style="font-size:12.5px;color:var(--text3);margin-top:6px">You can answer once. The three members and the developer see it.</div>`),
+    foot: obtn('Done') }),
+  answer: (th) => ophone(th, { title: 'Review', pill: '+70 tix', body: oapp(A.pets, true),
+    over: dlg('Answer the developer', 'Explain what you sent or add a screenshot. You can answer once.', 'Cancel', 'Send', '',
+      `<div style="margin-top:14px;--fb:var(--sheet)">${field('Your answer', '', { lines: 4, ph: 'My feedback was sent on Google Play.', max: 280 })}</div><div class="o-q">Add a screenshot?<span class="o-ghost">Add</span></div>`) }),
+  given: (th) => ophone(th, { title: 'Feedback', pill: '+25 tix', body: oapp(A.chef, false) +
+      odone('Given up', 'You told the developer it wouldn\'t install. Nothing counts against you, and the slot went back.', [['bad', 'You gave it up', 'The slot went back for somebody else'], ['bad', '+25 tix', 'Not paid']]),
+    foot: obtn('Done') }),
+  loading: (th) => ophone(th, { title: 'Review', pill: '+45 tix', body: oapp(A.tide, true) +
+      `<div style="display:flex;justify-content:space-around;margin-top:24px">${[1, 2, 3, 4].map(() => `<div style="display:flex;flex-direction:column;align-items:center;gap:8px">${S('48px', 48, 24)}${S('58px', 12)}</div>`).join('')}</div>${sp(24)}${S('100%', 14)}${sp(6)}${S('220px', 14)}${sp(24)}<div style="display:flex;gap:10px">${S('28px', 28, 9)}${S('150px', 16)}</div>${sp(8)}${S('100%', 12)}${sp(6)}${S('170px', 12)}`,
+    foot: `<div style="height:52px"></div>` }),
+  failed: (th) => ophone(th, { title: 'Review', pill: '+45 tix', raw: true, body: `<div style="padding:8px 16px">${oapp(A.tide, true)}</div><div class="rob">${ROBOT}<div class="h" style="font-size:22px">Can't open this review</div><div class="b">We could not reach TestTrack. Check your connection.</div></div>`,
+    foot: obtn('Try again') }),
+  report: (th) => ophone(th, { title: 'Feedback', pill: '+25 tix', body: oapp(A.chef, false) + oroute(1, false),
+    over: dlg("Can't install Pocket Chef?", 'The developer is told why, without your name. The slot goes back and nothing counts against you. When two testers report it, it comes off Circle until the developer fixes it.', 'Cancel', 'Send report', '',
+      `<div style="margin-top:16px">${field('What went wrong', '', { ph: 'Choose one', drop: true })}</div>`) }),
+  giveupDlg: (th) => ophone(th, { title: 'Feedback', pill: '+60 tix', body: oapp(A.run, false) + oroute(2, false),
+    over: dlg('Give this review up?', 'Your slot is released and no reward is paid.', 'Cancel', 'Give it up', 'bad') }),
+};
+
+/* ==================== PAGE B: check a review ==================== */
+const reviewer = (name, chips) => `<div class="rr" style="margin-top:18px">${face('chk')}<div class="col"><div class="t">${name}</div><div class="chips" style="margin-top:5px">${chips}</div></div></div>`;
+const ACCEPTS = (left, open) => il('clock', `Accepts itself in <b>${left}</b> if you do nothing.`, '', ii(open) + (open ? co('Refuse it and three members decide. Whoever they decide against pays them <b>15 tix</b>.', '74%') : ''));
+const ASKAGAIN = il('help', 'Can\'t find it on Play?', '', `<span style="margin-left:4px">${ia('Ask for a new one')}</span>`);
+const CHECKFOOT = (n, o = {}) => pbtn(o.busy ? '' : `Accept and pay ${n} tix`, { busy: o.busy }) + ta('', 'Refuse', o.busy ? 'off' : 'bad');
+const BN = {
+  check: (th) => phone(th, { title: 'Check review', right: '1 of 2', tall: true, body:
+      revHead(A.buddy, {}) + reviewer('Tania Ahmed', chip('2h left', 'warn', 'clock') + chip('Pays 30 tix', 'quiet')) + sp(14) +
+      il('text', 'You asked for written feedback, <b>100+ characters</b>.') + sp(14) +
+      `<div class="thr">${M({ pic: 'feedback', color: '#2E9C8F', text: TXT_BUDDY, meta: `${TXT_BUDDY.length} characters, changed your ready review` })}</div>` + sp(16) +
+      ASKAGAIN + sp(4) + `<div style="position:relative">${ACCEPTS('2h', true)}</div>`,
+    foot: CHECKFOOT(30) }),
+  kept: (th) => phone(th, { title: 'Check review', body:
+      revHead(A.tides, { live: true }) + reviewer('Farhan Rahman', chip('1d 4h left', 'quiet', 'clock') + chip('Pays 20 tix', 'quiet')) + sp(14) +
+      il('tri', 'They uninstalled it within a day of reviewing. Google may doubt the review.', 'warn', ii()) + sp(14) +
+      `<div class="thr">${M({ pic: 'review', color: '#3D8BFD', text: 'Clear chart and the widget works. Good for my morning walks.', meta: 'In their own words' })}</div>` + sp(16) +
+      ASKAGAIN + sp(4) + ACCEPTS('1d 4h'),
+    foot: CHECKFOOT(20) }),
+  half: (th) => phone(th, { title: 'Check review', body:
+      revHead(A.buddy, {}) + reviewer('Sabbir Ahmed', chip('7h left', 'warn', 'clock') + chip('Pays 15 tix, half', 'quiet')) + sp(14) +
+      il('info', 'Play showed them no review box, so they sent it here. The other 15 tix come back to you.') + sp(14) +
+      `<div class="thr">${M({ pic: 'nobox', color: '#2E9C8F', text: TXT_NOBOX.replace('notes sync', 'budgets sync'), meta: '141 characters' })}</div>` + sp(16) + ACCEPTS('7h'),
+    foot: CHECKFOOT(15) }),
+  recheck: (th) => phone(th, { title: 'Check review', body:
+      revHead(A.tides, { live: true }) + reviewer('Tania Rahman', chip('7h left', 'warn', 'clock') + chip('Pays 20 tix', 'quiet')) + sp(16) +
+      `<div class="thr">${M({ pic: 'review', color: '#3D8BFD', meta: 'First screenshot' })}${SYS('You asked for a new one')}${M({ pic: 'review', color: '#3D8BFD', meta: 'New, taken on Play when asked' })}</div>` + sp(16) + ACCEPTS('7h'),
+    foot: CHECKFOOT(20) }),
+  refuse: (th) => phone(th, { title: 'Check review', body: revHead(A.buddy, {}) + reviewer('Tania Ahmed', chip('2h left', 'warn', 'clock')),
+    over: sheet('Refuse this review?', 'scale',
+      `<div style="position:relative">${il('lock', '<b>15 tix</b> are held from you until three members decide.', '', ii(true) + co('If they agree with you, the tix come back and the slot opens again. If not, the reviewer is paid and your 15 tix pay the members.', '86%'))}</div>` + sp(104) +
+      `<div style="font-size:14px;font-weight:700;margin-bottom:2px">What was missing</div>` +
+      [['No review on Google Play', true], ['The screenshot is of something else'], ['The text isn\'t what\'s on Play'], ['The text is too short or off topic']].map(([t, on]) => `<div class="cb"><i class="${on ? 'on' : ''}">${on ? ic('check', 13, 3.4) : ''}</i>${t}</div>`).join('') + sp(12) +
+      field('Anything else', '', { lines: 3, ph: 'Optional. The reviewer sees this too.', max: 280 }) + sp(10) +
+      pill('Add your screenshot', 'imagePlus') + sp(16) + pbtn('Refuse and hold 15 tix', { bad: true })) }),
+  askagain: (th) => phone(th, { title: 'Check review', body: revHead(A.buddy, {}) + reviewer('Tania Ahmed', chip('2h left', 'warn', 'clock')),
+    over: dlg('Ask for a new screenshot?', 'They get 48 hours to show their review on Play again. 5 tix are held from you: they get them if they show it, you get them back if not. You can ask once.', 'Cancel', 'Ask') }),
+  busy: (th) => phone(th, { title: 'Check review', right: '1 of 2', body:
+      revHead(A.buddy, {}) + reviewer('Tania Ahmed', chip('2h left', 'warn', 'clock') + chip('Pays 30 tix', 'quiet')) + sp(14) +
+      il('text', 'You asked for written feedback, <b>100+ characters</b>.') + sp(14) +
+      `<div class="thr">${M({ pic: 'feedback', color: '#2E9C8F', text: TXT_BUDDY, meta: `${TXT_BUDDY.length} characters, changed your ready review` })}</div>`,
+    foot: CHECKFOOT(30, { busy: true }) }),
+  next: (th) => phone(th, { title: 'Check review', right: '2 of 2', msg: { t: 'Accepted. Tania has been paid.' }, body:
+      revHead(A.buddy, {}) + reviewer('Sabbir Ahmed', chip('7h left', 'warn', 'clock') + chip('Pays 15 tix, half', 'quiet')) + sp(14) +
+      il('info', 'Play showed them no review box, so they sent it here. The other 15 tix come back to you.') + sp(14) +
+      `<div class="thr">${M({ pic: 'nobox', color: '#2E9C8F', text: TXT_NOBOX.replace('notes sync', 'budgets sync') })}</div>`,
+    foot: CHECKFOOT(15) }),
+  loading: (th) => phone(th, { title: 'Check review', body:
+      `<div class="ah">${S('52px', 52, 16)}<div class="col">${S('140px', 15)}${sp(7)}${S('80px', 11)}</div></div>${sp(18)}
+      <div class="rr">${S('40px', 40, 20)}<div class="col">${S('120px', 15)}${sp(8)}${S('150px', 22, 11)}</div></div>${sp(18)}${S('80%', 12)}${sp(16)}
+      <div style="display:flex;gap:8px;align-items:flex-end">${S('28px', 28, 14)}${S('186px', 330, 18)}</div>`,
+    foot: S('100%', 52, 26) + sp(8) }),
+  request: (th) => phone(th, { title: 'Your request', body:
+      revHead(A.buddy, { sub: 'Closed test, 30 tix each' }) + sp(16) +
+      `<div class="card p16"><div class="th2"><span class="nm">4 of 5 reviews in</span><span class="dt">On Circle</span></div>${sp(12)}<div class="rv">${face('ok', 36)}${face('ok', 36)}${face('chk', 36)}${face('chk', 36)}${face('prog', 36)}</div></div>` +
+      sh('Reviews') + `<div class="rlist">` +
+      [['chk', 'Tania Ahmed', 'Waiting for you, 2h left', 'warn', pill('Check', '', '')], ['chk', 'Sabbir Ahmed', 'Waiting for you, 7h left', 'warn', pill('Check')], ['prog', 'Farhan Ahmed', 'Using it now', ''], ['ok', 'Nusrat Ahmed', 'Accepted on 19 Nov', 'ok'], ['ok', 'Jahid Ahmed', 'Accepted on 18 Nov', 'ok']]
+        .map(([k, n, s, tone, end]) => `<div class="card p14"><div class="rr">${face(k, 36)}<div class="col"><div class="t">${n}</div><div class="s ${tone}">${s}</div></div>${end || ''}</div></div>`).join('') + `</div>` + sp(10) +
+      il('text', 'You asked for written feedback, <b>100+ characters</b>.', 'sm'),
+    foot: ta('', 'Close request') }),
+  requestOpen: (th) => phone(th, { title: 'Your request', body:
+      revHead(A.buddy, { sub: 'Closed test, 30 tix each' }) + sh('Reviews') + `<div class="rlist">` +
+      `<div class="card p14"><div class="rr">${face('chk', 36)}<div class="col"><div class="t">Tania Ahmed</div><div class="s warn">Waiting for you, 2h left</div></div>${pill('Check')}</div></div>` +
+      `<div class="card p14"><div class="rr">${face('ok', 36)}<div class="col"><div class="t">Nusrat Ahmed</div><div class="s ok">Accepted on 19 Nov</div></div></div>${sp(12)}<div class="thr">${M({ pic: 'feedback', color: '#2E9C8F', text: 'Clean layout and it opened fast. The back button on the second screen felt a bit hidden.' })}</div></div>` +
+      `<div class="card p14"><div class="rr">${face('ok', 36)}<div class="col"><div class="t">Jahid Ahmed</div><div class="s ok">Accepted on 18 Nov</div></div></div></div></div>`,
+    foot: ta('', 'Close request') }),
+  refused: (th) => phone(th, { title: 'Your request', body:
+      revHead(A.tides, { live: true, sub: 'Live app, 20 tix each' }) + sh('Reviews') + `<div class="rlist">` +
+      `<div class="card p14"><div class="rr">${face('chk', 36)}<div class="col"><div class="t">Rafi Islam</div><div class="s warn">Refused, members deciding</div></div></div>${sp(12)}
+        <div class="thr">${M({ pic: 'review', color: '#3D8BFD', text: 'Handy widget, quick chart.' })}${M({ side: 'r', tone: 'mine', text: 'No review from this name on Play after two checks.', meta: 'You refused it, 19 Nov' })}${M({ text: ANSWER, meta: 'Their answer' })}</div>${sp(10)}
+        <div class="stand"><span class="hl" style="font-size:13px;color:var(--text3)">Members are deciding</span>${pill('Accept after all')}</div></div>` +
+      `<div class="card p14"><div class="rr">${face('ok', 36)}<div class="col"><div class="t">Mitu Das</div><div class="s ok">Paid after a dispute</div></div></div></div>` +
+      `<div class="card p14"><div class="rr">${face('bad', 36)}<div class="col"><div class="t">Karim Hasan</div><div class="s">No new screenshot came</div></div></div></div></div>`,
+    over: '' }),
+  acceptLater: (th) => phone(th, { title: 'Your request', body: revHead(A.tides, { live: true, sub: 'Live app, 20 tix each' }),
+    over: dlg('Accept it after all?', 'Rafi is paid 20 tix and the members stop. The one who already voted gets 5 tix from your 15, and the rest comes back to you.', 'Cancel', 'Accept and pay') }),
+  entry: (th) => phone(th, { right: `<span style="color:var(--text2)">${ic('trash', 22)}</span>`, body:
+      `<div class="hero">${art(A.buddy, 88)}<div class="hn">Budget Buddy</div><div class="hp">dev.seedshowcase.owner.run</div></div>` +
+      `<div class="head">Feedback<span class="when">Any time</span></div>
+      <div class="card p16"><div class="th2"><span class="nm">4 of 5 reviews in</span><span class="dt">On Circle</span></div>${sp(12)}<div class="rv">${face('ok', 36)}${face('ok', 36)}${face('chk', 36)}${face('chk', 36)}${face('prog', 36)}</div>${sp(12)}
+      <div class="stand"><span class="hl">2 waiting for you</span><span class="pill fill hl-tap">Check</span></div></div>` + sp(14) +
+      il('info', '<b>Check</b> opens the first waiting review. The card opens the request.', 'sm') }),
+};
+const BO = {
+  kept: (th) => ophone(th, { title: 'Review', body: ohead(A.tides, 'Live app') + ostats([['Reviewer', 'Farhan Rahman'], ['Time left', '1d 4h'], ['Pays', '20 tix']]) +
+      `<div class="o-notice">${inl('tri', 16)}<span>They uninstalled the app within a day of reviewing it. Google may see that as a review that is not genuine, so check it before it accepts itself.</span></div>` +
+      osaid('Their note', 'Clear chart and the widget works. Good for my morning walks.') + `<div class="o-note">In their own words</div>` + oshot('review', '', '#3D8BFD'),
+    foot: `<div style="display:flex;gap:10px"><div class="o-btn" style="flex:1">Accept and pay 20 tix</div><div class="o-btn badsec" style="flex:1">Refuse</div></div>` }),
+  check: (th) => ophone(th, { title: 'Review', body: ohead(A.buddy, 'Closed test') + ostats([['Reviewer', 'Tania Ahmed'], ['Time left', '2h', 1], ['Pays', '30 tix']]) +
+      onote('You asked for written feedback: at least 100 characters.') + osaid(`Their text from Google Play, ${TXT_BUDDY.length} characters`, TXT_BUDDY) + onote('Changed your ready review') + oshot('feedback', '', '#2E9C8F'),
+    foot: `<div style="display:flex;gap:10px"><div class="o-btn" style="flex:1">Accept and pay 30 tix</div><div class="o-btn badsec" style="flex:1">Refuse</div></div>` }),
+  half: (th) => ophone(th, { title: 'Review', body: ohead(A.buddy, 'Closed test') + ostats([['Reviewer', 'Sabbir Ahmed'], ['Time left', '7h', 1], ['Pays', '15 tix']]) +
+      onote('You asked for written feedback: at least 100 characters.') +
+      onote('Play showed them no review box, so they sent their feedback here with a screenshot of the Play page. Accepting pays them 15 tix, half the reward, and the rest comes back to you.') +
+      osaid('Their text from Google Play, 141 characters', TXT_NOBOX.replace('notes sync', 'budgets sync')) + oshot('nobox', '', '#2E9C8F'),
+    foot: `<div style="display:flex;gap:10px"><div class="o-btn" style="flex:1">Accept and pay 15 tix</div><div class="o-btn badsec" style="flex:1">Refuse</div></div>` }),
+  recheck: (th) => ophone(th, { title: 'Review', body: ohead(A.tides, 'Live app') + ostats([['Reviewer', 'Tania Rahman'], ['Time left', '7h', 1], ['Pays', '20 tix']]) +
+      oshot('review', 'First screenshot', '#3D8BFD') + oshot('review', 'New screenshot, taken when asked', '#3D8BFD'),
+    foot: `<div style="display:flex;gap:10px"><div class="o-btn" style="flex:1">Accept and pay 20 tix</div><div class="o-btn badsec" style="flex:1">Refuse</div></div>` }),
+  busy: (th) => ophone(th, { title: 'Review', body: ohead(A.buddy, 'Closed test') + ostats([['Reviewer', 'Tania Ahmed'], ['Time left', '2h', 1], ['Pays', '30 tix']]) + `<div class="o-q">Can't find it on Google Play?<span class="o-ghost">Ask again</span></div>`,
+    foot: `<div style="display:flex;gap:10px"><div class="o-btn" style="flex:1"><span class="spin"></span></div><div class="o-btn off" style="flex:1">Refuse</div></div>` }),
+  loading: (th) => ophone(th, { title: '', body: [1, 2, 3, 4].map(() => `<div style="display:flex;gap:12px;align-items:center;margin-bottom:12px">${S('52px', 52, 14)}<div style="flex:1">${S('60%', 14)}${sp(8)}${S('80%', 11)}</div>${S('58px', 76, 14)}</div>`).join('') }),
+  refused: (th) => ophone(th, { title: 'Your request', body: ohead(A.tides, 'Live app') + ostats([['Done', '9 of 12'], ['Open slots', '0'], ['Pays', '20 tix']]) + `<div style="font-size:16px;font-weight:700;margin:20px 0 10px">12 reviews</div>` +
+      `<div class="o-row"><div class="h"><span class="n">Rafi Islam</span><span class="chip warn">Refused, members deciding</span>${ic('chevD', 18)}</div><div class="o-note">You said: No review from this name on Play after two checks.</div><div class="o-q">Refused by mistake?<span class="o-ghost">Accept after all</span></div></div>
+       <div class="o-row"><div class="h"><span class="n">Mitu Das</span><span class="chip ok">Paid after a dispute</span>${ic('chevD', 18)}</div></div>
+       <div class="o-row"><div class="h"><span class="n">Karim Hasan</span><span class="chip quiet">No new screenshot came</span>${ic('chevD', 18)}</div></div>`,
+    foot: `<div class="o-btn sec">Close request</div>` }),
+  acceptLater: (th) => ophone(th, { title: 'Your request', body: ohead(A.tides, 'Live app'),
+    over: dlg('Accept it after all?', 'The reviewer is paid 20 tix and the members stop deciding. Members who already voted get 5 tix each from your 15 tix stake, and the rest comes back to you.', 'Cancel', 'Accept and pay') }),
+};
+
+/* ==================== PAGE C: decide a case ==================== */
+const VOTE = (sel, lock) => `<div class="lvs">${[['check', 'The review stands', 'The reviewer is paid', 'a'], ['x', 'The developer is right', 'Nothing is paid', 'b']].map(([i, n, f, k]) =>
+  `<div class="lv${sel === k ? ' on' : ''}${lock && sel !== k ? ' off' : ''}"><span class="g">${ic(i, 18, 2.4)}</span>${sel === k ? `<span class="ck">${ic('check', 15, 2.6)}</span>` : ''}<div class="n">${n}</div><div class="f">${f}</div></div>`).join('')}</div>`;
+const CASETHREAD = `<div class="thr">${M({ who: 'Reviewer', pic: 'review', color: '#E86A5C', text: 'Cute pets and the daily care loop is fun. Feeding animations are smooth on my old phone.', meta: '98 characters, in their own words' })}
+  ${SYS('The developer refused it', true)}${M({ side: 'r', tone: 'side', who: 'Developer', text: REASON })}${M({ side: 'r', tone: 'side', pic: 'dev', color: '#E86A5C' })}
+  ${SYS('The reviewer answered')}${M({ who: 'Reviewer', text: ANSWER })}${M({ pic: 'review', color: '#E86A5C' })}</div>`;
+const caseHead = (votes) => revHead(A.pets, { live: true }) + `<div class="chips" style="margin-top:14px">${chip(votes, 'quiet', 'users')}${chip('5 tix to you', 'quiet')}</div>` + sp(14) +
+  il('text', 'The request asked for written feedback, <b>100+ characters</b>.');
+const CN = {
+  case: (th) => phone(th, { title: 'Decide a case', tall: true, body: caseHead('1 of 3 votes in') + sp(16) + CASETHREAD + sh('Your vote') + VOTE() + sp(12) +
+      il('scale', 'Whoever you decide against pays <b>15 tix</b>, 5 to each of you.', 'sm'),
+    foot: pbtn('Send my vote', { off: true }) + sp(8) }),
+  chosen: (th) => phone(th, { title: 'Decide a case', body: caseHead('1 of 3 votes in') + sh('Your vote') + VOTE('a') + sp(12) +
+      il('scale', 'Whoever you decide against pays <b>15 tix</b>, 5 to each of you.', 'sm') + sh('What each side showed') + CASETHREAD,
+    foot: pbtn('', { busy: true }) + sp(8) }),
+  voted: (th) => phone(th, { title: 'Decide a case', msg: { t: 'Counted. Thank you.' }, body: caseHead('2 of 3 votes in') + sh('Your vote') + VOTE('a', true) + sp(12) +
+      il('hourglass', 'Waiting for one more vote. Your 5 tix come once it is decided.', '') + sh('What each side showed') + CASETHREAD }),
+  decided: (th) => phone(th, { title: 'Decide a case', body: revHead(A.pets, { live: true }) +
+      stt('ok', 'scale', 'The review stands', '2 of 3 voted the same way. 5 tix are yours.') + sp(16) + VOTE('a', true) + sh('What each side showed') + CASETHREAD }),
+  loading: (th) => phone(th, { title: 'Decide a case', body:
+      `<div class="ah">${S('52px', 52, 16)}<div class="col">${S('120px', 15)}${sp(7)}${S('70px', 11)}</div></div>${sp(14)}<div style="display:flex;gap:6px">${S('110px', 24, 12)}${S('90px', 24, 12)}</div>${sp(16)}
+      <div style="display:flex;gap:8px;align-items:flex-end">${S('28px', 28, 14)}${S('186px', 300, 18)}</div>${sp(12)}<div style="display:flex;justify-content:flex-end">${S('230px', 60, 18)}</div>`,
+    foot: S('100%', 52, 26) + sp(8) }),
+  list: (th, o = { cases: true }) => { // To check with cases
+    const tick = (a, note, n, warn) => `<div class="tkw"><div class="tk"><svg class="shape" width="378" height="76" viewBox="0 0 378 76"><path d="M14,0 H313 A7,7 0 0 0 327,0 H364 A14,14 0 0 1 378,14 V62 A14,14 0 0 1 364,76 H327 A7,7 0 0 0 313,76 H14 A14,14 0 0 1 0,62 V14 A14,14 0 0 1 14,0 Z" fill="var(--bg)" stroke="var(--cardLine)"/><line x1="320" y1="11" x2="320" y2="65" stroke="var(--glassBorder)" stroke-dasharray="3 3"/></svg><div class="main">${art(a, 52)}<div class="col"><div class="tt">${a.n}</div><div class="nt2${warn ? ' warn' : ''}">${note}</div></div></div><div class="stub">${TMARK(16)}<div class="fig">${n}</div></div></div></div>`;
+    const tabs = `<div class="seg"><span>Feedback</span><span>My reviews<b>5</b></span><span class="on">To check<b>5</b></span></div>`;
+    const items = [['msg', 'Circle', true], ['users', 'Crew'], ['plus', ''], ['grid', 'My apps'], ['user', 'You']];
+    const bar = `<div class="bar">${items.map(([i, t, on]) => `<span class="${on ? 'on' : ''}"><span class="ib">${ic(i, 22)}</span>${t}</span>`).join('')}</div>`;
+    const body = `<div class="chh">Reviews of your apps<span class="cbn">4</span></div>${tick(A.tides, `${ic('clock', 12)}Farhan Rahman, closed test, 2h left`, 20, true)}${tick(A.buddy, `${ic('clock', 12)}Tania Ahmed, closed test, 2h left`, 30, true)}${tick(A.buddy, `${ic('clock', 12)}Sabbir Ahmed, closed test, 7h left`, 15, true)}${tick(A.tides, `${ic('clock', 12)}Tania Rahman, closed test, 7h left`, 20, true)}
+      ${o.cases ? `<div class="chh gap">Cases to decide<span class="cbn">1</span></div>${tick(A.pets, 'Disputed, 1 of 3 votes in', 15)}` : ''}`;
+    return `<div class="phone ${th}"><div class="sbar"></div>${tabs}${o.msg ? sp(8) + pmsg({ t: o.msg }) : ''}<div class="clist">${body}</div>${bar}<div class="gest"><i></i></div></div>`;
+  },
+};
+const CO = {
+  case: (th) => ophone(th, { title: 'Case', body: ohead(A.pets, 'Disputed', true) + ostats([['Votes', '1 of 3'], ['Stake', '15 tix'], ['Review pays', '70 tix']]) +
+      osaid('The developer says', REASON) + onote('The request asked for written feedback: at least 100 characters.') +
+      osaid('Their text from Google Play, 98 characters', 'Cute pets and the daily care loop is fun. Feeding animations are smooth on my old phone.') + oshot('review', '', '#E86A5C') +
+      oshot('dev', 'The developer\'s screenshot', '#E86A5C') + `<div class="o-lab">The reviewer's answer</div><div style="font-weight:500;margin-top:4px">${ANSWER}</div>` + oshot('review', '', '#E86A5C') +
+      `<div class="o-note">Whoever you decide against pays the 15 tix that goes to the three of you deciding.</div>`,
+    foot: `<div class="o-btn sec">The review stands</div>${sp(8)}<div class="o-btn sec">The developer is right</div>` }),
+  voted: (th) => CN.list(th, { cases: false, msg: 'Counted. Thank you.' }),
+};
+
+/* ---------- the document ---------- */
+const IMG = (f) => `<img class="cap" src="current/${f}.png" alt="${f}">`;
+const NOW = (html, note) => `<div class="state"><div class="tag"><i>NOW</i>${note ? `<em>${note}</em>` : ''}</div>${html}</div>`;
+const NEW = (html, note) => `<div class="state"><div class="tag"><i class="new">NEW</i>${note ? `<em>${note}</em>` : ''}</div>${html}</div>`;
+const PAIR = (k, label, nows, news) => `<div class="pair"><div class="pl"><span class="k">${k}</span>${label}</div><div class="two">${nows}${'<span class="gap"></span>'}${news}</div></div>`;
+const PH = 'on the phone', RB = 'rebuilt from the code', DEV = "demo app isn't installed, so the phone shows step 1";
+
+function show(th) {
+  let h = '';
+  /* A */
+  h += `<div class="page" id="A">A. Your review</div><div class="from"><b>Opened from</b><span>Circle, My reviews tab</span><span>Circle, Feedback tab (new review)</span><b>Stays where it is.</b></div>`;
+  h += PAIR('A1', 'New review, before agreeing', NOW(IMG('A-new-live-1'), PH), NEW(AN.new(th), '(i) open'));
+  h += PAIR('A2', 'Step 1, install', NOW(IMG('A-claimed-1'), PH), NEW(AN.install(th)));
+  h += PAIR('A3', 'Step 1, Play copy needed', NOW(IMG('A-installed-live-1'), PH), NEW(AN.sideload(th)));
+  h += PAIR('A4', 'Step 2, use timer', NOW(AO.use(th), RB) + NOW(IMG('A-used-closed-1'), DEV), NEW(AN.use(th)));
+  h += PAIR('A5', 'Step 2, usage access off', NOW(AO.usage(th), RB), NEW(AN.usage(th)));
+  h += PAIR('A6', 'Step 2, live app, come back another day', NOW(AO.ret(th), RB), NEW(AN.ret(th)));
+  h += PAIR('A7', 'Step 3, review it on Play, ready review', NOW(AO.leave(th), RB), NEW(AN.leave(th)));
+  h += PAIR('A8', 'No review box on Play', NOW(AO.nobox(th), RB), NEW(AN.nobox(th), 'fixes') + NEW(AN.nobox2(th), 'send it here'));
+  h += PAIR('A9', 'Step 4, proof, empty', NOW(AO.proof(th), RB), NEW(AN.proof(th)));
+  h += PAIR('A10', 'Step 4, proof ready, sending', NOW(AO.proofBusy(th), RB), NEW(AN.proofBusy(th), 'loader in the button, (i) open'));
+  h += PAIR('A11', 'Half pay, no review box', NOW(AO.half(th), RB), NEW(AN.half(th)));
+  h += PAIR('A12', 'Checking: owner asked for a new screenshot', NOW(AO.checking(th), RB) + NOW(IMG('A-checking-1'), DEV), NEW(AN.checking(th)));
+  h += PAIR('A13', 'Sent, waiting', NOW(IMG('A-submitted-1'), PH), NEW(AN.sent(th)));
+  h += PAIR('A14', 'Sent, half pay, live app', NOW(IMG('A-halfpay-1'), PH), NEW(AN.sentHalf(th)));
+  h += PAIR('A15', 'Refused, you can answer', NOW(AO.disputeOpen(th), RB), NEW(AN.disputeOpen(th)));
+  h += PAIR('A16', 'Answer the developer', NOW(AO.answer(th), RB), NEW(AN.answerSheet(th), 'PickerSheet'));
+  h += PAIR('A17', 'Refused, answered, members deciding', NOW(IMG('A-disputed-1'), PH) + NOW(IMG('A-disputed-2'), 'scrolled'), NEW(AN.disputeAns(th)));
+  h += PAIR('A18', 'Approved', NOW(IMG('A-approved-1'), PH), NEW(AN.approved(th)));
+  h += PAIR('A19', 'Rejected', NOW(IMG('A-rejected-1'), PH), NEW(AN.rejected(th)));
+  h += PAIR('A20', 'Given up', NOW(IMG('A-givenup-1'), PH), NEW(AN.gaveup(th)));
+  h += PAIR('A21', "Given back: it wouldn't install", NOW(AO.given(th), RB), NEW(AN.given(th)));
+  h += PAIR('A22', 'Ran out', NOW(IMG('A-expired-1'), PH), NEW(AN.expired(th)));
+  h += PAIR('A23', "Can't install, report it", NOW(AO.report(th), RB), NEW(AN.report(th), 'PickerSheet'));
+  h += PAIR('A24', 'Give it up', NOW(AO.giveupDlg(th), RB), NEW(AN.giveupDlg(th), 'kept a dialog'));
+  h += PAIR('A25', 'Loading', NOW(AO.loading(th), RB), NEW(AN.loading(th), 'skeleton'));
+  h += PAIR('A26', "Couldn't load", NOW(AO.failed(th), RB), NEW(AN.failed(th)));
+  /* B */
+  h += `<div class="page" id="B">B. Check a review</div><div class="from"><b>Opened from</b><span>Circle, To check, a review row</span><span class="mv">My apps, app page, Check: opens the first waiting review</span><span>Your request page, a waiting row</span></div>`;
+  h += PAIR('B0', 'Way in from the app page', NOW(IMG('entry-apppage'), 'Check opens the request page') + NOW(IMG('tocheck-list'), 'To check'), NEW(BN.entry(th), 'Check opens the review'));
+  h += PAIR('B1', 'A review to check', NOW(IMG('B-check-1'), 'on the phone, demo has no picture') + NOW(BO.check(th), RB + ', with picture'), NEW(BN.check(th), '(i) open'));
+  h += PAIR('B2', 'Live app, uninstalled after reviewing', NOW(BO.kept(th), RB), NEW(BN.kept(th)));
+  h += PAIR('B3', 'Half pay, no review box', NOW(BO.half(th), RB), NEW(BN.half(th)));
+  h += PAIR('B4', 'New screenshot came back', NOW(BO.recheck(th), RB), NEW(BN.recheck(th)));
+  h += PAIR('B5', 'Refuse', NOW(IMG('B-refuse-dialog'), PH), NEW(BN.refuse(th), 'PickerSheet, (i) open'));
+  h += PAIR('B6', "Can't find it on Play", NOW(IMG('B-askagain-dialog'), PH), NEW(BN.askagain(th), 'kept a dialog'));
+  h += PAIR('B7', 'Accepting', NOW(BO.busy(th), RB), NEW(BN.busy(th), 'loader in the button'));
+  h += PAIR('B8', 'Accepted, the next one opens', NOW(IMG('tocheck-list'), 'the page closes'), NEW(BN.next(th)));
+  h += PAIR('B9', 'Loading', NOW(BO.loading(th), RB), NEW(BN.loading(th), 'skeleton'));
+  h += PAIR('B10', 'Your request', NOW(IMG('B-request-1'), PH), NEW(BN.request(th)));
+  h += PAIR('B11', 'Your request, one opened', NOW(IMG('B-request-expanded'), PH), NEW(BN.requestOpen(th)));
+  h += PAIR('B12', 'Refused one, accept after all', NOW(BO.refused(th), RB), NEW(BN.refused(th)));
+  h += PAIR('B13', 'Accept after all', NOW(BO.acceptLater(th), RB), NEW(BN.acceptLater(th), 'kept a dialog'));
+  /* C */
+  h += `<div class="page" id="C">C. Decide a case</div><div class="from"><b>Opened from</b><span>Circle, To check, Cases to decide</span><b>Stays where it is.</b></div>`;
+  h += PAIR('C0', 'Way in', NOW(IMG('tocheck-list'), 'no case open for this account today'), NEW(CN.list(th), 'unchanged'));
+  h += PAIR('C1', 'A case to decide', NOW(CO.case(th), RB), NEW(CN.case(th)));
+  h += PAIR('C2', 'Vote picked, sending', NOW(CO.case(th), 'one tap votes at once'), NEW(CN.chosen(th), 'loader in the button'));
+  h += PAIR('C3', 'After your vote', NOW(CO.voted(th), 'the page closes'), NEW(CN.voted(th)));
+  h += PAIR('C4', 'Decided', NOW(CO.voted(th), 'not shown today'), NEW(CN.decided(th), 'needs the server'));
+  h += PAIR('C5', 'Loading', NOW(BO.loading(th), RB), NEW(CN.loading(th), 'skeleton'));
+  document.getElementById('doc').innerHTML = h;
+  document.body.classList.toggle('dk', th === 'dark');
+  document.querySelectorAll('.top button').forEach((b) => b.classList.toggle('on', b.dataset.t === th));
+}
+document.querySelectorAll('.top button').forEach((b) => b.addEventListener('click', () => { show(b.dataset.t); localStorage.setItem('rf-th', b.dataset.t); }));
+show(localStorage.getItem('rf-th') || 'light');
+if (document.fonts) document.fonts.ready.then(() => show(document.body.classList.contains('dk') ? 'dark' : 'light'));
+</script>
+</body>
+</html>

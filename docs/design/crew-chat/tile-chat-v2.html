@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>TestTrack: crew tile chat, v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  @font-face { font-family: "BarlowApp"; font-weight: 400; src: url("../../../app/src/main/res/font/barlow_regular.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 500; src: url("../../../app/src/main/res/font/barlow_medium.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 600; src: url("../../../app/src/main/res/font/barlow_semibold.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 700; src: url("../../../app/src/main/res/font/barlow_bold.ttf"); }
+  @font-face { font-family: "PlexApp"; font-weight: 500; src: url("../../../app/src/main/res/font/plexmono_medium.ttf"); }
+  @font-face { font-family: "PlexApp"; font-weight: 600; src: url("../../../app/src/main/res/font/plexmono_semibold.ttf"); }
+  @font-face { font-family: "PlexApp"; font-weight: 700; src: url("../../../app/src/main/res/font/plexmono_bold.ttf"); }
+
+  /* OceanLight / OceanDark from ui/theme/Tokens.kt */
+  .light {
+    --bg:#F7FCFF; --text:#142F43; --text2:#203A4E; --text3:#223D50; --text4:#59758A;
+    --tabSelected:#2E4E66; --tabUnselected:#526B7D;
+    --glass:#F2F9FD; --glass2:#DFEDF6; --glassBorder:#B7D1E2;
+    --accent:#3A5B73; --onAccent:#FFFFFF; --accentInk:#22394B; --badgeFill:#3A5B73;
+    --tile:#DCE6EE; --tileInk:#3A5B73; --leafAccentSoft:rgba(74,114,144,.16); --dock:#E8F3FA; --dockInk:#304C60;
+    --ok:#246B59; --warn:#8A611C; --bad:#9E3B2E;
+    --card:#F3F8FB; --cardLine:#E1ECF3; --ring:rgba(20,47,67,.14);
+    --primary:var(--accent); --onPrimary:var(--onAccent); --inkOnOk:#FFFFFF; --inkOnWarn:#FFFFFF;
+  }
+  .dark {
+    --bg:#0F1011; --text:#ECEEF0; --text2:#BCC1C6; --text3:#9DA3A9; --text4:#757C82;
+    --tabSelected:#B6CCDC; --tabUnselected:#989EA4;
+    --glass:#1C1E20; --glass2:#292C2F; --glassBorder:#383C41;
+    --accent:#4A7290; --onAccent:#FFFFFF; --accentInk:#93B3CA; --badgeFill:#4A7290;
+    --tile:#2A2D31; --tileInk:#A2BED2; --leafAccentSoft:#2A2D31; --dock:#1C1E20; --dockInk:#BCC1C6;
+    --ok:#83D8C4; --warn:#D8B774; --bad:#E4938A;
+    --card:#1C1E20; --cardLine:#2D3034; --ring:rgba(255,255,255,.16);
+    --primary:var(--accentInk); --onPrimary:var(--bg); --inkOnOk:#0F1011; --inkOnWarn:#0F1011;
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #D9E0E5; font-family: "BarlowApp", "Barlow", system-ui, sans-serif; color: #1B2B36; }
+  body.night { background: #1A1D20; color: #DDE3E8; }
+  .bar { position: sticky; top: 0; z-index: 9; display: flex; gap: 8px; align-items: center; padding: 12px 28px; background: inherit; border-bottom: 1px solid rgba(120,140,155,.35); }
+  .bar b { font-size: 18px; margin-right: 14px; }
+  .bar button { font: 600 15px/20px "BarlowApp", "Barlow", sans-serif; padding: 8px 18px; border-radius: 20px; border: 1px solid #8DA2B1; background: transparent; color: inherit; cursor: pointer; }
+  .bar button.on { background: #2D4A5F; color: #fff; border-color: #2D4A5F; }
+  .doc { padding: 24px 28px 80px; display: flex; flex-direction: column; gap: 40px; }
+  h2 { margin: 0 0 14px 2px; font-size: 22px; font-weight: 700; }
+  .row { display: flex; flex-wrap: wrap; gap: 22px; align-items: flex-start; }
+  .state { display: flex; flex-direction: column; gap: 7px; }
+  .lbl { font-size: 14px; font-weight: 700; margin-left: 2px; }
+  .grid { display: grid; grid-template-columns: 130px repeat(4, 372px); gap: 16px 18px; align-items: start; }
+  .grid .ch { font-size: 14px; font-weight: 700; padding-left: 2px; }
+  .grid .rh { font-size: 14px; font-weight: 700; padding-top: 18px; }
+
+  /* frames */
+  .phone { width: 412px; background: var(--bg); color: var(--text); border-radius: 28px; overflow: hidden; border: 1px solid #B9C5CE; position: relative; display: flex; flex-direction: column; height: 900px; }
+  .dark.phone, .dark.mini { border-color: #2A2D31; }
+  .mini { width: 372px; background: var(--bg); color: var(--text); border-radius: 18px; padding: 12px 12px; border: 1px solid #B9C5CE; }
+  .sbar { height: 24px; flex: none; }
+  .scroll { padding: 12px 16px 24px; flex: 1; display: flex; flex-direction: column; gap: 8px; }
+  svg.ic { display: block; flex: none; }
+
+  /* level row + dock, as on the Crew tab */
+  .lvl { display: flex; align-items: center; gap: 10px; padding: 6px 16px 2px; }
+  .lvl .a { font-size: 16px; font-weight: 600; } .lvl .b { font-size: 12.5px; color: var(--text2); }
+  .tix { display: inline-flex; align-items: center; gap: 6px; font: 700 20px "PlexApp", monospace; }
+  .dock { position: absolute; left: 0; right: 0; bottom: 0; height: 74px; background: var(--dock); display: flex; align-items: center; justify-content: space-around; color: var(--dockInk); border-top: 1px solid var(--cardLine); }
+  .dock .d { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 12px; font-weight: 500; }
+  .dock .d .pill { width: 52px; height: 30px; border-radius: 15px; display: grid; place-items: center; position: relative; }
+  .dock .d.on .pill { background: var(--tile); }
+  .dock .plus { width: 56px; height: 40px; border-radius: 14px; background: var(--accent); color: var(--onAccent); display: grid; place-items: center; }
+  .ddot { position: absolute; right: 10px; top: 2px; width: 9px; height: 9px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 0 2px var(--dock); }
+
+  /* SegmentedTabs */
+  .tabs { margin: 6px 16px 0; height: 44px; border-radius: 22px; background: var(--card); border: 1px solid var(--cardLine); display: flex; padding: 3px; gap: 2px; flex: none; }
+  .mini .tabs { margin: 0; }
+  .tabs .sg { flex: 1; display: flex; align-items: center; justify-content: center; border-radius: 17px; font-size: 14px; font-weight: 500; color: var(--text2); white-space: nowrap; }
+  .tabs .sg.on { background: var(--leafAccentSoft); color: var(--tabSelected); font-weight: 600; }
+  .tabs .lb { position: relative; }
+  /* NEW: chat unread on a segment = one 7dp dot, top end of the word */
+  .tabs .tdot { width: 7px; height: 7px; border-radius: 50%; background: var(--primary); margin-left: 2px; align-self: center; transform: translateY(-6px); flex: none; }
+  .tabs .wc { margin-left: 5px; font: 700 11px/16px "PlexApp", monospace; color: var(--tileInk); background: var(--tile); border-radius: 8px; padding: 0 5px; }
+  .dark .tabs .sg.on .wc { background: var(--card); }
+
+  /* CrewCard */
+  .card { background: var(--bg); border: 1px solid var(--cardLine); border-radius: 14px; padding: 16px; }
+  .mini { border: 0 !important; }
+
+  /* NEW heading: name, night right after it, chat pill at the end */
+  .th { display: flex; align-items: center; gap: 8px; min-height: 28px; }
+  .th .nm { font-size: calc(18px * var(--fs, 1)); line-height: calc(23px * var(--fs, 1)); font-weight: 600; white-space: nowrap; flex: none; }
+  .th .dt { flex: 1; min-width: 0; font-size: calc(12px * var(--fs, 1)); line-height: calc(17px * var(--fs, 1)); color: var(--text3); padding-top: 2px; }
+  .th .dt.bad { color: var(--bad); }
+
+  /* NEW CrewChatPill */
+  .cp { height: calc(28px * var(--fs, 1)); border-radius: 99px; display: inline-flex; align-items: center; gap: 5px; padding: 0 12px 0 10px; background: var(--tile); color: var(--tileInk); font-size: calc(13.5px * var(--fs, 1)); font-weight: 600; flex: none; position: relative; cursor: pointer; }
+  .cp .n { min-width: calc(18px * var(--fs, 1)); height: calc(18px * var(--fs, 1)); padding: 0 5px; border-radius: 99px; font: 700 calc(11.5px * var(--fs, 1))/calc(18px * var(--fs, 1)) "PlexApp", monospace; text-align: center; margin-left: 1px; }
+  .cp.has { padding-right: 5px; }
+  .cp.new { background: var(--badgeFill); color: var(--onAccent); }
+  .cp.new .n { background: var(--onAccent); color: var(--badgeFill); }
+  .cp.muted { color: var(--text3); }
+  .cp.muted .n { background: var(--bg); color: var(--text3); }
+  .cp svg { width: calc(15px * var(--fs, 1)); height: calc(15px * var(--fs, 1)); }
+  .cp.touch::after { content: ""; position: absolute; left: -6px; right: -6px; top: 50%; height: 48px; transform: translateY(-50%); border: 1.5px dashed #E0662B; border-radius: 24px; }
+
+  /* app strips */
+  .strip { display: flex; justify-content: space-between; margin-top: 14px; }
+  .ai { display: grid; place-items: center; flex: none; overflow: hidden; box-shadow: inset 0 0 0 1px var(--ring); font-weight: 700; }
+  .nt { background: hsl(var(--h) 45% 89%); color: hsl(var(--h) 50% 32%); box-shadow: none; }
+  .dark .nt { background: hsl(var(--h) 30% 18%); color: hsl(var(--h) 55% 76%); }
+  .slot { position: relative; flex: none; }
+  .slot.dim > .ai { opacity: .4; }
+  .mk { position: absolute; right: -2px; bottom: -2px; width: 11px; height: 11px; border-radius: 50%; display: grid; place-items: center; box-shadow: 0 0 0 1.5px var(--bg); }
+  .mk.ok { background: var(--ok); color: var(--inkOnOk); }
+  .mk.rp { background: var(--warn); color: var(--inkOnWarn); }
+  .mine { position: absolute; right: -1px; bottom: -1px; width: 6px; height: 6px; border-radius: 50%; background: var(--accentInk); box-shadow: 0 0 0 1px var(--bg); }
+  .empty { background: var(--tile); }
+  .chk { background: var(--tile); color: var(--text3); box-shadow: 0 0 0 1.5px var(--warn); }
+
+  /* standing + footer, unchanged */
+  .stand { display: flex; align-items: flex-start; gap: 12px; margin-top: 9px; }
+  .stand.nos { margin-top: 14px; }
+  .stand .hl { flex: 1; font-size: calc(15px * var(--fs, 1)); line-height: calc(20px * var(--fs, 1)); font-weight: 500; }
+  .stand .rt { flex: 1; font-size: calc(12px * var(--fs, 1)); line-height: calc(17px * var(--fs, 1)); color: var(--text3); text-align: right; }
+  .stand .rt.auto { flex: none; }
+  .hl.ok { color: var(--ok); } .hl.warn { color: var(--warn); } .hl.bad { color: var(--bad); }
+  .note { margin-top: 8px; font-size: calc(12px * var(--fs, 1)); line-height: calc(17px * var(--fs, 1)); color: var(--warn); }
+  .foot { margin-top: 12px; display: flex; align-items: center; gap: 8px; }
+  .foot .fn { font-size: calc(13px * var(--fs, 1)); line-height: calc(18px * var(--fs, 1)); color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* skeleton */
+  .sk { display: block; background: color-mix(in srgb, var(--accentInk) 7%, var(--glass2)); border-radius: 6px; position: relative; overflow: hidden; flex: none; }
+  .sk::after { content: ""; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 30%, color-mix(in srgb, var(--glass) 80%, transparent) 50%, transparent 70%); background-size: 300% 100%; animation: sweep 1.6s linear infinite; }
+  @keyframes sweep { from { background-position: 150% 0; } to { background-position: -150% 0; } }
+
+  .hide { display: none !important; }
+</style>
+</head>
+<body class="night">
+<div class="bar"><b>Crew tiles: chat</b><button data-t="dark" class="on">Dark</button><button data-t="light">Light</button></div>
+<div class="doc" id="doc"></div>
+<script>
+const L = {
+  msg: '<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>',
+  bellOff: '<path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M17 17H4a1 1 0 0 1-.74-1.673C4.59 13.956 6 12.499 6 8a6 6 0 0 1 .258-1.742"/><path d="m2 2 20 20"/><path d="M8.668 3.01A6 6 0 0 1 18 8c0 2.687.77 4.653 1.707 6.05"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  minus: '<path d="M5 12h14"/>',
+  phone: '<rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/>',
+  ticket: '<path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/>',
+  msq: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  grid: '<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>',
+  user: '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  plus: '<path d="M5 12h14"/><path d="M12 5v14"/>',
+};
+const ic = (n, s = 16, w = 2) => `<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${L[n]}</svg>`;
+const botHead = (s) => `<svg width="${s}" height="${s}" viewBox="20 2 80 80" style="flex:none;display:block"><line x1="60" y1="10" x2="60" y2="26" style="stroke:var(--tileInk);stroke-width:4"/><circle cx="60" cy="9" r="6" style="fill:var(--warn)"/><rect x="26" y="26" width="68" height="52" rx="18" style="fill:var(--tile);stroke:var(--tileInk);stroke-width:4"/><rect x="36" y="38" width="48" height="28" rx="13" style="fill:var(--bg)"/><circle cx="50" cy="52" r="5" style="fill:var(--text)"/><circle cx="70" cy="52" r="5" style="fill:var(--text)"/></svg>`;
+
+/* app art: stand-ins for Play icons */
+const MINE = { n: 'Bluefy: BT Keyboard & Mouse', art: 'bluefy' };
+const OTH = [
+  { n: 'Astra Match', art: 'astra' }, { n: 'Baka Run', art: 'baka' }, { n: 'Cherish', art: 'cherish' },
+  { n: 'EditMe', art: 'editme' }, { n: 'Auto Silent', art: 'silent' }, { n: 'Music Player', art: 'music' },
+  { n: 'Focus Flow', h: 160 }, { n: 'Habit Hen', h: 30 }, { n: 'Quiz Quest', h: 90 }, { n: 'Sleep Sound', h: 240 },
+  { n: 'Lumen Notes', h: 55 }, { n: 'Petal', h: 320 }, { n: 'Coin Keeper', h: 130 }, { n: 'Metro Map', h: 200 },
+];
+function art(a, s) {
+  const base = `width:${s}px;height:${s}px;border-radius:${Math.round(s * 0.3)}px;`;
+  const g = Math.round(s * 0.62);
+  const sv = (body) => `<svg width="${g}" height="${g}" viewBox="0 0 24 24">${body}</svg>`;
+  switch (a.art) {
+    case 'bluefy': return `<span class="ai" style="${base}background:linear-gradient(160deg,#EEF6FB,#D3E7F3)">${sv('<ellipse cx="12" cy="13.5" rx="7" ry="9" style="fill:#45C3E2"/><rect x="11.2" y="3.5" width="1.6" height="7" rx=".8" style="fill:#1E2B36"/>')}</span>`;
+    case 'astra': return `<span class="ai" style="${base}background:radial-gradient(circle at 30% 30%,#7A52E8,#2A1670)">${sv('<polygon points="8 3 9.6 6.6 13.5 7 10.6 9.6 11.4 13.4 8 11.4 4.6 13.4 5.4 9.6 2.5 7 6.4 6.6" style="fill:#FFC83D"/><rect x="12" y="11" width="8" height="8" rx="2" transform="rotate(45 16 15)" style="fill:#4FC3F7"/>')}</span>`;
+    case 'baka': return `<span class="ai" style="${base}background:linear-gradient(170deg,#3A2F86,#7B4BC8);color:#FFD84A;font-size:${Math.max(5, s * 0.24)}px;line-height:1">BAKA</span>`;
+    case 'cherish': return `<span class="ai" style="${base}background:#0EA5E9">${sv('<circle cx="8.5" cy="12" r="4.5" style="fill:none;stroke:#fff;stroke-width:2.4"/><circle cx="15.5" cy="12" r="4.5" style="fill:none;stroke:#fff;stroke-width:2.4"/>')}</span>`;
+    case 'editme': return `<span class="ai" style="${base}background:linear-gradient(135deg,#8A2BE2,#E8459A);color:#fff;font-size:${s * 0.55}px">E</span>`;
+    case 'silent': return `<span class="ai" style="${base}background:#F3F4F6">${sv('<circle cx="11" cy="12" r="8" style="fill:none;stroke:#2B3A4A;stroke-width:2"/><path d="M11 7v5h3" style="fill:none;stroke:#2B3A4A;stroke-width:2;stroke-linecap:round"/>')}</span>`;
+    case 'music': return `<span class="ai" style="${base}background:#1F1F1F">${sv('<path d="M5 10v4M8.5 7v10M12 9v6M15.5 6v12M19 10v4" style="stroke:#F5B400;stroke-width:2;stroke-linecap:round"/>')}</span>`;
+    default: return `<span class="ai nt" style="${base}--h:${a.h};font-size:${Math.round(s * 0.45)}px">${a.n[0]}</span>`;
+  }
+}
+const side = (w, n) => Math.min(24, Math.floor((w - 32 - 4 * (n - 1)) / n));
+
+/* Run strip: tonight's other apps, a check on each one opened, a minus on one reported */
+function runStrip(w, done, reported = -1) {
+  const s = side(w, 14);
+  return `<div class="strip">${OTH.map((a, i) => {
+    if (i === reported) return `<span class="slot dim" style="width:${s}px;height:${s}px">${art(a, s)}<i class="mk rp">${ic('minus', 8, 3.4)}</i></span>`;
+    return `<span class="slot" style="width:${s}px;height:${s}px">${art(a, s)}${i < done ? `<i class="mk ok">${ic('check', 8, 3.6)}</i>` : ''}</span>`;
+  }).join('')}</div>`;
+}
+/* Lobby strip: 15 places, confirmed apps, checking places, open places; dot on the reader's app */
+function lobbyStrip(w, filled, checking) {
+  const s = side(w, 15); const r = Math.round(s * 0.3);
+  const apps = [MINE, ...OTH];
+  return `<div class="strip">${Array.from({ length: 15 }, (_, i) => {
+    if (i < filled) return `<span class="slot" style="width:${s}px;height:${s}px">${art(apps[i], s)}${i === 0 ? '<i class="mine"></i>' : ''}</span>`;
+    if (i < filled + checking) return `<span class="ai chk" style="width:${s}px;height:${s}px;border-radius:${r}px">${ic('phone', Math.round(s * 0.65))}</span>`;
+    return `<span class="ai empty" style="width:${s}px;height:${s}px;border-radius:${r}px;box-shadow:none"></span>`;
+  }).join('')}</div>`;
+}
+
+/* NEW: the chat pill. c = { n, muted } or null for no chat */
+function pill(c, touch) {
+  if (!c) return '';
+  const t = touch ? ' touch' : '';
+  const n = c.n > 99 ? '99+' : c.n;
+  if (c.muted) return `<span class="cp muted${c.n ? ' has' : ''}${t}">${ic('bellOff', 15, 2.2)}Chat${c.n ? `<span class="n">${n}</span>` : ''}</span>`;
+  if (c.n > 0) return `<span class="cp new has${t}">${ic('msg', 15, 2.2)}Chat<span class="n">${n}</span></span>`;
+  return `<span class="cp${t}">${ic('msg', 15, 2.2)}Chat</span>`;
+}
+const head = (name, dt, c, dtTone, touch) => `<div class="th"><span class="nm">${name}</span><span class="dt${dtTone ? ' ' + dtTone : ''}">${dt}</span>${pill(c, touch)}</div>`;
+const foot = () => `<div class="foot">${art(MINE, 28)}<span class="fn">Bluefy: BT Keyboard &amp; Mouse</span></div>`;
+
+const RUN = {
+  in:     { name: 'Crew 66', night: 10, done: 9, hl: '5 apps left tonight', rt: '8 of 14 opened yours' },
+  done:   { name: 'Crew 61', night: 6, done: 14, hl: 'Done for tonight', tone: 'ok', rt: '14 of 14 opened yours' },
+  nights: { name: 'Crew 52', night: 14, strip: false, hl: 'Your nights are done', tone: 'ok', rt: '11 of 14 opened yours' },
+  out:    { name: 'Crew 47', night: 7, strip: false, hl: 'Your app is out', tone: 'bad' },
+  risk:   { name: 'Crew 70', night: 5, done: 11, rep: 13, hl: '3 apps left tonight', tone: 'warn', rt: '12 of 14 opened yours', note: 'Missed yesterday. Finish tonight to keep your app in.' },
+};
+function runTile(k, c, w = 372, touch) {
+  const s = RUN[k];
+  const strip = s.strip === false ? '' : runStrip(w, s.done, s.rep);
+  return `<div class="card">${head(s.name, `Night ${s.night} of 14`, c, null, touch)}${strip}
+    <div class="stand${strip ? '' : ' nos'}"><span class="hl${s.tone ? ' ' + s.tone : ''}">${s.hl}</span>${s.rt ? `<span class="rt">${s.rt}</span>` : ''}</div>
+    ${s.note ? `<div class="note">${s.note}</div>` : ''}${foot()}</div>`;
+}
+const LOBBY = {
+  filling:  { name: 'Crew 81', dt: '11 of 15 in', f: 11, ck: 0, hl: 'Your seat is held', rt: '4 more to start' },
+  full:     { name: 'Crew 79', dt: '15 of 15 in', f: 15, ck: 0, hl: 'Starts in 5 hours', rt: 'At midnight' },
+  checking: { name: 'Crew 83', dt: '9 of 15 in', f: 9, ck: 2, hl: 'Members are checking your app', tone: 'warn', rt: '6 Yes, 1 No' },
+};
+function lobbyTile(k, c, w = 372) {
+  const s = LOBBY[k];
+  return `<div class="card">${head(s.name, s.dt, c)}${lobbyStrip(w, s.f, s.ck)}
+    <div class="stand"><span class="hl${s.tone ? ' ' + s.tone : ''}">${s.hl}</span><span class="rt auto">${s.rt}</span></div>${foot()}</div>`;
+}
+
+/* tabs: o = { Lobby: [count, dot], Run: [count, dot] } */
+function tabs(sel, o = {}) {
+  return `<div class="tabs">${['Open', 'Lobby', 'Run', 'Record'].map((t) => {
+    const [n, dot] = o[t] || [0, false];
+    return `<span class="sg${t === sel ? ' on' : ''}"><span class="lb">${t}</span>${dot ? '<i class="tdot"></i>' : ''}${n ? `<span class="wc">${n}</span>` : ''}</span>`;
+  }).join('')}</div>`;
+}
+const dock = () => `<div class="dock">
+  <div class="d"><span class="pill">${ic('msq', 22)}</span>Circle</div>
+  <div class="d on"><span class="pill">${ic('users', 22)}<i class="ddot"></i></span>Crew</div>
+  <span class="plus">${ic('plus', 24, 2.4)}</span>
+  <div class="d"><span class="pill">${ic('grid', 22)}</span>My apps</div>
+  <div class="d"><span class="pill">${ic('user', 22)}</span>You</div></div>`;
+const phone = (th) => `<div class="phone ${th}"><div class="sbar"></div>
+  <div class="lvl">${botHead(40)}<div style="flex:1"><div class="a">Level 3</div><div class="b">75 exp to level 4</div></div><span class="tix">${ic('ticket', 22)}150</span></div>
+  ${tabs('Run', { Lobby: [1, true], Run: [8, true] })}
+  <div class="scroll">${runTile('in', { n: 3 }, 412)}${runTile('done', { n: 0 }, 412)}${runTile('risk', { n: 12 }, 412)}</div>${dock()}</div>`;
+
+const frame = (label, html) => `<div class="state"><div class="lbl">${label}</div>${html}</div>`;
+const mini = (th, body, style = '') => `<div class="mini ${th}" style="${style}">${body}</div>`;
+const CHATS = [['No new', { n: 0 }], ['3 new', { n: 3 }], ['12 new', { n: 12 }], ['Muted, 4 new', { n: 4, muted: true }]];
+
+function render(th) {
+  let h = '';
+  h += `<section><h2>Crew tab</h2><div class="row">${frame('Run tab', phone(th))}</div></section>`;
+
+  h += `<section><h2>Tabs</h2><div class="row">
+    ${frame('No new chat', mini(th, tabs('Run', { Lobby: [1, false], Run: [8, false] }), 'width:412px;padding:12px 0'))}
+    ${frame('New chat in Lobby', mini(th, tabs('Run', { Lobby: [1, true], Run: [8, false] }), 'width:412px;padding:12px 0'))}
+    ${frame('New chat in Run', mini(th, tabs('Run', { Lobby: [1, false], Run: [8, true] }), 'width:412px;padding:12px 0'))}
+    ${frame('Both', mini(th, tabs('Lobby', { Lobby: [1, true], Run: [8, true] }), 'width:412px;padding:12px 0'))}
+    ${frame('Nothing waiting, new chat', mini(th, tabs('Open', { Lobby: [0, true], Run: [0, true] }), 'width:412px;padding:12px 0'))}
+  </div></section>`;
+
+  const rows = [['in', 'In, apps left'], ['done', 'Done for tonight'], ['nights', 'Nights done'], ['out', 'App out'], ['risk', 'At risk']];
+  h += `<section><h2>Run tiles</h2><div class="grid"><span></span>${CHATS.map(([l]) => `<span class="ch">${l}</span>`).join('')}
+    ${rows.map(([k, l]) => `<span class="rh">${l}</span>${CHATS.map(([, c]) => mini(th, runTile(k, c))).join('')}`).join('')}</div></section>`;
+
+  const lrows = [['filling', 'Filling'], ['full', 'Full'], ['checking', 'Being checked']];
+  h += `<section><h2>Lobby tiles</h2><div class="grid"><span></span>${CHATS.map(([l]) => `<span class="ch">${l}</span>`).join('')}
+    ${lrows.map(([k, l]) => `<span class="rh">${l}</span>${CHATS.map(([, c]) => mini(th, lobbyTile(k, c))).join('')}`).join('')}</div></section>`;
+
+  const skel = `<div class="card"><div class="th"><span class="sk" style="width:78px;height:23px"></span><span class="sk" style="width:84px;height:15px"></span><span style="flex:1"></span><span class="sk" style="width:64px;height:28px;border-radius:14px"></span></div>
+    <div class="strip">${Array.from({ length: 14 }, () => `<span class="sk" style="width:21px;height:21px;border-radius:6px"></span>`).join('')}</div>
+    <div class="stand"><span class="sk" style="flex:1;height:20px"></span><span class="sk" style="flex:1;height:17px"></span></div>
+    <div class="foot"><span class="sk" style="width:28px;height:28px;border-radius:8px"></span><span class="sk" style="width:130px;height:18px"></span></div></div>`;
+  h += `<section><h2>Edges</h2><div class="row">
+    ${frame('Tap area, 48dp', mini(th, runTile('in', { n: 3 }, 372, true)))}
+    ${frame('Over 99', mini(th, runTile('in', { n: 140 })))}
+    ${frame('Small phone, 320dp', mini(th, runTile('in', { n: 12 }, 320), 'width:320px'))}
+    ${frame('Large text, 1.3x', mini(th, runTile('risk', { n: 12 }), '--fs:1.3'))}
+    ${frame('Loading', mini(th, skel))}
+  </div></section>`;
+  document.getElementById('doc').innerHTML = h;
+  document.body.className = th === 'dark' ? 'night' : '';
+}
+document.querySelectorAll('.bar button').forEach((b) => b.onclick = () => {
+  document.querySelectorAll('.bar button').forEach((x) => x.classList.toggle('on', x === b));
+  render(b.dataset.t);
+});
+const start = location.hash === '#light' ? 'light' : 'dark';
+document.querySelectorAll('.bar button').forEach((x) => x.classList.toggle('on', x.dataset.t === start));
+render(start);
+</script>
+</body>
+</html>

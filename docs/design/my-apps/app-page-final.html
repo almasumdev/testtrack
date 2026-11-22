@@ -1,0 +1,550 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>My apps: app page, final</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  @font-face { font-family: "BarlowApp"; font-weight: 400; src: url("../../../app/src/main/res/font/barlow_regular.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 500; src: url("../../../app/src/main/res/font/barlow_medium.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 600; src: url("../../../app/src/main/res/font/barlow_semibold.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 700; src: url("../../../app/src/main/res/font/barlow_bold.ttf"); }
+  @font-face { font-family: "PlexApp"; font-weight: 700; src: url("../../../app/src/main/res/font/plexmono_bold.ttf"); }
+
+  /* OceanLight / OceanDark, ui/theme/Tokens.kt */
+  .light {
+    --bg:#F7FCFF; --text:#142F43; --text2:#203A4E; --text3:#223D50; --text4:#59758A;
+    --tabSelected:#2E4E66;
+    --glass:#F2F9FD; --glass2:#DFEDF6; --glassBorder:#B7D1E2; --glassBorderStrong:#789AAF;
+    --accent:#3A5B73; --onAccent:#FFFFFF; --accentInk:#22394B; --badgeFill:#3A5B73;
+    --tile:#DCE6EE; --tileInk:#3A5B73; --leafAccent:#3A5B73; --leafAccentSoft:rgba(74,114,144,.16);
+    --dock:#E8F3FA; --dockInk:#304C60;
+    --ok:#246B59; --okBg:rgba(36,107,89,.12); --warn:#8A611C; --warnBg:rgba(154,110,36,.12);
+    --bad:#9E3B2E; --badBg:rgba(158,59,46,.12);
+    --card:#F3F8FB; --cardLine:#E1ECF3; --sheet:#FFFFFF; --ring:rgba(20,47,67,.14);
+    --primary:var(--accent); --onPrimary:var(--onAccent); --onTone:#FFFFFF; --scrim:rgba(20,34,48,.46);
+  }
+  .dark {
+    --bg:#0F1011; --text:#ECEEF0; --text2:#BCC1C6; --text3:#9DA3A9; --text4:#757C82;
+    --tabSelected:#B6CCDC;
+    --glass:#1C1E20; --glass2:#292C2F; --glassBorder:#383C41; --glassBorderStrong:#666D74;
+    --accent:#4A7290; --onAccent:#FFFFFF; --accentInk:#93B3CA; --badgeFill:#4A7290;
+    --tile:#2A2D31; --tileInk:#A2BED2; --leafAccent:#93B3CA; --leafAccentSoft:#2A2D31;
+    --dock:#1C1E20; --dockInk:#BCC1C6;
+    --ok:#83D8C4; --okBg:rgba(131,216,196,.12); --warn:#D8B774; --warnBg:rgba(216,183,116,.14);
+    --bad:#E4938A; --badBg:rgba(228,147,138,.15);
+    --card:#1C1E20; --cardLine:#2D3034; --sheet:#1C1E20; --ring:rgba(255,255,255,.16);
+    --primary:var(--accentInk); --onPrimary:var(--bg); --onTone:#0F1011; --scrim:rgba(0,0,0,.6);
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #D9E0E5; font-family: "BarlowApp", "Barlow", system-ui, sans-serif; color: #1B2B36; }
+  body.dk { background: #2A3036; color: #E3E8EC; }
+  .top { position: sticky; top: 0; z-index: 9; display: flex; align-items: center; gap: 10px; padding: 12px 28px; background: inherit; border-bottom: 1px solid #C3CDD4; }
+  body.dk .top { border-color: #3A4249; }
+  .top h1 { margin: 0 14px 0 0; font-size: 20px; font-weight: 700; }
+  .top button { font: 600 15px/20px "BarlowApp", "Barlow", sans-serif; padding: 8px 18px; border-radius: 20px; border: 1px solid #B3C0C9; background: #F4F7F9; color: #2D4A5F; cursor: pointer; }
+  .top button.on { background: #2D4A5F; color: #fff; border-color: #2D4A5F; }
+  .doc { padding: 6px 28px 80px; }
+  .sec { font-size: 20px; font-weight: 700; margin: 30px 0 14px 4px; }
+  .row { display: flex; flex-wrap: wrap; gap: 30px 26px; align-items: flex-start; }
+  .state { display: flex; flex-direction: column; gap: 8px; }
+  .lbl { font-size: 15px; font-weight: 700; margin-left: 4px; display: flex; gap: 8px; align-items: center; }
+  .lbl .k { display: inline-grid; place-items: center; min-width: 24px; height: 24px; padding: 0 6px; border-radius: 8px; background: #2D4A5F; color: #fff; font-size: 13px; }
+  body.dk .lbl .k { background: #93B3CA; color: #0F1011; }
+
+  /* phone: page scrolls, foot pinned */
+  .phone { width: 412px; height: 880px; background: var(--bg); color: var(--text); border-radius: 28px; overflow: hidden; border: 1px solid #B9C5CE; position: relative; display: flex; flex-direction: column; }
+  .dark.phone { border-color: #3A4046; }
+  .sbar { height: 24px; flex: none; }
+  .pbar { height: 64px; flex: none; display: flex; align-items: center; }
+  .pbar .back { width: 48px; height: 48px; display: grid; place-items: center; margin-left: 4px; color: var(--text); }
+  .scroll { flex: 1; overflow-y: auto; padding: 8px 16px 16px; scrollbar-width: none; }
+  .scroll::-webkit-scrollbar { display: none; }
+  .gest { height: 22px; flex: none; display: grid; place-items: center; }
+  .gest i { width: 108px; height: 4px; border-radius: 2px; background: var(--text4); opacity: .55; }
+
+  svg.ic { display: block; flex: none; }
+  .inl { display: inline-block; vertical-align: -2px; margin-right: 6px; }
+  .inl svg { display: inline-block; }
+  .i-ok { color: var(--ok); } .i-warn { color: var(--warn); } .i-bad { color: var(--bad); } .i-q { color: var(--text3); }
+  .ai { display: grid; place-items: center; flex: none; overflow: hidden; box-shadow: inset 0 0 0 1px var(--ring); font-weight: 700; }
+  .light .nt { background: hsl(var(--h) 45% 89%); color: hsl(var(--h) 50% 32%); box-shadow: none; }
+  .dark .nt { background: hsl(var(--h) 30% 18%); color: hsl(var(--h) 55% 76%); box-shadow: none; }
+
+  .chip { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 99px; font-size: 12.5px; line-height: 16px; font-weight: 700; white-space: nowrap; }
+  .chip.ok { background: var(--okBg); color: var(--ok); } .chip.warn { background: var(--warnBg); color: var(--warn); }
+  .chip.bad { background: var(--badBg); color: var(--bad); } .chip.quiet { background: var(--glass2); color: var(--text2); }
+  .cb { min-width: 22px; height: 22px; padding: 0 7px; border-radius: 11px; background: var(--badgeFill); color: var(--onAccent); font: 700 12px/22px "PlexApp", "IBM Plex Mono", monospace; text-align: center; display: inline-block; }
+
+  /* app header: the build's Hero (AppPage.kt), kept as it is */
+  .hero { display: flex; flex-direction: column; align-items: center; padding-top: 8px; }
+  .hico { position: relative; width: 96px; height: 96px; }
+  .pen { position: absolute; right: 0; bottom: 0; width: 30px; height: 30px; border-radius: 50%; background: var(--bg); border: 1px solid var(--glassBorder); display: grid; place-items: center; color: var(--accentInk); }
+  .hn { margin-top: 12px; font-size: 22px; line-height: 26px; font-weight: 700; text-align: center; }
+  .hp { margin-top: 4px; font-size: 12px; line-height: 16px; color: var(--text3); text-align: center; }
+  .achips { display: flex; gap: 6px; margin-top: 12px; justify-content: center; }
+  .achip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 99px; font-size: 13px; line-height: 17px; font-weight: 600; white-space: nowrap; }
+  .achip.n { background: var(--glass2); color: var(--text3); } .achip.ok { background: var(--okBg); color: var(--ok); } .achip.warn { background: var(--warnBg); color: var(--warn); }
+  .il { font-size: 13px; line-height: 18px; color: var(--text2); }
+  .il.sm { font-size: 12.5px; line-height: 17px; color: var(--text3); }
+  .il .inl { color: var(--text3); }
+  .ii { position: relative; display: inline-grid; place-items: center; width: 22px; height: 18px; vertical-align: -3px; color: var(--text3); }
+
+  /* heading with when tag */
+  .head { display: flex; align-items: center; gap: 5px; font-size: 16px; line-height: 19px; font-weight: 700; padding: 20px 0 10px; }
+  .head .when { margin-left: auto; font-size: 12px; line-height: 16px; font-weight: 600; color: var(--text3); background: var(--glass2); padding: 2px 9px; border-radius: 10px; }
+
+  /* every block: CrewCard, TileRadius 14, page colour, 1dp cardLine */
+  .card { background: var(--bg); border: 1px solid var(--cardLine); border-radius: 14px; position: relative; }
+  .card + .card { margin-top: 8px; }
+  .p16 { padding: 16px; }
+  .th { display: flex; align-items: center; gap: 8px; }
+  .th .nm { flex: 1; min-width: 0; font-size: 18px; line-height: 23px; font-weight: 600; }
+  .th .dt { font-size: 12px; line-height: 17px; color: var(--text3); white-space: nowrap; }
+  .th .dt.bad { color: var(--bad); } .th .dt.ok { color: var(--ok); }
+  .hl15 { font-size: 15px; line-height: 20px; font-weight: 500; }
+  .stand { display: flex; align-items: center; gap: 12px; }
+  .stand .hl { flex: 1; min-width: 0; font-size: 15px; line-height: 20px; font-weight: 500; }
+  .stand .rt { flex: 1; font-size: 12px; line-height: 17px; color: var(--text3); text-align: right; }
+  .stand .ia { flex: none; max-width: 45%; margin-right: -8px; }
+  .acts { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; margin: 8px -8px -6px 0; }
+
+  /* start row: soft pill at the end, no chevron */
+  .ra { display: flex; align-items: center; gap: 12px; padding: 12px; min-height: 60px; }
+  .ra .col { flex: 1; min-width: 0; }
+  .ra .t { font-size: 16px; line-height: 20px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ra .s { font-size: 12.5px; line-height: 16px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pill { flex: none; max-width: 44%; min-height: 32px; padding: 7px 14px; border-radius: 16px; font-size: 13.5px; line-height: 16px; font-weight: 700; text-align: center; }
+  .pill.fill { background: var(--primary); color: var(--onPrimary); } .pill.ton { background: var(--tile); color: var(--accentInk); }
+  .itile { width: 36px; height: 36px; border-radius: 11px; background: var(--tile); color: var(--tileInk); display: grid; place-items: center; flex: none; }
+  .ia { position: relative; min-height: 32px; padding: 0 8px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-size: 14px; font-weight: 700; color: var(--accentInk); border-radius: 16px; text-align: center; line-height: 17px; }
+  .ia.bad { color: var(--bad); }
+
+  /* crew strips */
+  .strip { display: flex; justify-content: space-between; }
+  .si { position: relative; width: 24px; height: 24px; flex: none; }
+  .si.faint > .ai { opacity: .45; }
+  .cm { position: absolute; right: -3.5px; bottom: -3.5px; width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid var(--bg); display: grid; place-items: center; color: var(--onTone); }
+  .cm.ok { background: var(--ok); } .cm.out { background: var(--text3); } .cm.rep { background: var(--warn); }
+  .ph { width: 24px; height: 24px; border-radius: 7px; background: var(--tile); display: grid; place-items: center; color: var(--text3); }
+  .ph.chk { box-shadow: 0 0 0 1.5px var(--warn); }
+  .mine { position: absolute; right: -1px; bottom: -1px; width: 6px; height: 6px; border-radius: 50%; background: var(--accentInk); border: 1px solid var(--bg); }
+  .chat { position: relative; width: 28px; height: 28px; display: grid; place-items: center; color: var(--text2); flex: none; margin-left: 2px; }
+  .chat .n { position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; padding: 0 3.5px; border-radius: 9px; background: var(--badgeFill); color: var(--onAccent); border: 1.5px solid var(--bg); font: 700 10px/15px "PlexApp", "IBM Plex Mono", monospace; text-align: center; }
+
+  /* production question */
+  .ask { margin-top: 12px; }
+  .ask-h { display: flex; align-items: flex-start; gap: 6px; font-size: 13px; line-height: 18px; font-weight: 600; }
+  .ask-h svg { color: var(--text3); margin-top: 2px; }
+  .ask-h .qt { flex: 1; }
+  .ask-h .tix { color: var(--accentInk); font-weight: 700; white-space: nowrap; }
+  .ask-r { display: flex; align-items: center; gap: 10px; margin-top: 2px; }
+  .ask-r .hint { flex: 1; font-size: 12px; line-height: 16px; color: var(--text3); }
+  .ask-r .pills { display: flex; margin-right: -8px; }
+
+  /* verify card */
+  .pbtn { height: 52px; border-radius: 26px; background: var(--primary); color: var(--onPrimary); display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; }
+  .addr { display: flex; align-items: center; gap: 4px; min-height: 40px; margin-top: 12px; }
+  .addr .col { flex: 1; min-width: 0; }
+  .addr .a { font-size: 15px; line-height: 18px; font-weight: 600; color: var(--accentInk); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .addr .l { margin-top: 2px; font-size: 12.5px; line-height: 14px; font-weight: 500; color: var(--text3); }
+  .addr .cp { width: 40px; height: 40px; display: grid; place-items: center; color: var(--accentInk); margin-right: -10px; }
+  .vh { font-size: 18px; line-height: 23px; font-weight: 600; }
+  .vl { margin-top: 4px; font-size: 13px; line-height: 18px; color: var(--text2); }
+  .how { margin: 4px 0 0 -8px; }
+
+  /* reviewer faces (feedback-card.html option B) */
+  .rv { display: flex; flex-wrap: wrap; gap: 12px 14px; align-items: center; }
+  .rv.off { opacity: .45; }
+  .rs { position: relative; width: 34px; height: 34px; flex: none; }
+  .rs .av { width: 34px; height: 34px; border-radius: 50%; background: var(--tile); color: var(--tileInk); display: grid; place-items: center; }
+  .rs.chk .av { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--warn); }
+  .rs.prog .av { opacity: .5; }
+  .rs.open .av { background: transparent; border: 1.5px dashed var(--glassBorderStrong); }
+  .rs .mk { position: absolute; right: -4px; bottom: -4px; width: 17px; height: 17px; border-radius: 50%; border: 2px solid var(--bg); display: grid; place-items: center; color: var(--onTone); }
+  .rs .mk.ok { background: var(--ok); } .rs .mk.chk { background: var(--warn); } .rs .mk.prog { background: var(--text4); }
+  /* more than 10 reviews: one stack per state, 2 by 2, done | to check, under way | open */
+  .sum { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .sg { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .stk { display: flex; flex: none; }
+  .stk .rs, .stk .rs .av { width: 28px; height: 28px; }
+  .stk .rs + .rs { margin-left: -10px; }
+  .stk .rs .av { box-shadow: 0 0 0 2px var(--bg); }
+  .stk .rs.chk .av { box-shadow: 0 0 0 2px var(--bg); }
+  .stk .rs.open .av { background: var(--bg); }
+  .stk .rs .mk { width: 15px; height: 15px; right: -3px; bottom: -3px; }
+  .stk .rs.prog .av { opacity: 1; color: color-mix(in srgb, var(--tileInk) 50%, var(--tile)); }
+  .sg .tx { min-width: 0; }
+  .sg .n { font-size: 15px; line-height: 18px; font-weight: 700; font-feature-settings: "tnum"; }
+  .sg .n.warn { color: var(--warn); }
+  .sg .w { font-size: 12px; line-height: 15px; color: var(--text3); white-space: nowrap; }
+  /* an earlier request: same card, compact, faces at the crew strip's 24 */
+  .old { padding: 12px 14px; }
+  .old .th .nm { font-size: 16px; line-height: 20px; }
+  .old .rv { gap: 8px 10px; margin-top: 10px; }
+  .old .rs, .old .rs .av { width: 24px; height: 24px; }
+  .old .rs.chk .av { box-shadow: 0 0 0 1.5px var(--bg), 0 0 0 3px var(--warn); }
+  .old .rs .mk { width: 14px; height: 14px; right: -3.5px; bottom: -3.5px; border-width: 1.5px; }
+  .old .stand { margin-top: 10px; }
+  .old .stand .hl { font-size: 14px; }
+  .old .note { margin-top: 8px; font-size: 12.5px; line-height: 16px; color: var(--text3); display: flex; align-items: center; gap: 5px; }
+  .earlier { font-size: 12.5px; line-height: 16px; font-weight: 600; color: var(--text3); margin: 16px 0 8px 2px; }
+
+  /* app bar: back on the left, Delete as a trash action on the right */
+  .pbar .act { margin-left: auto; margin-right: 4px; width: 48px; height: 48px; display: grid; place-items: center; color: var(--text2); border-radius: 50%; }
+  .pbar .act.off { color: var(--text4); opacity: .55; }
+  .pbar .act.tap { background: color-mix(in srgb, var(--text) 8%, transparent); }
+  /* PageMessage */
+  .pmsg { margin: 0 16px 6px; display: flex; align-items: center; gap: 10px; padding: 11px 10px 11px 14px; border-radius: 14px; background: var(--glass); border: 1px solid var(--glassBorder); font-size: 14px; line-height: 19px; flex: none; }
+  .pmsg span { flex: 1; }
+  .pmsg svg { color: var(--text3); } .pmsg svg:first-child { color: var(--accentInk); }
+  /* mark live: a soft pill under the chips, only while it is a closed test */
+  .golive { display: flex; justify-content: center; margin-top: 10px; }
+  .golive .pill { display: inline-flex; align-items: center; gap: 6px; max-width: none; }
+  /* faces in a grid: one row when they fit, else two even rows */
+  .rv.grid { display: grid; justify-content: start; }
+  .rv.grid .rs, .rv.grid .rs .av { width: var(--f); height: var(--f); }
+  .rv.grid .rs .mk { width: var(--m); height: var(--m); right: calc(var(--m) / -4); bottom: calc(var(--m) / -4); }
+  .rv.grid .rs.chk .av { box-shadow: 0 0 0 1.5px var(--bg), 0 0 0 3.5px var(--warn); }
+  /* dialogs (kept as they are) */
+  .scrimL { position: absolute; inset: 0; background: var(--scrim); }
+  .dlg { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 312px; background: var(--sheet); border-radius: 28px; padding: 24px; }
+  .dlg .t { font-size: 20px; line-height: 26px; font-weight: 700; }
+  .dlg .b { margin-top: 14px; font-size: 14px; line-height: 20px; color: var(--text2); }
+  .dlg .bt { display: flex; justify-content: flex-end; gap: 4px; margin: 20px -8px -8px 0; }
+
+  /* Circle, To check */
+  .seg { display: flex; margin: 6px 16px 0; padding: 4px; border: 1px solid var(--cardLine); background: var(--card); border-radius: 22px; gap: 2px; flex: none; }
+  .seg span { flex: 1; height: 34px; border-radius: 17px; display: flex; align-items: center; justify-content: center; gap: 5px; font-size: 14px; font-weight: 500; color: var(--text2); white-space: nowrap; }
+  .seg span.on { background: var(--leafAccentSoft); color: var(--tabSelected); font-weight: 600; }
+  .seg b { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--tile); color: var(--tileInk); font: 700 11px/18px "BarlowApp", "Barlow"; text-align: center; }
+  .dark .seg span.on b { background: var(--card); }
+  .clist { flex: 1; overflow-y: auto; padding: 23.5px 0 16px; scrollbar-width: none; }
+  .clist::-webkit-scrollbar { display: none; }
+  .ch { display: flex; align-items: center; gap: 5px; padding: 0 16px 10px; font-size: 16px; line-height: 19px; font-weight: 700; }
+  .ch.gap { padding-top: 20px; }
+  .tkw { padding: 4px 16px; }
+  .tk { position: relative; height: 76px; display: flex; }
+  .tk > svg.shape { position: absolute; inset: 0; overflow: visible; }
+  .tk .main { position: relative; flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 12px 8px 12px 12px; }
+  .tk .col { flex: 1; min-width: 0; }
+  .tk .tt { font-size: 16px; line-height: 19px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tk .nt { margin-top: 3px; font-size: 12.5px; line-height: 14px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 4px; }
+  .tk .nt.warn { color: var(--warn); }
+  .tk .stub { position: relative; width: 58px; flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .tk .fig { margin-top: 3px; font-size: 18px; line-height: 20px; font-weight: 600; color: var(--tabSelected); font-feature-settings: "tnum"; }
+  .rob { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 32px 60px; text-align: center; }
+  .rob .h { margin-top: 16px; font-size: 20px; line-height: 25px; font-weight: 700; }
+  .rob .b { margin-top: 6px; font-size: 14px; line-height: 20px; color: var(--text2); max-width: 300px; }
+  .bar { flex: none; border-top: 1px solid var(--cardLine); background: var(--dock); display: flex; height: 64px; }
+  .bar span { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 12px; font-weight: 500; color: var(--dockInk); position: relative; }
+  .bar span .ib { width: 52px; height: 32px; border-radius: 8px; display: grid; place-items: center; position: relative; }
+  .bar span.on { color: var(--tabSelected); font-weight: 600; }
+  .bar span.on .ib { background: var(--leafAccentSoft); }
+  .bar .nb { position: absolute; top: 0; left: 30px; min-width: 16px; height: 16px; padding: 0 4.5px; border-radius: 8px; background: var(--badgeFill); color: var(--onAccent); font: 700 10px/16px "BarlowApp", "Barlow"; box-shadow: 0 0 0 1.5px var(--dock); }
+</style>
+</head>
+<body>
+<div class="top"><h1>App page, final</h1><button data-t="light" class="on">Light</button><button data-t="dark">Dark</button></div>
+<div class="doc" id="doc"></div>
+<script>
+const L = {
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  minus: '<path d="M5 12h14"/>',
+  info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+  alert: '<circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>',
+  flask: '<path d="M14 2v6a2 2 0 0 0 .245.96l5.51 10.08A2 2 0 0 1 18 22H6a2 2 0 0 1-1.755-2.96l5.51-10.08A2 2 0 0 0 10 8V2"/><path d="M6.453 15h11.094"/><path d="M8.5 2h7"/>',
+  globe: '<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>',
+  badgeCheck: '<path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/>',
+  pencil: '<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  user: '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  msq: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  msg: '<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>',
+  arrowUR: '<path d="M7 7h10v10"/><path d="M7 17 17 7"/>',
+  copy: '<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+  imagePlus: '<path d="M16 5h6"/><path d="M19 2v6"/><path d="M21 11.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7.5"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/><circle cx="9" cy="9" r="2"/>',
+  rocket: '<path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/>',
+  clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  phone: '<rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/>',
+  eye: '<path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/>',
+  eyeOff: '<path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/>',
+  lock: '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  chevD: '<path d="m6 9 6 6 6-6"/>',
+  trash: '<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/>',
+  grid: '<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>',
+  trophy: '<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>',
+};
+const ic = (n, s = 16, w = 2) => `<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${L[n]}</svg>`;
+const inl = (n, s = 14, w = 2.2) => `<span class="inl">${ic(n, s, w)}</span>`;
+const BACK = `<svg width="22" height="22" viewBox="0 0 24 24" style="fill:currentColor"><path d="M17.77 3.77 16 2 6 12l10 10 1.77-1.77L9.54 12z"/></svg>`;
+const sp = (h) => `<div style="height:${h}px"></div>`;
+const chip = (t, tone, icon) => `<span class="chip ${tone}">${icon ? ic(icon, 13, 2.4) : ''}${t}</span>`;
+const ia = (t, cls = '') => `<span class="ia ${cls}">${t}</span>`;
+const iline = (icon, text, cls = '') => `<div class="il ${cls}">${inl(icon, 14)}${text}</div>`;
+const ii = () => `<span class="ii">${ic('info', 14)}</span>`;
+const TMARK = (s) => `<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" style="transform:rotate(-12deg)"><path d="M4.5 4.5H19.5a2.5 2.5 0 0 1 2.5 2.5V9a3 3 0 0 0 0 6v2a2.5 2.5 0 0 1-2.5 2.5H4.5A2.5 2.5 0 0 1 2 17v-2a3 3 0 0 0 0-6V7a2.5 2.5 0 0 1 2.5-2.5Z" fill="var(--card)" stroke="var(--leafAccent)" stroke-width="1.6" stroke-linejoin="round"/><path d="M16 7.4v.4M16 11.8v.4M16 16.2v.4" stroke="var(--leafAccent)" stroke-width="1.9" stroke-linecap="round"/></svg>`;
+
+/* ---------- app art (as app-page.html) ---------- */
+const BLUEFY = { n: 'Bluefy: BT Keyboard & Mouse', p: 'com.eazyverse.bluefy', art: 'bluefy' };
+const NEWAPP = { n: 'Pocket Budget', p: 'com.pocketbudget.app', h: 150 };
+const LIVEAPP = { n: 'Auto Silent: Volume Scheduler', p: 'com.eazyverse.soundscheduler', art: 'silent' };
+const OTH = [
+  { n: 'Astra Match', art: 'astra' }, { n: 'Baka Run', art: 'baka' }, { n: 'Cherish', art: 'cherish' }, { n: 'EditMe', art: 'editme' },
+  { n: 'Music Player', art: 'music' }, { n: 'Focus Flow', h: 160 }, { n: 'Habit Hen', h: 30 }, { n: 'Quiz Quest', h: 90 },
+  { n: 'Sleep Sound', h: 240 }, { n: 'Lumen Notes', h: 55 }, { n: 'Petal', h: 320 }, { n: 'Coin Keeper', h: 130 }, { n: 'Metro Map', h: 200 },
+];
+function art(a, s) {
+  const base = `width:${s}px;height:${s}px;border-radius:${Math.round(s * 0.3)}px;`;
+  const g = Math.round(s * 0.62);
+  const sv = (body) => `<svg width="${g}" height="${g}" viewBox="0 0 24 24">${body}</svg>`;
+  switch (a.art) {
+    case 'bluefy': return `<span class="ai" style="${base}background:linear-gradient(160deg,#EEF6FB,#D3E7F3)">${sv('<ellipse cx="12" cy="13.5" rx="7" ry="9" style="fill:#45C3E2"/><rect x="11.2" y="3.5" width="1.6" height="7" rx=".8" style="fill:#1E2B36"/>')}</span>`;
+    case 'astra': return `<span class="ai" style="${base}background:radial-gradient(circle at 30% 30%,#7A52E8,#2A1670)">${sv('<polygon points="8 3 9.6 6.6 13.5 7 10.6 9.6 11.4 13.4 8 11.4 4.6 13.4 5.4 9.6 2.5 7 6.4 6.6" style="fill:#FFC83D"/><rect x="12" y="11" width="8" height="8" rx="2" transform="rotate(45 16 15)" style="fill:#4FC3F7"/>')}</span>`;
+    case 'baka': return `<span class="ai" style="${base}background:linear-gradient(170deg,#3A2F86,#7B4BC8);color:#FFD84A;font-size:${Math.max(5, s * 0.24)}px;line-height:1">BAKA</span>`;
+    case 'cherish': return `<span class="ai" style="${base}background:#0EA5E9">${sv('<circle cx="8.5" cy="12" r="4.5" style="fill:none;stroke:#fff;stroke-width:2.4"/><circle cx="15.5" cy="12" r="4.5" style="fill:none;stroke:#fff;stroke-width:2.4"/>')}</span>`;
+    case 'editme': return `<span class="ai" style="${base}background:linear-gradient(135deg,#8A2BE2,#E8459A);color:#fff;font-size:${s * 0.55}px">E</span>`;
+    case 'silent': return `<span class="ai" style="${base}background:#F3F4F6">${sv('<circle cx="11" cy="12" r="8" style="fill:none;stroke:#2B3A4A;stroke-width:2"/><path d="M11 7v5h3" style="fill:none;stroke:#2B3A4A;stroke-width:2;stroke-linecap:round"/>')}</span>`;
+    case 'music': return `<span class="ai" style="${base}background:#1F1F1F">${sv('<path d="M5 10v4M8.5 7v10M12 9v6M15.5 6v12M19 10v4" style="stroke:#F5B400;stroke-width:2;stroke-linecap:round"/>')}</span>`;
+    default: return `<span class="ai nt" style="${base}--h:${a.h};font-size:${Math.round(s * 0.45)}px">${a.n[0]}</span>`;
+  }
+}
+
+/* ---------- header ---------- */
+function appHead(app, o = {}) {
+  const achip = (t, tone, icon) => `<span class="achip ${tone}">${ic(icon, 14)}${t}</span>`;
+  const ver = o.verified === 'play' ? achip('Verified on Play', 'ok', 'badgeCheck')
+    : o.verified === 'crew' ? achip('Verified by its crew', 'ok', 'badgeCheck')
+    : achip('Not verified', 'warn', 'alert');
+  const golive = o.live ? '' : `<div class="golive"><span class="pill ton">${ic('arrowUR', 15, 2.4)}It's live on Play</span></div>`;
+  return `<div class="hero"><span class="hico">${art(app, 88)}<span class="pen">${ic('pencil', 15)}</span></span>
+      <div class="hn">${app.n}</div><div class="hp">${app.p}</div>
+      <div class="achips">${o.live ? achip('Live', 'n', 'globe') : achip('Closed test', 'n', 'flask')}${ver}</div>${golive}</div>`;
+}
+function verifyCard() {
+  return `<div class="card p16" style="margin-top:16px">
+    <div class="vh">Add our testers group</div>
+    <div class="vl">Add this address to your closed track's testers, then tap Verify now.${ii()}</div>
+    <div class="addr"><div class="col"><div class="a">testtrack-testers@googlegroups.com</div><div class="l">Testers group address</div></div><span class="cp">${ic('copy', 18)}</span></div>
+    <div class="how">${ia('How to add it')}</div>${sp(10)}
+    <div class="pbtn">Verify now</div></div>`;
+}
+const head = (t, when) => `<div class="head">${t}${when ? `<span class="when">${when}</span>` : ''}</div>`;
+
+/* ---------- crew tiles (app-page.html) ---------- */
+const chat = (n) => `<span class="chat">${ic('msg', 24)}${n ? `<span class="n">${n}</span>` : ''}</span>`;
+function runTile() {
+  const marks = ['ok', 'ok', 'ok', '', 'ok', 'ok', 'rep', 'ok', '', 'ok', 'ok', 'ok', 'out'];
+  const icons = OTH.map((a, i) => {
+    const m = marks[i];
+    const cm = m === 'ok' ? `<span class="cm ok">${ic('check', 8, 3.5)}</span>` : m === 'rep' ? `<span class="cm rep">${ic('minus', 8, 3.5)}</span>` : m === 'out' ? `<span class="cm out">${ic('x', 8, 3.5)}</span>` : '';
+    return `<span class="si${m === 'rep' || m === 'out' ? ' faint' : ''}">${art(a, 24)}${cm}</span>`;
+  }).join('');
+  return `<div class="card p16">
+    <div class="th"><span class="nm">Crew 07</span><span class="dt">Night 6 of 14</span>${chat(3)}</div>${sp(14)}
+    <div class="strip">${icons}</div>${sp(9)}
+    <div class="stand"><span class="hl">2 apps left tonight</span><span class="rt">9 of 13 opened yours</span></div></div>`;
+}
+function lobbyTile() {
+  const places = Array.from({ length: 15 }, (_, i) => {
+    if (i === 0) return `<span class="si">${art(BLUEFY, 24)}<span class="mine"></span></span>`;
+    if (i < 11) return `<span class="si">${art(OTH[i - 1], 24)}</span>`;
+    if (i < 12) return `<span class="si"><span class="ph chk">${ic('phone', 15)}</span></span>`;
+    return `<span class="si"><span class="ph"></span></span>`;
+  }).join('');
+  return `<div class="card p16">
+    <div class="th"><span class="nm">Crew 08</span><span class="dt">11 of 15 in</span>${chat(0)}</div>${sp(14)}
+    <div class="strip">${places}</div>${sp(9)}
+    <div class="stand"><span class="hl">Your seat is held</span><span class="rt">4 more to start</span></div></div>`;
+}
+function recordTile(o) {
+  const ask = o.ask ? `<div class="ask"><div class="ask-h">${ic('rocket', 14)}<span class="qt">Got production access?</span><span class="tix">+10 tix</span></div>
+      <div class="ask-r"><span class="hint">Answer once Google replies to your apply.</span><span class="pills">${ia('Yes')}${ia('No')}</span></div></div>` : '';
+  const clear = o.clear ? `${sp(10)}${chip(o.clear, 'quiet', 'clock')}` : '';
+  return `<div class="card p16">
+    <div class="th"><span class="nm">${o.name}</span><span class="dt">${o.dates}</span></div>${sp(10)}
+    <div class="hl15 i-${o.tone}">${o.hl}</div>${clear}${ask}
+    ${o.again ? `<div class="acts">${ia('Put in a new crew')}</div>` : ''}</div>`;
+}
+const startRow = (icon, t, s, pill) => `<div class="card ra"><span class="itile">${ic(icon, 19)}</span><div class="col"><div class="t">${t}</div><div class="s">${s}</div></div><span class="pill ton">${pill}</span></div>`;
+const NO_CREW = startRow('users', 'Find a crew', 'Testing days Google asks for', 'Put in');
+const ASK = startRow('msq', 'Get reviews', 'Real people try it, then review', 'Ask');
+
+/* ---------- feedback requests: reviewer faces ---------- */
+function face(k, small, f) {
+  if (k === 'open') return `<span class="rs open"><span class="av"></span></span>`;
+  const z = small ? [7, 8, 8] : [9, 10, 10];
+  const mk = k === 'acc' ? `<span class="mk ok">${ic('check', z[0], 3.6)}</span>`
+    : k === 'chk' ? `<span class="mk chk">${ic('eye', z[1], 2.8)}</span>`
+    : `<span class="mk prog">${ic('clock', z[2], 2.8)}</span>`;
+  return `<span class="rs ${k}"><span class="av">${ic('user', f ? Math.round(f * 0.5) : (small ? 13 : 17), 2)}</span>${mk}</span>`;
+}
+const slots = (r) => [...Array(r.acc).fill('acc'), ...Array(r.chk || 0).fill('chk'), ...Array(r.prog || 0).fill('prog'), ...Array(r.open || 0).fill('open')];
+const total = (r) => r.acc + (r.chk || 0) + (r.prog || 0) + (r.open || 0);
+const DT = { on: ['', 'On Circle'], off: ['bad', 'Off Circle'], done: ['ok', 'Done'], closed: ['', 'Closed'] };
+const titleOf = (r) => {
+  const n = total(r), inn = r.acc + (r.chk || 0), word = n === 1 ? 'review' : 'reviews';
+  if (r.state === 'done') return n === 1 ? 'The review is in' : `All ${n} reviews in`;
+  if (inn === 0) return 'No reviews in yet';
+  return `${inn} of ${n} ${word} in`;
+};
+const MAX_FACES = 10;
+/* Faces fill the card's width. Body width: phone - 2 border - 32 gutter - 2 card border - padding.
+   perRow = floor((W + minGap) / (minFace + minGap)); the face grows to fill the row (up to maxFace),
+   and whatever is left after the largest face goes to the gaps. Later rows use the same columns. */
+let CW = 412;
+function fit(W, minFace, maxFace, minGap) {
+  const p = Math.max(1, Math.floor((W + minGap) / (minFace + minGap)));
+  const f = p === 1 ? Math.min(maxFace, W) : Math.min(maxFace, (W - minGap * (p - 1)) / p);
+  const g = p === 1 ? 0 : (W - p * f) / (p - 1);
+  return { p, f, g };
+}
+function faceGrid(r, w, compact) {
+  const W = compact ? w - 64 : w - 68;
+  const { p, f, g } = compact ? fit(W, 24, 28, 8) : fit(W, 30, 36, 8);
+  const m = Math.round(f * 0.5);
+  return `<div class="rv grid${r.state === 'off' ? ' off' : ''}" style="--f:${f}px;--m:${m}px;grid-template-columns:repeat(${p},${f}px);column-gap:${g}px;row-gap:${compact ? 8 : 12}px${compact ? ';margin-top:10px' : ''}">${slots(r).map((k) => face(k, compact, f)).join('')}</div>`;
+}
+function summary(r) {
+  const groups = [['acc', r.acc, 'done'], ['chk', r.chk || 0, 'to check'], ['prog', r.prog || 0, 'under way'], ['open', r.open || 0, 'open']];
+  return `<div class="sum">${groups.filter((g) => g[1] > 0).map(([k, n, w]) => {
+    const shown = Math.min(n, 2);
+    const faces = Array.from({ length: shown }, (_, i) => (i === shown - 1 ? face(k) : (k === 'open' ? face('open') : `<span class="rs ${k}"><span class="av">${ic('user', 15, 2)}</span></span>`))).join('');
+    return `<div class="sg"><span class="stk">${faces}</span><span class="tx"><div class="n${k === 'chk' ? ' warn' : ''}">${n}</div><div class="w">${w}</div></span></div>`;
+  }).join('')}</div>`;
+}
+function reqTile(r, w = CW) {
+  const [dc, dt] = DT[r.state];
+  let foot = '';
+  if (r.state === 'off') foot = `${sp(12)}<div class="stand"><span class="hl i-bad">${inl('eyeOff', 15)}Testers can't install it</span>${ia('Fix it')}</div>`;
+  else if (r.chk) foot = `${sp(12)}<div class="stand"><span class="hl">${r.chk} waiting for you</span><span class="pill fill">Check</span></div>`;
+  else if (r.again) foot = `<div class="acts">${ia('Ask again')}</div>`;
+  else if (r.state === 'on') foot = `${sp(12)}<div class="stand"><span class="hl i-q">Testers are on it</span></div>`;
+  return `<div class="card p16"><div class="th"><span class="nm">${titleOf(r)}</span><span class="dt ${dc}">${dt}</span></div>${sp(12)}
+    ${total(r) > MAX_FACES ? summary(r) : faceGrid(r, w)}${foot}</div>`;
+}
+function oldTile(r) {
+  const [dc, dt] = DT[r.state];
+  let foot = '';
+  if (r.chk) foot = `<div class="stand"><span class="hl">${r.chk} waiting for you</span><span class="pill fill">Check</span></div>`;
+  else if (r.back) foot = `<div class="note">${TMARK(13)}${r.back} tix came back</div>`;
+  return `<div class="card old"><div class="th"><span class="nm">${titleOf(r)}</span><span class="dt ${dc}">${dt} ${r.date}</span></div>
+    ${faceGrid(r, CW, true)}${foot}</div>`;
+}
+const earlier = (tiles) => `<div class="earlier">Earlier</div>${tiles}`;
+
+const WHY_CREW = 'It has been tested in a crew, so its record stays.';
+function page(th, o) {
+  const w = o.w || 412;
+  CW = w;
+  let b = appHead(o.app, o.head);
+  if (o.verify) b += verifyCard();
+  if (o.crew) b += head('Crew test', 'Before production') + o.crew;
+  b += head('Feedback', 'Any time') + (typeof o.fb === 'function' ? o.fb(w) : o.fb);
+  const act = `<span class="act${o.del ? '' : ' off'}${o.tapDel ? ' tap' : ''}">${ic('trash', 22)}</span>`;
+  const msg = o.msg ? `<div class="pmsg">${ic('lock', 17)}<span>${o.msg}</span>${ic('x', 16)}</div>` : '';
+  return `<div class="phone ${th}" style="width:${w}px"><div class="sbar"></div><div class="pbar"><span class="back">${BACK}</span>${act}</div>${msg}
+    <div class="scroll">${b}</div><div class="gest"><i></i></div>${o.over || ''}</div>`;
+}
+const dlg = (t, b, ok, bad) => `<div class="scrimL"></div><div class="dlg"><div class="t">${t}</div><div class="b">${b}</div><div class="bt">${ia('Cancel')}${ia(ok, bad ? 'bad' : '')}</div></div>`;
+
+const BF = { verified: 'play' };
+const S = [
+  ['1', 'Not verified', { app: NEWAPP, head: {}, verify: true, crew: NO_CREW, fb: ASK, del: true }],
+  ['2', 'In a lobby', { app: BLUEFY, head: BF, crew: lobbyTile(), fb: ASK }],
+  ['3', 'Running, one request open', { app: BLUEFY, head: BF, crew: runTile(), fb: (w) => reqTile({ state: 'on', acc: 1, chk: 2, prog: 1, open: 1 }, w) }],
+  ['4', 'Finished, production question, open plus earlier', { app: BLUEFY, head: { verified: 'crew' },
+    crew: recordTile({ name: 'Crew 04', dates: 'Oct 6 to 19', hl: 'Finished with 13 testers', tone: 'ok', clear: 'Details clear in 2 days', ask: true }),
+    fb: (w) => reqTile({ state: 'on', acc: 2, prog: 2, open: 1 }, w) + earlier(oldTile({ state: 'done', acc: 5, date: 'Nov 2' }) + oldTile({ state: 'closed', acc: 2, open: 2, date: 'Oct 20', back: 70 })) }],
+  ['5', 'Taken out, off Circle', { app: BLUEFY, head: BF,
+    crew: recordTile({ name: 'Crew 03', dates: 'Sep 22 to Oct 5', hl: 'Taken out on day 4', tone: 'bad', again: true }),
+    fb: (w) => reqTile({ state: 'off', acc: 1, open: 4 }, w) }],
+  ['6', 'Live, none open, every earlier one listed', { app: LIVEAPP, head: { live: true, verified: 'play' },
+    fb: (w) => reqTile({ state: 'done', acc: 5, again: true }, w) + earlier(
+      oldTile({ state: 'closed', acc: 2, chk: 1, date: 'Nov 1' }) + oldTile({ state: 'done', acc: 3, date: 'Oct 12' }) +
+      oldTile({ state: 'closed', acc: 1, open: 2, date: 'Sep 30', back: 40 }) + oldTile({ state: 'done', acc: 4, date: 'Sep 2' })) }],
+  ['7', 'Trash tapped, it can\'t be deleted', { app: BLUEFY, head: BF, crew: runTile(), fb: ASK, tapDel: true, msg: `Can't delete. ${WHY_CREW}` }],
+  ['8', 'Trash tapped, it can be deleted', { app: NEWAPP, head: {}, verify: true, crew: NO_CREW, fb: ASK, del: true, tapDel: true,
+    over: dlg('Delete Pocket Budget?', 'It comes off My apps. Nothing has happened to it yet, so there is nothing to keep.', 'Delete', true) }],
+  ['9', "It's live on Play tapped", { app: BLUEFY, head: BF, crew: NO_CREW, fb: ASK,
+    over: dlg('Mark Bluefy: BT Keyboard & Mouse live?', "We'll check its public Play page. Once it's live it takes feedback, but it can never go into a crew again.", 'Mark it live') }],
+];
+
+const LH = { live: true, verified: 'play' };
+const FB = (k, label, r, w) => [k, label, { w, app: LIVEAPP, head: LH, fb: (ww) => reqTile(r, ww) }];
+const MANY = [
+  ['F0', 'No request', { app: LIVEAPP, head: LH, fb: ASK, del: true }],
+  FB('F1', '1 review', { state: 'on', acc: 0, open: 1 }),
+  FB('F2', '2 reviews', { state: 'on', acc: 1, chk: 1 }),
+  FB('F3', '3 reviews', { state: 'on', acc: 1, prog: 1, open: 1 }),
+  FB('F10', '10 reviews, 412dp', { state: 'on', acc: 5, chk: 2, prog: 1, open: 2 }),
+  FB('F10', '10 reviews, 360dp', { state: 'on', acc: 5, chk: 2, prog: 1, open: 2 }, 360),
+  FB('F10', '10 reviews, 320dp', { state: 'on', acc: 5, chk: 2, prog: 1, open: 2 }, 320),
+  FB('F20', '20 reviews, 360dp', { state: 'on', acc: 12, chk: 3, prog: 2, open: 3 }, 360),
+  FB('F50', '50 reviews (the most), 320dp', { state: 'on', acc: 31, chk: 4, prog: 6, open: 9 }, 320),
+  FB('F50', '50, all in', { state: 'done', acc: 50, again: true }, 360),
+];
+
+/* ---------- To check, after ---------- */
+let clipN = 0;
+function ticketShape(w, h) {
+  const r = 14, n = 7, x = w - 58 - 0.75;
+  const d = `M${r},0 H${x - n} A${n},${n} 0 0 0 ${x + n},0 H${w - r} A${r},${r} 0 0 1 ${w},${r} V${h - r} A${r},${r} 0 0 1 ${w - r},${h} H${x + n} A${n},${n} 0 0 0 ${x - n},${h} H${r} A${r},${r} 0 0 1 0,${h - r} V${r} A${r},${r} 0 0 1 ${r},0 Z`;
+  const id = 'clip' + (clipN++);
+  return `<svg class="shape" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><defs><clipPath id="${id}"><path d="${d}"/></clipPath></defs>
+    <path d="${d}" fill="var(--bg)"/><rect x="${x}" y="0" width="${w - x}" height="${h}" fill="var(--leafAccentSoft)" clip-path="url(#${id})"/>
+    <line x1="${x}" y1="${n + 4}" x2="${x}" y2="${h - n - 4}" stroke="var(--glassBorder)" stroke-width="1" stroke-dasharray="3 3"/>
+    <path d="${d}" fill="none" stroke="var(--cardLine)" stroke-width="1"/></svg>`;
+}
+function ticket(a, note, n, warn) {
+  return `<div class="tkw"><div class="tk">${ticketShape(378, 76)}
+    <div class="main">${art(a, 52)}<div class="col"><div class="tt">${a.n}</div><div class="nt${warn ? ' warn' : ''}">${note}</div></div></div>
+    <div class="stub">${TMARK(16)}<div class="fig">${n}</div></div></div></div>`;
+}
+const heading = (t, n, gap) => `<div class="ch${gap ? ' gap' : ''}">${t}<span class="cb">${n}</span></div>`;
+const CHECK_LIST = heading('Reviews of your apps', 2) +
+  ticket(BLUEFY, `${ic('clock', 12)}Sam, closed test, 1d 4h left`, 40) +
+  ticket(LIVEAPP, `${ic('clock', 12)}Rafi, live app, 9h left`, 35, true) +
+  heading('Cases to decide', 1, true) +
+  ticket(OTH[5], 'Disputed, 1 of 3 votes in', 15);
+const ROBOT = `<svg width="132" height="120" viewBox="0 0 132 120">
+    <line x1="60" y1="10" x2="60" y2="26" style="stroke:var(--tileInk);stroke-width:3"/><circle cx="60" cy="9" r="5" style="fill:var(--warn)"/>
+    <rect x="26" y="26" width="68" height="52" rx="18" style="fill:var(--tile);stroke:var(--tileInk);stroke-width:3"/>
+    <rect x="36" y="38" width="48" height="28" rx="13" style="fill:var(--bg)"/>
+    <circle cx="50" cy="52" r="4" style="fill:var(--text)"/><circle cx="70" cy="52" r="4" style="fill:var(--text)"/>
+    <rect x="36" y="82" width="48" height="28" rx="10" style="fill:var(--tile);stroke:var(--tileInk);stroke-width:3"/>
+    <path d="M96 84l8-18" style="stroke:var(--tileInk);stroke-width:3;stroke-linecap:round"/><path d="M98 58a9 9 0 0 1 14 3l-7 9z" style="fill:#F4B6C8;stroke:var(--tileInk);stroke-width:2"/></svg>`;
+const EMPTY = `<div class="rob">${ROBOT}<div class="h">Nothing to check</div><div class="b">New reviews of your apps show up here. Your own requests are on each app's page in My apps.</div></div>`;
+function circle(th, owed, body, list) {
+  const tabs = `<div class="seg"><span>Feedback</span><span>My reviews</span><span class="on">To check${owed ? `<b>${owed}</b>` : ''}</span></div>`;
+  const items = [['msq', 'Circle', true], ['users', 'Crew'], ['trophy', 'Ranks'], ['grid', 'My apps'], ['user', 'You']];
+  const bar = `<div class="bar">${items.map(([i, t, on]) => `<span class="${on ? 'on' : ''}"><span class="ib">${ic(i, 22)}${on && owed ? `<span class="nb">${owed}</span>` : ''}</span>${t}</span>`).join('')}</div>`;
+  return `<div class="phone ${th}"><div class="sbar"></div>${tabs}${list ? `<div class="clist">${body}</div>` : body}${bar}<div class="gest"><i></i></div></div>`;
+}
+
+/* ---------- page ---------- */
+const F = (k, label, html) => `<div class="state"><div class="lbl"><span class="k">${k}</span>${label}</div>${html}</div>`;
+function show(th) {
+  clipN = 0;
+  let h = `<div class="sec">App page</div><div class="row">`;
+  for (const [k, label, o] of S) h += F(k, label, page(th, o));
+  h += `</div><div class="sec">Feedback by number of reviews</div><div class="row">`;
+  for (const [k, label, o] of MANY) h += F(k, label, page(th, o));
+  h += `</div><div class="sec">Circle, To check</div><div class="row">`;
+  h += F('C1', 'Reviews to check', circle(th, 3, CHECK_LIST, true));
+  h += F('C2', 'Nothing to check', circle(th, 0, EMPTY, false));
+  h += `</div>`;
+  document.getElementById('doc').innerHTML = h;
+  document.body.classList.toggle('dk', th === 'dark');
+  document.querySelectorAll('.top button').forEach((b) => b.classList.toggle('on', b.dataset.t === th));
+  history.replaceState(null, '', '#' + th);
+}
+document.querySelectorAll('.top button').forEach((b) => b.addEventListener('click', () => show(b.dataset.t)));
+show(location.hash === '#dark' ? 'dark' : 'light');
+if (document.fonts) document.fonts.ready.then(() => show(document.body.classList.contains('dk') ? 'dark' : 'light'));
+</script>
+</body>
+</html>
