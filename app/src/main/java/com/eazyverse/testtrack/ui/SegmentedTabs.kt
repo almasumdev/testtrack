@@ -79,7 +79,7 @@ fun SegmentedTabs(
                 lineHeight = 16.sp,
                 fontWeight = FontWeight.Bold,
             )
-        val measurer = rememberTextMeasurer()
+        val measurer = rememberTextMeasurer(cacheSize = 32)
         val density = LocalDensity.current
         val n = labels.size
 

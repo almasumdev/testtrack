@@ -279,9 +279,10 @@ fun CrewRunPhase(
     crew: Crew,
     actions: CrewActions,
 ) {
-    val seatOf = { app: CrewApp -> crew.seats.first { it.id == app.id } }
+    val seatOf = { app: CrewApp -> crew.seats.firstOrNull { it.id == app.id } }
     val owed = crew.apps.filter { !it.done && !it.reported }
-    val apps = crewRunAppEntries(crew, actions.isInstalled)
+    // A row needs its seat; one the crew has no seat for (a list caught mid-change) is left out.
+    val apps = crewRunAppEntries(crew, actions.isInstalled).filter { seatOf(it.app) != null }
     // What Open all opens: on this phone, and nothing the server is known to refuse.
     val here = openAllOf(owed, { actions.copyOf(it) }, actions.sendingPicture)
     val missing = owed.filter { !actions.isInstalled(it.packageName) }
@@ -326,7 +327,7 @@ fun CrewRunPhase(
         if (apps.isNotEmpty()) {
             item { CrewHeading("Apps", "${apps.size}") }
             rows("app", apps, { it.app.id }) { entry ->
-                CrewRunAppTile(entry.app, seatOf(entry.app), actions, onSheet, entry.kind, volunteer = crew.volunteer != null)
+                CrewRunAppTile(entry.app, seatOf(entry.app) ?: return@rows, actions, onSheet, entry.kind, volunteer = crew.volunteer != null)
             }
         }
     }

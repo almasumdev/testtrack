@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -83,8 +84,8 @@ internal fun InfoLine(
 ) = InfoLine(AnnotatedString(text), modifier, tone, icon, info?.let(::AnnotatedString), infoTitle, infoLook)
 
 /**
- * A soft tinted bar with an accent [icon] at the start and one line of [text] after it, such as
- * the offer under a section heading. Stays on one line; space around it goes in [modifier].
+ * A soft tinted bar with an accent [icon] at the start and up to two lines of [text] after it, such as
+ * the offer under a section heading. The icon sits level with the first line; space around it goes in [modifier].
  */
 @Composable
 internal fun TintedNote(
@@ -99,15 +100,17 @@ internal fun TintedNote(
             .clip(RoundedCornerShape(10.dp))
             .background(t.glass2)
             .padding(horizontal = 12.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalAlignment = Alignment.Top,
     ) {
-        Icon(icon, null, Modifier.size(16.dp), tint = t.accentInk)
+        // Centred on the first line, whatever the font size.
+        val lineHeight = with(LocalDensity.current) { TextStyles.PageLine.lineHeight.toDp() }
+        Icon(icon, null, Modifier.padding(top = ((lineHeight - 16.dp) / 2).coerceAtLeast(0.dp)).size(16.dp), tint = t.accentInk)
         Spacer(Modifier.width(8.dp))
         Text(
             text,
             style = TextStyles.PageLine,
             color = t.text2,
-            maxLines = 1,
+            maxLines = 2,
             overflow = TextOverflow.Ellipsis,
         )
     }

@@ -13,14 +13,12 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -271,44 +269,40 @@ internal fun InlineAction(
     onClick: () -> Unit,
 ) {
     val dismissKeyboard = rememberDismissKeyboard()
-    // Match the 32dp header mark without reserving blank space. Compose still expands touch bounds.
-    // A dialog's button keeps Material's 48dp target, which its row is laid out around.
-    val touch = if (dialog) LocalMinimumInteractiveComponentSize.current else Dp.Unspecified
-    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides touch) {
-        TextButton(
-            onClick = {
-                dismissKeyboard()
-                onClick()
-            },
-            modifier =
-                modifier
-                    .then(if (fullWidth) Modifier.fillMaxWidth() else Modifier)
-                    .heightIn(min = if (dialog) SmallButtonHeight else 32.dp),
-            enabled = enabled && !busy,
-            shape = if (dialog) RoundedCornerShape(10.dp) else RoundedCornerShape(percent = 50),
-            contentPadding = PaddingValues(horizontal = if (dialog) 10.dp else 8.dp, vertical = 4.dp),
-            colors = ButtonDefaults.textButtonColors(contentColor = color, disabledContentColor = Tt.colors.text4),
-        ) {
-            if (leading != null) {
-                Icon(leading, null, Modifier.size(16.dp))
-                Spacer(Modifier.width(6.dp))
-            }
-            Box(contentAlignment = Alignment.Center) {
-                Text(
-                    label,
-                    Modifier.alpha(if (busy) 0f else 1f),
-                    style = MaterialTheme.typography.labelLarge.copy(fontSize = if (dialog) 14.5.sp else 14.sp),
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                    textDecoration = if (underline) TextDecoration.Underline else null,
-                    maxLines = 2,
-                )
-                if (busy) CircularProgressIndicator(Modifier.size(18.dp), color = color, strokeWidth = 2.dp)
-            }
-            if (trailing != null) {
-                Spacer(Modifier.width(4.dp))
-                Icon(trailing, null, Modifier.size(16.dp))
-            }
+    // The words and fill stay 32 high (40 in a dialog), but the button keeps Material's 48dp touch target.
+    TextButton(
+        onClick = {
+            dismissKeyboard()
+            onClick()
+        },
+        modifier =
+            modifier
+                .then(if (fullWidth) Modifier.fillMaxWidth() else Modifier)
+                .heightIn(min = if (dialog) SmallButtonHeight else 32.dp),
+        enabled = enabled && !busy,
+        shape = if (dialog) RoundedCornerShape(10.dp) else RoundedCornerShape(percent = 50),
+        contentPadding = PaddingValues(horizontal = if (dialog) 10.dp else 8.dp, vertical = 4.dp),
+        colors = ButtonDefaults.textButtonColors(contentColor = color, disabledContentColor = Tt.colors.text4),
+    ) {
+        if (leading != null) {
+            Icon(leading, null, Modifier.size(16.dp))
+            Spacer(Modifier.width(6.dp))
+        }
+        Box(contentAlignment = Alignment.Center) {
+            Text(
+                label,
+                Modifier.alpha(if (busy) 0f else 1f),
+                style = MaterialTheme.typography.labelLarge.copy(fontSize = if (dialog) 14.5.sp else 14.sp),
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                textDecoration = if (underline) TextDecoration.Underline else null,
+                maxLines = 2,
+            )
+            if (busy) CircularProgressIndicator(Modifier.size(18.dp), color = color, strokeWidth = 2.dp)
+        }
+        if (trailing != null) {
+            Spacer(Modifier.width(4.dp))
+            Icon(trailing, null, Modifier.size(16.dp))
         }
     }
 }
