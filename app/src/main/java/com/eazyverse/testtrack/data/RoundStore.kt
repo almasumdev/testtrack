@@ -49,6 +49,13 @@ object RoundStore {
         val pictures: Boolean = false,
         /** When the round began; 0 from a build before it was kept. */
         val startedAt: Long = 0L,
+        /**
+         * The index of the app already counted while it is held on screen, so a restart before the
+         * move on never records it a second time; -1 when none.
+         */
+        val recordedIndex: Int = -1,
+        /** How many counted apps have no picture, which the round's last line says plainly. */
+        val noPicture: Int = 0,
     ) {
         val current: Stop? get() = stops.getOrNull(index)
     }
