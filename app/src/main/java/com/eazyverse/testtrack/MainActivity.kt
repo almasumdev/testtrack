@@ -161,7 +161,9 @@ class MainActivity : ComponentActivity() {
         // App because it reads Session, which is only loaded now.
         AppUpdateService.applyCachedDecision()
         openCrew.value = intent?.getBooleanExtra(EXTRA_OPEN_CREW, false) == true
-        openChat.value = intent?.getStringExtra(EXTRA_OPEN_CHAT)
+        // Only on a fresh start: a rotation or restore must not reopen the chat that was tapped before.
+        if (savedInstanceState == null) openChat.value = intent?.getStringExtra(EXTRA_OPEN_CHAT)
+        intent?.removeExtra(EXTRA_OPEN_CHAT)
         setContent {
             // The theme chosen on the You page, or the phone's own. See [ThemeChoice].
             TestTrackTheme(darkTheme = ThemeChoice.isDark(isSystemInDarkTheme())) {
@@ -289,6 +291,7 @@ class MainActivity : ComponentActivity() {
         setIntent(intent)
         if (intent.getBooleanExtra(EXTRA_OPEN_CREW, false)) openCrew.value = true
         intent.getStringExtra(EXTRA_OPEN_CHAT)?.let { openChat.value = it }
+        intent.removeExtra(EXTRA_OPEN_CHAT)
     }
 
     companion object {
