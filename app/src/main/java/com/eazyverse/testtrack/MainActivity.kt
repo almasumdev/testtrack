@@ -367,7 +367,9 @@ fun AppNav(
                 CheckScreen(
                     feed,
                     requireNotNull(entry.arguments?.getString("id")),
-                    onClose = { nav.popBackStack() },
+                    // Only while this page is the one showing: a second close during its exit
+                    // transition would otherwise pop Home from under it.
+                    onClose = { if (nav.currentBackStackEntry == entry) nav.popBackStack() },
                     onOpen = { nav.push(Routes.check(it)) },
                 )
             }

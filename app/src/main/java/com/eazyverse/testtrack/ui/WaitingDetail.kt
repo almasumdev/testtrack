@@ -37,6 +37,15 @@ fun CheckScreen(
     onOpen: (String) -> Unit = {},
 ) {
     val context = LocalContext.current
+    // The page closes once. Accepting the last review closes it from the decision, and the reload
+    // that then drops that review would close it again while it is still leaving, popping Home too.
+    var closed by remember { mutableStateOf(false) }
+    val closeOnce = {
+        if (!closed) {
+            closed = true
+            onClose()
+        }
+    }
     // The review shown: the one opened, then the next of its app's once one is decided here. Keyed
     // on the id, since opening another of these from this page reuses the page with a new one.
     var current by rememberSaveable(id) { mutableStateOf(id) }
@@ -82,7 +91,7 @@ fun CheckScreen(
         if (review == null && settled != null) return@LaunchedEffect
         val next = queue.firstOrNull { it.id != done }
         if (next == null) {
-            onClose()
+            closeOnce()
         } else {
             doneHere = doneHere + done
             current = next.id
@@ -91,7 +100,7 @@ fun CheckScreen(
     // A review arriving, a vote landing or the case being decided shows on this page as it happens.
     WhileShown(onShow = { feed.startPageLive(context) }, onHide = feed::stopPageLive)
     LaunchedEffect(missing, feed.loadsFinished) {
-        if (missing && feed.loadsFinished > opened && !feed.offline) onClose()
+        if (missing && feed.loadsFinished > opened && !feed.offline) closeOnce()
     }
     Column(Modifier.fillMaxSize()) {
         when {
@@ -100,7 +109,7 @@ fun CheckScreen(
                     review,
                     busy = feed.busy,
                     proof = { ref -> ProofImage(ref, whole = true) },
-                    onBack = onClose,
+                    onBack = closeOnce,
                     onApprove = { feed.approve(context, review) },
                     onReject = { refusing = true },
                     onAskAgain = { askingAgain = true },
@@ -111,7 +120,7 @@ fun CheckScreen(
                     settled.first,
                     busy = feed.busy,
                     proof = { ref -> ProofImage(ref, whole = true) },
-                    onBack = onClose,
+                    onBack = closeOnce,
                     settled = settled.second,
                     onAcceptLater = { acceptingLater = true },
                 )
@@ -120,7 +129,7 @@ fun CheckScreen(
                     request,
                     busy = feed.busy,
                     proof = { ref -> ProofImage(ref, whole = true) },
-                    onBack = onClose,
+                    onBack = closeOnce,
                     onClose = { feed.closeRequest(context, request.id) },
                     onRelist = { feed.relistRequest(context, request.id) },
                     onOpenWaiting = onOpen,
@@ -131,7 +140,7 @@ fun CheckScreen(
                     case,
                     busy = feed.busy,
                     proof = { ref -> ProofImage(ref, whole = true) },
-                    onBack = onClose,
+                    onBack = closeOnce,
                     onVote = { forReviewer ->
                         sending = Voted(case, forReviewer)
                         feed.vote(context, case, forReviewer)
@@ -139,7 +148,7 @@ fun CheckScreen(
                     voted = voted?.forReviewer,
                 )
             feed.offline -> {
-                PageBar("", onClose)
+                PageBar("", closeOnce)
                 RobotState(
                     Prop.Notes,
                     "Couldn't load this",
@@ -149,7 +158,7 @@ fun CheckScreen(
                     soft = true,
                 )
             }
-            else -> CheckSkeleton(onClose)
+            else -> CheckSkeleton(closeOnce)
         }
     }
     if (askingAgain && review != null) {
