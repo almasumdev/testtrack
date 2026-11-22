@@ -3,6 +3,7 @@ package com.eazyverse.testtrack.viewmodel
 import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.viewModelScope
+import com.eazyverse.testtrack.data.AppScope
 import com.eazyverse.testtrack.data.ProofImages
 import com.eazyverse.testtrack.data.ServerUpload
 import com.eazyverse.testtrack.domain.ChatAllowance
@@ -140,7 +141,10 @@ private fun CrewChatViewModel.post(
     context: Context? = null,
 ) {
     val job = pending[id] ?: return
-    viewModelScope.launch {
+    // Not the view model's own scope: leaving the chat must not cancel a send under way. The id is
+    // reused on a retry, so it finishing on its own is safe. The state it writes goes to this view
+    // model, which nobody reads once it is cleared; its poll wake-up is a plain channel send.
+    AppScope.main.launch {
         try {
             var pictureId = job.pictureId
             if (pictureId != null && !job.pictureSent) {
