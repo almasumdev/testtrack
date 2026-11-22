@@ -27,6 +27,7 @@ import com.eazyverse.testtrack.domain.DockScreen
 import com.eazyverse.testtrack.domain.dockAnchor
 import com.eazyverse.testtrack.domain.dockCorner
 import com.eazyverse.testtrack.domain.stickTo
+import com.eazyverse.testtrack.ui.DOCK_MORPH_MS
 import com.eazyverse.testtrack.ui.DockCardGap
 import com.eazyverse.testtrack.ui.DockShadowRoom
 import com.eazyverse.testtrack.ui.DockSizes
@@ -174,6 +175,7 @@ class VisitDockWindow(
 
     fun hide() {
         animator?.cancel()
+        view?.removeCallbacks(settleFallback)
         view?.let { runCatching { windows.removeView(it) } }
         view = null
         owner?.stop()
@@ -230,10 +232,26 @@ class VisitDockWindow(
      */
     private fun beginMorph() {
         val s = sizes ?: return
-        if (view == null || morphing) return
+        if (view == null) return
+        // Whatever the card does, the oversized window is held only for the beat and a moment more.
+        armSettle()
+        if (morphing) return
         morphing = true
         animator?.cancel()
         refit(s)
+    }
+
+    /**
+     * The window is larger than the card (and catches touches the app under it should get) only
+     * while it morphs. [settle] normally ends that when the card's animation finishes; this is the
+     * backstop if that callback never comes, so the window is back to wrapping the card promptly.
+     */
+    private val settleFallback = Runnable { if (morphing) settle() }
+
+    private fun armSettle() {
+        val v = view ?: return
+        v.removeCallbacks(settleFallback)
+        v.postDelayed(settleFallback, DOCK_MORPH_MS + 120L)
     }
 
     private fun refit(s: DockSizes? = sizes) {
@@ -255,8 +273,9 @@ class VisitDockWindow(
         val s = sizes ?: return
         if (view == null || !morphing) return
         morphing = false
+        view?.removeCallbacks(settleFallback)
         animator?.cancel()
-        val w = (if (open) s.openW else s.closedW) + 2 * room.roundToInt()
+        val w =(if (open) s.openW else s.closedW) + 2 * room.roundToInt()
         val h = (if (open) s.openH else s.closedH) + 2 * room.roundToInt()
         params.width = WindowManager.LayoutParams.WRAP_CONTENT
         params.height = WindowManager.LayoutParams.WRAP_CONTENT

@@ -73,10 +73,14 @@ import kotlin.math.roundToInt
  */
 
 /**
- * Transparent room the window keeps around the card so its 10dp shadow (about 10dp down and 10dp of
- * blur, less on the other sides) is not cut off by the window's edge.
+ * Transparent room the window keeps around the card so its shadow is not cut off by the window's
+ * edge. Kept small on purpose: the room is part of the window, and a touch in it is caught by the
+ * control instead of reaching the app underneath. It is enough for [DockCardShadow].
  */
-val DockShadowRoom = 24.dp
+val DockShadowRoom = 12.dp
+
+/** The card's shadow depth: a soft lift whose reach (about this far down, less to the sides) fits in [DockShadowRoom]. */
+val DockCardShadow = 6.dp
 
 /**
  * The gap between the card and the window's edge before the shadow room was added. The window
@@ -119,7 +123,7 @@ data class DockSizes(
 )
 
 /** One calm beat for opening and closing: the card changes size, then the inside fades. */
-private const val DOCK_MORPH_MS = 240
+internal const val DOCK_MORPH_MS = 240
 
 /** The share of the beat the card spends changing size; the rest is the open content's fade. */
 private const val SIZE_END = 0.7f
@@ -226,7 +230,7 @@ private fun DockChrome(morph: State<Float>) {
     val shape = RoundedCornerShape(lerp(24.dp, 22.dp, sizeProgress(morph.value)))
     Box(
         Modifier
-            .shadow(10.dp, shape)
+            .shadow(DockCardShadow, shape)
             .clip(shape)
             .background(t.glass)
             .border(1.dp, t.glassBorder, shape),
