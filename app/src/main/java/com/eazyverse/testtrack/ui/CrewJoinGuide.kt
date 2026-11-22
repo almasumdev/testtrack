@@ -13,6 +13,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eazyverse.testtrack.findActivity
 import com.eazyverse.testtrack.viewmodel.HudViewModel
+import com.eazyverse.testtrack.viewmodel.allowPermissions
+import com.eazyverse.testtrack.viewmodel.permissionsReady
 
 /**
  * What the Open tab's join steps need, read again on every return to TestTrack: the switches are

@@ -1,7 +1,6 @@
 package com.eazyverse.testtrack.viewmodel
 
 import android.content.Context
-import android.content.Intent
 import android.provider.Settings
 import com.eazyverse.testtrack.data.InstalledApps
 import com.eazyverse.testtrack.data.RoundStore
@@ -9,10 +8,6 @@ import com.eazyverse.testtrack.data.UsageRepo
 import com.eazyverse.testtrack.data.VisitCameraService
 import com.eazyverse.testtrack.data.VisitPictures
 import com.eazyverse.testtrack.domain.RoundRules
-import com.eazyverse.testtrack.net.Api
-import com.eazyverse.testtrack.net.ApiError
-import com.eazyverse.testtrack.net.PrivateVisitIn
-import com.eazyverse.testtrack.net.privateVisit
 import com.eazyverse.testtrack.ui.Snack
 import com.eazyverse.testtrack.ui.SnackTone
 import kotlinx.coroutines.CoroutineScope
@@ -24,7 +19,6 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import java.io.File
-import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 
@@ -58,8 +52,8 @@ object NightRound {
     const val VISIT_MS = 20_000L
     const val COUNT_MS = 10_000L
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
-    private var round: RoundStore.Round? = null
+    internal val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    internal var round: RoundStore.Round? = null
     private var window: VisitDockWindow? = null
     private var ticker: Job? = null
 
@@ -71,7 +65,7 @@ object NightRound {
     private var paused = false
 
     /** This app's recording once it is made (counted or refused), so a held app is never recorded twice. */
-    private var recorded: Outcome? = null
+    internal var recorded: Outcome? = null
 
     /** The move to the next app is under way, so the clock and the button do not start another. */
     private var advancing = false
@@ -83,11 +77,11 @@ object NightRound {
     private var stopSay: ((Snack?) -> Unit)? = null
 
     /** This stop's picture is already waiting to be sent, so a late one is not queued twice. */
-    private var pictureQueued = false
+    internal var pictureQueued = false
 
     /** Whether this round takes pictures, and this app's: taken, failed, or not yet. */
-    private var pictures = false
-    private var shot: File? = null
+    internal var pictures = false
+    internal var shot: File? = null
     private var shotFailed = false
     private var shooting: Job? = null
 
@@ -230,41 +224,6 @@ object NightRound {
                 queueLate(context, stop)
                 publish()
             }
-    }
-
-    /** Puts a picture on the send queue for [stop]; one crew visit, one picture. */
-    private fun queuePicture(
-        context: Context,
-        stop: RoundStore.Stop,
-        file: File,
-    ) {
-        if (pictureQueued) return
-        pictureQueued = true
-        VisitPictures.add(context, VisitPictures.Waiting(stop.seatId, stop.label, file.path, day = stop.day))
-        scope.launch { VisitPictures.send(context) }
-    }
-
-    /**
-     * A counted app whose picture came after its recording. Counted apps with no picture were
-     * noted as missing when they were recorded, so this one is taken off that count.
-     */
-    private fun queueLate(
-        context: Context,
-        stop: RoundStore.Stop,
-    ) {
-        val file = shot ?: return
-        if (pictureQueued || recorded != Outcome.Counted || stop.privateTestId.isNotBlank()) return
-        queuePicture(context, stop, file)
-        changeMissing(context, -1)
-    }
-
-    private fun changeMissing(
-        context: Context,
-        by: Int,
-    ) {
-        val now = round ?: return
-        round = now.copy(noPicture = (now.noPicture + by).coerceAtLeast(0))
-        RoundStore.save(context, round)
     }
 
     /** [now] with what the recording changed on the live round: the missing-picture count and the held mark. */
@@ -478,94 +437,6 @@ object NightRound {
         }
     }
 
-    private fun shortLine(
-        stop: RoundStore.Stop,
-        result: Outcome.Short,
-    ) = Snack("${stop.label} was open ${result.ms / 1000}s. It needs ${COUNT_MS / 1000} to count.")
-
-    /** The line for a round that ends after [stop] was recorded: its last word, or how many are left. */
-    private fun endedLine(
-        stop: RoundStore.Stop,
-        moved: RoundStore.Round,
-        result: Outcome,
-    ): Snack {
-        val left = moved.stops.size - moved.index - 1
-        return when {
-            left == 0 -> lastSnack(moved)
-            result is Outcome.Refused -> Snack("${result.message} Open all again for the $left left.")
-            else -> Snack("${stop.label} counted. Open all again for the $left left.")
-        }
-    }
-
-    /** The round's last word: tonight done, or how many were left out and why. A private test is its own app's. */
-    private fun lastSnack(round: RoundStore.Round): Snack {
-        val skipped = round.skipped
-        val only = round.stops.singleOrNull()?.takeIf { it.privateTestId.isNotBlank() }
-        if (only != null && skipped.isEmpty()) return Snack("${only.label} counted for tonight.", SnackTone.DONE)
-        val clean = skipped.isEmpty() && round.noPicture == 0
-        return Snack(roundLastWord(skipped, round.noPicture), if (clean) SnackTone.DONE else SnackTone.INFO)
-    }
-
-    /** A crew app's visit is dated by its night, so a round that has crossed midnight must not go on. */
-    private fun newNightFor(
-        stop: RoundStore.Stop,
-        startedAt: Long,
-    ) = stop.privateTestId.isBlank() && isNewNight(startedAt)
-
-    private sealed interface Outcome {
-        data object Counted : Outcome
-
-        data class Short(
-            val ms: Long,
-        ) : Outcome
-
-        data class Failed(
-            val message: String,
-        ) : Outcome
-
-        /** The server will not count this app's open as it is: skipped, and the round goes on. */
-        data class Refused(
-            val message: String,
-        ) : Outcome
-    }
-
-    private suspend fun record(
-        context: Context,
-        stop: RoundStore.Stop,
-        since: Long,
-        taken: File? = null,
-    ): Outcome {
-        // The visit is dated by the night it is recorded on, and the stop's picture by the night
-        // the round began: across midnight the two differ, so nothing is recorded.
-        if (newNightFor(stop, round?.startedAt ?: 0L)) return Outcome.Failed(NEW_NIGHT_LINE)
-        val used = UsageRepo.measure(context, stop.packageName, since, needMs = COUNT_MS, source = "crew")
-        if (used < COUNT_MS) return Outcome.Short(used)
-        return try {
-            // Which copy was opened: a copy Play did not put here, or one older than the owner's
-            // newest past its 24 hours, is refused with what to do.
-            val copy = InstalledApps.info(context, stop.packageName)
-            // A private test counts on its own ask, from the seconds and the copy, and nothing else.
-            if (stop.privateTestId.isNotBlank()) {
-                Api.privateVisit(stop.privateTestId, PrivateVisitIn(used, copy.installer.orEmpty()))
-                return Outcome.Counted
-            }
-            Api.visit(stop.seatId, used, versionCode = copy.versionCode.takeIf { copy.installed }, installer = copy.installer.orEmpty())
-            // The visit first, then its picture, in the background: the next app does not wait.
-            if (taken != null) {
-                queuePicture(context, stop, taken)
-            } else if (pictures) {
-                // Counted without a picture: said plainly in the round's last line. A picture that
-                // still comes while the app is held ([queueLate]) takes it off again.
-                changeMissing(context, 1)
-            }
-            Outcome.Counted
-        } catch (e: ApiError) {
-            if (RoundRules.refusedOpen(e.status, e.isAuth)) Outcome.Refused(e.message) else Outcome.Failed(e.message)
-        } catch (_: Exception) {
-            Outcome.Failed("We could not reach TestTrack. Check your connection.")
-        }
-    }
-
     private fun end(
         context: Context,
         camera: Boolean = true,
@@ -581,41 +452,4 @@ object NightRound {
         if (camera && pictures) VisitCameraService.stop(context)
         if (camera) pictures = false
     }
-
-    /** TestTrack to the front, on the Crew tab, once a floating round is over. */
-    private fun bringBack(context: Context) {
-        val intent =
-            context.packageManager.getLaunchIntentForPackage(context.packageName)?.apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
-                putExtra("openCrew", true)
-            } ?: return
-        runCatching { context.startActivity(intent) }
-    }
-}
-
-/** Said when a round is found to have crossed midnight: its stops belong to the night it began. */
-internal const val NEW_NIGHT_LINE = "It's a new night. Open the round again."
-
-/**
- * Whether the phone's local date has changed since the round began, so a visit would be dated a
- * different night from the one its stop was set up for. 0 (a round from a build that did not keep
- * its start) is never a new night.
- */
-internal fun isNewNight(
-    startedAt: Long,
-    nowMs: Long = System.currentTimeMillis(),
-    zone: ZoneId = ZoneId.systemDefault(),
-): Boolean =
-    startedAt > 0 &&
-        Instant.ofEpochMilli(startedAt).atZone(zone).toLocalDate() != Instant.ofEpochMilli(nowMs).atZone(zone).toLocalDate()
-
-/** The round's last line: tonight done, how many were left out, and how many counted apps have no picture. */
-internal fun roundLastWord(
-    skipped: List<String>,
-    noPicture: Int = 0,
-): String {
-    if (noPicture <= 0) return RoundRules.lastWord(skipped)
-    val missing =
-        if (noPicture == 1) "1 picture is missing. Add it from the Crew page." else "$noPicture pictures are missing. Add them from the Crew page."
-    return if (skipped.isEmpty()) "Counted, but $missing" else "${skipped.size} left. ${skipped.first()} $missing"
 }

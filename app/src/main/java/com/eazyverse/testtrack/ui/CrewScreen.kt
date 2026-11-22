@@ -99,7 +99,9 @@ fun CrewScreen(
                             if (it) CrewRunLoading() else CrewRunTab(vm, onSignIn, actions, onOpenCrew, onOpenChat, privateRun)
                         }
                     CrewPhase.LOBBY ->
-                        LoadSwap(vm.firstLoad) { if (it) CrewLobbyLoading() else CrewLobbyTab(vm, onSignIn, actions, onOpenCrew, onOpenChat) }
+                        LoadSwap(
+                            vm.firstLoad,
+                        ) { if (it) CrewLobbyLoading() else CrewLobbyTab(vm, onSignIn, actions, onOpenCrew, onOpenChat) }
                     CrewPhase.RECORD ->
                         LoadSwap(vm.firstLoad) { if (it) CrewRecordLoading() else CrewRecordTab(vm, onSignIn, onOpenCrew) }
                     CrewPhase.OPEN -> CrewOpenTab(vm, actions, rememberCrewGuide(vm, myApps, onSignIn, onAddApp, onOpenCircle), volunteers)

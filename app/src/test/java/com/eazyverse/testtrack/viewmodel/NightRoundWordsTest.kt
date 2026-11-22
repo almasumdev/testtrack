@@ -16,7 +16,11 @@ class NightRoundWordsTest {
         day: Int,
         hour: Int,
         minute: Int = 0,
-    ) = LocalDateTime.of(2026, 11, day, hour, minute).atZone(zone).toInstant().toEpochMilli()
+    ) = LocalDateTime
+        .of(2026, 11, day, hour, minute)
+        .atZone(zone)
+        .toInstant()
+        .toEpochMilli()
 
     @Test
     fun same_local_date_is_the_same_night() {
@@ -46,7 +50,10 @@ class NightRoundWordsTest {
 
     @Test
     fun last_word_keeps_the_skipped_line_and_adds_missing_pictures() {
-        assertEquals("1 left. Update it first. 2 pictures are missing. Add them from the Crew page.", roundLastWord(listOf("Update it first."), 2))
+        assertEquals(
+            "1 left. Update it first. 2 pictures are missing. Add them from the Crew page.",
+            roundLastWord(listOf("Update it first."), 2),
+        )
     }
 
     @Test

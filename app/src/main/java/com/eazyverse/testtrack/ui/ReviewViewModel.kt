@@ -16,13 +16,13 @@ import com.eazyverse.testtrack.data.ProofStore
 import com.eazyverse.testtrack.data.ReviewCaptureService
 import com.eazyverse.testtrack.data.ReviewClock
 import com.eazyverse.testtrack.data.ReviewKeep
-import com.eazyverse.testtrack.data.UsageRepo
 import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiError
 import com.eazyverse.testtrack.net.ApiPost
 import com.eazyverse.testtrack.viewmodel.LiveReload
 import com.eazyverse.testtrack.viewmodel.ProofGate
 import com.eazyverse.testtrack.viewmodel.keepEdited
+import com.eazyverse.testtrack.viewmodel.look
 import com.eazyverse.testtrack.viewmodel.replyWithPicture
 import com.eazyverse.testtrack.viewmodel.requirePlayInstall
 import com.eazyverse.testtrack.viewmodel.sendProof
@@ -54,7 +54,7 @@ class ReviewViewModel : ViewModel() {
      * (see [ReviewKeep]) and says it is offline, rather than an error over a page that still works.
      */
     var offline by mutableStateOf(false)
-        private set
+        internal set
 
     /** Why there is nothing to show at all: no saved review and no way to fetch one. */
     var failure by mutableStateOf<String?>(null)
@@ -65,7 +65,7 @@ class ReviewViewModel : ViewModel() {
      * at sign-up, and read again on every return so switching it on moves the page straight on.
      */
     var usageAccess by mutableStateOf(true)
-        private set
+        internal set
 
     /**
      * The screenshot for step four, however it came, kept on the phone until it is sent. See
@@ -165,7 +165,7 @@ class ReviewViewModel : ViewModel() {
 
     /** True once the package is present but Play did not put it there. */
     var sideloaded by mutableStateOf(false)
-        private set
+        internal set
 
     /** Take the post on, or pick up wherever this account already was on it. */
     fun start(
@@ -316,41 +316,6 @@ class ReviewViewModel : ViewModel() {
         }
     }
 
-    /** Report fresh phone observations. [settle] waits for Android to finish writing usage events. */
-    private suspend fun look(
-        context: Context,
-        current: ReviewJob,
-        settle: Boolean,
-    ): ReviewJob {
-        if (current.settled) return current
-        usageAccess = UsageRepo.hasAccess(context)
-        val info = InstalledApps.info(context, current.post.packageName)
-
-        sideloaded = info.installed && !info.fromPlay
-        if (current.review.id.isEmpty()) return current.copy(onPhone = info.fromPlay)
-        if (!info.fromPlay) return current.copy(requiresPlayInstall = true, onPhone = false)
-
-        var review = current.review
-        if (review.state == CLAIMED) {
-            review = Api.installed(review.id)
-            offline = false
-        }
-        if (review.state == INSTALLED || review.state == USED) {
-            val use = ReviewClock.measure(context, current.post.packageName, review.id, review.createdAt, review.neededMs, settle)
-            if (!InstalledApps.info(context, current.post.packageName).fromPlay) {
-                return current.copy(review = review, requiresPlayInstall = true)
-            }
-            // A new day of use is news even when the total has not moved since the last report, and
-            // so is a live review's hours passing: the server opens its last step on being asked.
-            val due = review.state == INSTALLED && review.returnsAt?.let(::isPast) == true
-            if (use.ms > review.usedMs || use.days > review.daysUsed || due) {
-                review = Api.used(review.id, maxOf(use.ms, review.usedMs).coerceAtMost(MAX_USED_MS), use.days)
-                offline = false
-            }
-        }
-        return current.copy(review = review, requiresPlayInstall = false)
-    }
-
     /** On to the proof: the reviewer has been to Google Play for it, or will screenshot it themselves. */
     fun markLeft() {
         if (!requirePlayInstall(app ?: return)) return
@@ -488,14 +453,7 @@ class ReviewViewModel : ViewModel() {
         /** The offline snack's key, taken away once a send goes or the page closes. */
         const val OFFLINE = "review-offline"
 
-        const val CLAIMED = "claimed"
-        const val INSTALLED = "installed"
-        const val USED = "used"
-
         /** Given up or run out: over, whatever the phone kept of it. */
         val ENDED = setOf("abandoned", "expired")
-
-        /** The most the server takes in one report: a day. A lost pause event can read more. */
-        const val MAX_USED_MS = 86_400_000L
     }
 }

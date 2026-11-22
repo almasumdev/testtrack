@@ -327,7 +327,14 @@ fun CrewRunPhase(
         if (apps.isNotEmpty()) {
             item { CrewHeading("Apps", "${apps.size}") }
             rows("app", apps, { it.app.id }) { entry ->
-                CrewRunAppTile(entry.app, seatOf(entry.app) ?: return@rows, actions, onSheet, entry.kind, volunteer = crew.volunteer != null)
+                CrewRunAppTile(
+                    entry.app,
+                    seatOf(entry.app) ?: return@rows,
+                    actions,
+                    onSheet,
+                    entry.kind,
+                    volunteer = crew.volunteer != null,
+                )
             }
         }
     }

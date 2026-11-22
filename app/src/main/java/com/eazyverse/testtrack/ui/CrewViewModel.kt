@@ -2,23 +2,18 @@ package com.eazyverse.testtrack.ui
 
 import android.app.Activity
 import android.content.Context
-import android.content.Intent
-import android.net.Uri
-import android.provider.Settings
 import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.eazyverse.testtrack.data.Device
 import com.eazyverse.testtrack.data.InstalledApps
 import com.eazyverse.testtrack.data.RoundStore
 import com.eazyverse.testtrack.data.UsageRepo
 import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiAuth
 import com.eazyverse.testtrack.net.ApiError
-import com.eazyverse.testtrack.net.SeatIn
 import com.eazyverse.testtrack.viewmodel.CrewRecords
 import com.eazyverse.testtrack.viewmodel.LiveReload
 import com.eazyverse.testtrack.viewmodel.NightPictures
@@ -26,7 +21,6 @@ import com.eazyverse.testtrack.viewmodel.NightRound
 import com.eazyverse.testtrack.viewmodel.ReviewMoment
 import com.eazyverse.testtrack.viewmodel.UninstallRun
 import kotlinx.coroutines.launch
-import java.util.TimeZone
 
 /**
  * The crew tab, against the API.
@@ -55,11 +49,11 @@ class CrewViewModel : ViewModel() {
 
     /** A seat is being taken: the server is looking the app up on Play, which takes a while. */
     var seating by mutableStateOf(false)
-        private set
+        internal set
 
     /** Why the last seat was not taken, said inside the dialog that asked. */
     var seatError by mutableStateOf<String?>(null)
-        private set
+        internal set
 
     fun clearSeatError() {
         seatError = null
@@ -67,11 +61,11 @@ class CrewViewModel : ViewModel() {
 
     /** Which tab is showing. */
     var tab by mutableStateOf(CrewPhase.OPEN)
-        private set
+        internal set
 
     /** Which crew's own page is showing, or null for the tab itself. */
     var opened by mutableStateOf<String?>(null)
-        private set
+        internal set
 
     /** The Record tab's kept records, read with every load, and the two answers they ask. */
     val records = CrewRecords(viewModelScope)
@@ -264,64 +258,6 @@ class CrewViewModel : ViewModel() {
     }
 
     /**
-     * Take a seat with an app of your own.
-     *
-     * The crew is not named. The server checks the app on Play for the testers group and puts it
-     * into whichever crew is nearest to starting; a client that picks its own crew is a client
-     * picking which fourteen people test its app. [onRefused] gets a refusal's code and details.
-     */
-    fun takeSeat(
-        context: Context,
-        packageName: String,
-        appName: String,
-        notes: String,
-        appId: String? = null,
-        onRefused: (ApiError) -> Unit = {},
-        onDone: () -> Unit,
-    ) {
-        val fingerprint = Device.fingerprint(context)
-        if (fingerprint == null) {
-            seatError = "This phone will not identify itself, so it cannot hold a seat."
-            return
-        }
-        if (seating) return
-        seating = true
-        seatError = null
-        viewModelScope.launch {
-            try {
-                val seat =
-                    Api.takeSeat(
-                        SeatIn(
-                            appName = appName,
-                            packageName = packageName,
-                            notes = notes,
-                            deviceFp = fingerprint,
-                            timezone = TimeZone.getDefault().id,
-                            appId = appId,
-                            confirmBoxes = true,
-                        ),
-                    )
-                if (seat.state == "confirmed") {
-                    say("${seat.appName} is in. Play shows it to the testers group.", SnackTone.DONE)
-                } else {
-                    say("${seat.appName} is waiting. We couldn't reach Play just now and will check again shortly.")
-                }
-                opened = null
-                tab = CrewPhase.LOBBY
-                onDone()
-                load(context)
-                MyAppsChanged.tell()
-            } catch (e: ApiError) {
-                seatError = e.message.also { onRefused(e) }
-            } catch (_: Exception) {
-                seatError = "We could not reach TestTrack. Check your connection."
-            } finally {
-                seating = false
-            }
-        }
-    }
-
-    /**
      * Tonight's open: go to the app, stay a moment, come back.
      *
      * The whole obligation is opening somebody's app, so this launches it, through the round:
@@ -392,24 +328,6 @@ class CrewViewModel : ViewModel() {
             return
         }
         pictures.ask(stops, float = true, context)
-    }
-
-    /** Both switches a round needs: usage access for the proof, drawing over apps for the timer. */
-    fun permissionsReady(context: Context) = UsageRepo.hasAccess(context) && NightRound.canFloat(context)
-
-    /** The guide's Allow: whichever of the two is still off, usage access first. */
-    fun allowPermissions(activity: Activity) {
-        if (!UsageRepo.hasAccess(activity)) UsageRepo.openSettings(activity) else allowOverlay(activity)
-    }
-
-    /** "Allow": to Android's switch; the round starts when TestTrack is back in front. */
-    fun allowOverlay(context: Context) {
-        runCatching {
-            context.startActivity(
-                Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:${context.packageName}"))
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-            )
-        }
     }
 
     /** "Not now": the round runs without the control, coming back to TestTrack between apps. */

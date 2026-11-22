@@ -275,7 +275,7 @@ class VisitDockWindow(
         morphing = false
         view?.removeCallbacks(settleFallback)
         animator?.cancel()
-        val w =(if (open) s.openW else s.closedW) + 2 * room.roundToInt()
+        val w = (if (open) s.openW else s.closedW) + 2 * room.roundToInt()
         val h = (if (open) s.openH else s.closedH) + 2 * room.roundToInt()
         params.width = WindowManager.LayoutParams.WRAP_CONTENT
         params.height = WindowManager.LayoutParams.WRAP_CONTENT

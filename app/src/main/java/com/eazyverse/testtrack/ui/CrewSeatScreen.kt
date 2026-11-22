@@ -31,6 +31,7 @@ import com.eazyverse.testtrack.findActivity
 import com.eazyverse.testtrack.viewmodel.AppAction
 import com.eazyverse.testtrack.viewmodel.AppsViewModel
 import com.eazyverse.testtrack.viewmodel.CrewAddViewModel
+import com.eazyverse.testtrack.viewmodel.takeSeat
 
 /**
  * Taking a seat, on one page with everything open: the app picked in [CrewSeatSheet], the testers

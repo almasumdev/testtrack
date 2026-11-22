@@ -28,6 +28,7 @@ import com.eazyverse.testtrack.findActivity
 import com.eazyverse.testtrack.viewmodel.AppsViewModel
 import com.eazyverse.testtrack.viewmodel.PrivateTestsViewModel
 import com.eazyverse.testtrack.viewmodel.UninstallPhone
+import com.eazyverse.testtrack.viewmodel.allowOverlay
 import com.eazyverse.testtrack.viewmodel.leave
 import com.eazyverse.testtrack.viewmodel.leaveVolunteer
 import com.eazyverse.testtrack.viewmodel.privateCountsLine
