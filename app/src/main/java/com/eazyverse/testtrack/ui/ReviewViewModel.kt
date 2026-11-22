@@ -378,6 +378,8 @@ class ReviewViewModel : ViewModel() {
         run(waits = true, onOffline = {
             Snacks.show(Snack("You're offline. Your screenshot and note are saved.", SnackTone.OFFLINE, sticky = true, key = OFFLINE))
         }) {
+            // A second tap queued behind the first one: by now the review is sent or another one is open.
+            if (job?.review?.id != id || job?.settled != false) return@run
             if (!requirePlayInstall(activity)) return@run
             // The picture is the one kept at this moment, read inside the gate: never one a
             // version with details hidden is still replacing, whatever the page showed.

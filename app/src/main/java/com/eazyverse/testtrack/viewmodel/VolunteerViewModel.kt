@@ -143,7 +143,9 @@ class VolunteerViewModel : ViewModel() {
         onDone: (String) -> Unit,
     ) {
         if (joining) return
-        val fingerprint = Device.fingerprint(context)
+        // The retry outlives this call, so it must not hold an Activity.
+        val app = context.applicationContext
+        val fingerprint = Device.fingerprint(app)
         if (fingerprint == null) {
             Snacks.error("This phone won't identify itself, so it can't volunteer.")
             return
@@ -161,7 +163,7 @@ class VolunteerViewModel : ViewModel() {
                 Snacks.error(e.message)
                 load()
             } catch (_: Exception) {
-                Snacks.error("Couldn't reach TestTrack. Check your connection.") { join(context, spot, onDone) }
+                Snacks.error("Couldn't reach TestTrack. Check your connection.") { join(app, spot, onDone) }
             } finally {
                 joining = false
             }

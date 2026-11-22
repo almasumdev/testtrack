@@ -449,7 +449,10 @@ class CrewViewModel : ViewModel() {
         onDone: (T) -> Unit = {},
         block: suspend () -> T,
     ) {
-        if (acting != null) return
+        if (acting != null) {
+            Snacks.info("Still sending. Try again in a moment.")
+            return
+        }
         acting = seat
         viewModelScope.launch {
             try {

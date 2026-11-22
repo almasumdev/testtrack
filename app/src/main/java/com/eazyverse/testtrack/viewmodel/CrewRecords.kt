@@ -132,9 +132,15 @@ class CrewRecords(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Snacks.error(COULD_NOT_SEND) { act(crewId, what, block) }
-                // Answered or claimed already, maybe from another phone: show what the server has.
-                if (e is ApiError && e.status == 409) load(signedOut = false)
+                if (e is ApiError && e.status == 409) {
+                    // Answered or claimed already, maybe from another phone: say so, with no retry, and
+                    // show what the server has, in the list and in the record that is open.
+                    Snacks.error(e.message)
+                    load(signedOut = false)
+                    if (crewId in opened) loadOne(crewId)
+                } else {
+                    Snacks.error(COULD_NOT_SEND) { act(crewId, what, block) }
+                }
             } finally {
                 busy = busy - crewId
             }
