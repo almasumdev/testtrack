@@ -271,15 +271,13 @@ internal fun CrewHero(
 
 /**
  * Words members wrote, quoted, in an edged block; who wrote them is never shown. A [title] leads
- * in the tone's colour, [labels] say when above each line (labels[i] for lines[i], blank draws
- * nothing), and [more] sits between the lines and the footer.
+ * in the tone's colour, and [more] sits between the lines and the footer.
  */
 @Composable
 internal fun Quotes(
     lines: List<String>,
     footer: String,
     tone: Tone = Tone.WARN,
-    labels: List<String> = emptyList(),
     title: String = "",
     more: (@Composable () -> Unit)? = null,
 ) {
@@ -295,12 +293,8 @@ internal fun Quotes(
         if (title.isNotBlank()) {
             Text(title, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold, color = tone.ink())
         }
-        lines.forEachIndexed { i, line ->
-            Column {
-                val label = labels.getOrNull(i).orEmpty()
-                if (label.isNotBlank()) Text(label, style = MaterialTheme.typography.labelSmall, color = Tt.colors.text4)
-                Text("“$line”", style = MaterialTheme.typography.bodyMedium, color = Tt.colors.text2)
-            }
+        lines.forEach { line ->
+            Text("“$line”", style = MaterialTheme.typography.bodyMedium, color = Tt.colors.text2)
         }
         more?.invoke()
         if (footer.isNotBlank()) Text(footer, style = MaterialTheme.typography.bodySmall, color = Tt.colors.text4)

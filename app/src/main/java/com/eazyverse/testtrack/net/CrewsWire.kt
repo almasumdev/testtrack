@@ -120,12 +120,10 @@ data class ReportIn(
     val reason: String,
 )
 
-/** One report on an app: what it said, the night it was filed (0 = before the run) and the day. */
+/** One report on an app: only what it said. Any night or day an older server sends is ignored. */
 @Serializable
 data class ApiSeatReport(
     val reason: String,
-    val night: Int? = null,
-    val on: String = "",
 )
 
 @Serializable

@@ -136,11 +136,9 @@ object CrewRules {
     fun nightly(crews: Int) = crews * NIGHTLY
 }
 
-/** One report: what it said, its night (0 is before the run, null is not known) and its day ("2026-11-21"). */
+/** One report: what it said. When it was filed is never kept, so it cannot point at a tester. */
 data class SeatReport(
     val reason: String,
-    val night: Int? = null,
-    val on: String = "",
 )
 
 /**
@@ -190,7 +188,7 @@ data class CrewSeat(
     val canAppeal: Boolean = true,
     val appealBlocked: String = "",
 ) {
-    /** Reports newest first: [reportNotes], or from an older server [reasons] reversed with no night or day. */
+    /** Reports newest first: [reportNotes], or from an older server [reasons] reversed. */
     val reportList: List<SeatReport>
         get() = reportNotes.ifEmpty { reasons.reversed().map { SeatReport(it) } }
 }

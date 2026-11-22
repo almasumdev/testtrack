@@ -258,7 +258,7 @@ private fun SentBack(
             headline = if (byTeam) "The TestTrack team took your app out" else "Your app came back",
             line = mine.outReason.ifBlank { if (byTeam) "It is not in ${crew.name} any more." else "It came back to you before the run." },
             extra = {
-                SeatReports(mine, "What members wrote. Who wrote it isn't shown.", Tone.BAD, dateOnly = true)
+                SeatReports(mine, "What members wrote. Who wrote it isn't shown.", Tone.BAD)
             },
             action = if (byTeam) "Put it in a crew again" else "Fix it, then put it in again",
             onAction = actions.onTakeSeat,

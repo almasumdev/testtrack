@@ -2,10 +2,11 @@ package com.eazyverse.testtrack.ui
 
 import com.eazyverse.testtrack.net.ApiSeat
 import com.eazyverse.testtrack.net.ApiSeatReport
+import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-/** What an owner sees of their reports: the wire's notes, the old server's bare reasons, and the date labels. */
+/** What an owner sees of their reports: the wire's notes (reasons only) and the old server's bare reasons. */
 class SeatReportsTest {
     private fun apiSeat(
         reasons: List<String> = emptyList(),
@@ -28,9 +29,9 @@ class SeatReportsTest {
         val seat =
             apiSeat(
                 reasons = listOf("a", "b"),
-                notes = listOf(ApiSeatReport("b", 3, "2026-11-21"), ApiSeatReport("a", 0, "2026-11-18")),
+                notes = listOf(ApiSeatReport("b"), ApiSeatReport("a")),
             ).toSeat()
-        assertEquals(listOf(SeatReport("b", 3, "2026-11-21"), SeatReport("a", 0, "2026-11-18")), seat.reportNotes)
+        assertEquals(listOf(SeatReport("b"), SeatReport("a")), seat.reportNotes)
         assertEquals(seat.reportNotes, seat.reportList)
     }
 
@@ -41,16 +42,9 @@ class SeatReportsTest {
     }
 
     @Test
-    fun reportWhen_says_night_and_day() {
-        assertEquals("Night 3, Nov 21", reportWhen(SeatReport("x", 3, "2026-11-21")))
-        assertEquals("Before the run, Nov 18", reportWhen(SeatReport("x", 0, "2026-11-18")))
-        assertEquals("Nov 2", reportWhen(SeatReport("x", null, "2026-11-02")))
-    }
-
-    @Test
-    fun reportWhen_date_only_and_missing_date() {
-        assertEquals("Nov 18", reportWhen(SeatReport("x", 0, "2026-11-18"), dateOnly = true))
-        assertEquals("Night 3", reportWhen(SeatReport("x", 3, "soon")))
-        assertEquals("", reportWhen(SeatReport("x")))
+    fun a_note_with_a_night_and_day_still_reads_but_only_the_reason_is_kept() {
+        val json = Json { ignoreUnknownKeys = true }
+        val note = json.decodeFromString<ApiSeatReport>("""{"reason":"x","night":3,"on":"2026-11-21"}""")
+        assertEquals(ApiSeatReport("x"), note)
     }
 }

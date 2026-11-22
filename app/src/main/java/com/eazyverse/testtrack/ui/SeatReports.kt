@@ -12,36 +12,15 @@ import com.composables.icons.lucide.ChevronDown
 import com.composables.icons.lucide.ChevronUp
 import com.composables.icons.lucide.Lucide
 import com.eazyverse.testtrack.domain.pluralOf
-import com.eazyverse.testtrack.domain.shortDate
-import java.time.LocalDate
 
 /** How many reports show before "Show all". */
 private const val REPORTS_SHOWN = 3
 
 /**
- * When a report was filed: "Night 3, Nov 21", "Before the run, Nov 18", or just "Nov 2" when its
- * night is not known. The day is dropped when [SeatReport.on] is not a date. [dateOnly] says only
- * the day, for reports that are all from before the run.
- */
-internal fun reportWhen(
-    r: SeatReport,
-    dateOnly: Boolean = false,
-): String {
-    val date = runCatching { LocalDate.parse(r.on) }.getOrNull()?.let(::shortDate)
-    if (dateOnly && date != null) return date
-    val night =
-        when {
-            r.night == null -> null
-            r.night == 0 -> "Before the run"
-            else -> "Night ${r.night}"
-        }
-    return listOfNotNull(night, date).joinToString(", ")
-}
-
-/**
  * What members wrote about the reader's own app, newest first: the latest three, then "Show all N"
- * that opens the rest in place. Draws nothing without reports. [title] adds the count over the
- * lines, for places that do not already show it; [dateOnly] is for reports from before the run.
+ * that opens the rest in place. Draws nothing without reports. Only the reasons show, never the
+ * night or day, so a reason cannot be matched to a tester on the grid. [title] adds the count over
+ * the lines, for places that do not already show it.
  */
 @Composable
 internal fun SeatReports(
@@ -49,7 +28,6 @@ internal fun SeatReports(
     footer: String,
     tone: Tone = Tone.WARN,
     title: Boolean = false,
-    dateOnly: Boolean = false,
 ) {
     val all = seat.reportList
     if (all.isEmpty()) return
@@ -59,7 +37,6 @@ internal fun SeatReports(
         lines = shown.map { it.reason },
         footer = footer,
         tone = tone,
-        labels = shown.map { reportWhen(it, dateOnly) },
         title = if (title) "${all.size} ${pluralOf(all.size, "report")}" else "",
         more =
             if (all.size > REPORTS_SHOWN) {

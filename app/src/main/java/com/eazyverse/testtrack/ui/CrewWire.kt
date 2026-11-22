@@ -55,7 +55,7 @@ fun ApiSeat.toSeat(crewName: String = "") =
         reports = reports,
         reported = reported,
         reasons = reasons,
-        reportNotes = reportNotes.map { SeatReport(it.reason, it.night, it.on) },
+        reportNotes = reportNotes.map { SeatReport(it.reason) },
         outReason = outReason,
         yes = yes,
         no = no,
