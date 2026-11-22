@@ -89,16 +89,18 @@ private fun keepPicture(
     return File(dir, "$pictureId.jpg").apply { writeBytes(jpeg) }
 }
 
-/** The bytes of a picture waiting to go: an edited one as it was kept, anything else made ready again. */
+/**
+ * The bytes of a picture waiting to go: an edited one as it was kept, anything else made ready
+ * again. A kept file over the server's cap is drawn again under it, since a 413 is final.
+ */
 private fun pictureBytes(
     context: Context,
     uri: Uri,
-): ByteArray =
-    if (uri.scheme == "file") {
-        File(requireNotNull(uri.path)).readBytes()
-    } else {
-        ProofImages.bytes(context, uri, ProofImages.CREW_MAX_BYTES)
-    }
+): ByteArray {
+    if (uri.scheme != "file") return ProofImages.bytes(context, uri, ProofImages.CREW_MAX_BYTES)
+    val kept = File(requireNotNull(uri.path)).readBytes()
+    return if (kept.size <= ProofImages.CREW_MAX_BYTES) kept else ProofImages.bytes(context, uri, ProofImages.CREW_MAX_BYTES)
+}
 
 /** A failed line, tried again under its own id. */
 fun CrewChatViewModel.retry(
