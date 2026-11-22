@@ -25,12 +25,15 @@ import kotlinx.coroutines.launch
 class UninstallPhone(
     val installed: (String) -> Boolean,
     val ask: (String) -> Boolean,
+    /** Re-reads what the rows read from the cache, so the card's count follows a removal. */
+    val refresh: () -> Unit = {},
 ) {
     companion object {
         fun of(context: Context) =
             UninstallPhone(
                 installed = { InstalledApps.info(context, it).installed },
                 ask = { uninstall(context, it) },
+                refresh = { InstalledApps.refresh(context) },
             )
     }
 }
@@ -65,6 +68,9 @@ class UninstallRun(
         crewId: String,
         left: List<String>,
     ) {
+        // A second tap while a confirm is up or a tick is showing must not open another.
+        val now = state
+        if (now?.crewId == crewId && (now.step == UninstallStep.ASKING || now.step == UninstallStep.TICK)) return
         val earlier = state?.takeIf { it.crewId == crewId }?.removed.orEmpty()
         val run = beginUninstall(crewId, left, earlier) ?: return
         state = run
@@ -78,9 +84,14 @@ class UninstallRun(
     }
 
     /** The page is in front again: read what the confirm came to, or carry on with a waiting run. */
-    fun onResume(phone: UninstallPhone) {
+    fun onResume(
+        phone: UninstallPhone,
+        crewId: String?,
+    ) {
         inFront = true
         val run = state ?: return
+        // Only the page of the crew the run is for acts on it; any other page just notes it is in front.
+        if (run.crewId != crewId) return
         when {
             run.step == UninstallStep.ASKING && sawPause -> read(phone, run)
             run.step == UninstallStep.WAIT -> next(phone)
@@ -135,11 +146,12 @@ class UninstallRun(
                     tries++
                 }
                 state = state?.settled(pkg, gone)
+                phone.refresh()
             }
     }
 
     private companion object {
-        const val RECHECKS = 3
-        const val RECHECK_MS = 350L
+        const val RECHECKS = 8
+        const val RECHECK_MS = 400L
     }
 }

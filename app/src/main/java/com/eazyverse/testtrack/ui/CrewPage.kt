@@ -86,7 +86,7 @@ fun CrewPage(
             onBack()
         }
     }
-    CrewLifecycle(vm)
+    CrewLifecycle(vm, id)
     // A finished crew's page draws its own record, read on its own for the testers it carries.
     val finished = crew?.phase == CrewPhase.RECORD
     LaunchedEffect(id, finished) { if (finished) vm.records.loadOne(id) }
@@ -281,7 +281,10 @@ internal fun crewActions(
  * measured and recorded, and where the crew's own news starts being listened to again.
  */
 @Composable
-internal fun CrewLifecycle(vm: CrewViewModel) {
+internal fun CrewLifecycle(
+    vm: CrewViewModel,
+    crewId: String? = null,
+) {
     val context = LocalContext.current
     val owner = LocalLifecycleOwner.current
     val phone = remember(context) { UninstallPhone.of(context) }
@@ -293,7 +296,7 @@ internal fun CrewLifecycle(vm: CrewViewModel) {
                         // Back from Play, an app may be on the phone now: its row moves to Open.
                         vm.refreshInstalled(context)
                         // Back from Android's uninstall confirm: read what it came to, fresh.
-                        vm.uninstall.onResume(phone)
+                        vm.uninstall.onResume(phone, crewId)
                         vm.settle(context)
                         vm.startLive(context)
                     }
