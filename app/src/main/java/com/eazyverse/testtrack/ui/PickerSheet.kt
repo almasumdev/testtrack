@@ -37,10 +37,13 @@ import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -118,16 +121,21 @@ internal fun PickerSheet(
             confirmValueChange = { it != SheetValue.Hidden || canDismiss },
         )
     val scope = rememberCoroutineScope()
+    var closing by remember { mutableStateOf(false) }
     val close: (() -> Unit) -> Unit = { next ->
         // A locked sheet is not closed from inside either: a button that is still on screen from
         // the state before the lock must not remove it. And what follows runs only once the sheet
         // really is hidden, since the hide can be refused after the check.
-        if (canDismiss) {
+        // A second tap while it hides must not run the dismiss and what follows again.
+        if (canDismiss && !closing) {
+            closing = true
             scope.launch {
                 state.hide()
                 if (!state.isVisible) {
                     onDismiss()
                     next()
+                } else {
+                    closing = false
                 }
             }
         }
@@ -183,6 +191,13 @@ internal fun PickerSheet(
         // The sheet's own back handling is switched off above while locked; this swallows the press
         // so it cannot fall through to the screen underneath either.
         BackHandler(enabled = !dismissible) {}
+        // This sheet is a window over the root snack host, so it draws the snacks itself while it
+        // is open. Its level says which of several open sheets is the one on top.
+        val snackLevel = remember { SnackPlace.overlays }
+        DisposableEffect(Unit) {
+            SnackPlace.overlays++
+            onDispose { SnackPlace.overlays-- }
+        }
         Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
             Column(
                 Modifier
@@ -236,6 +251,7 @@ internal fun PickerSheet(
                 Spacer(Modifier.height(headerGap))
                 content(close)
             }
+            SnackHost(Modifier.matchParentSize(), sheetLevel = snackLevel)
         }
     }
 }

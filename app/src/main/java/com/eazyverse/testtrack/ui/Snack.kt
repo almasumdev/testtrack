@@ -3,6 +3,7 @@ package com.eazyverse.testtrack.ui
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -146,6 +147,9 @@ internal object SnackPlace {
 
     /** The showing snack's height in pixels, for [snackRoom]. */
     var height by mutableFloatStateOf(0f)
+
+    /** How many sheets are open. Each is a window over the root host, so it draws the snack itself. */
+    var overlays by mutableIntStateOf(0)
 }
 
 /**

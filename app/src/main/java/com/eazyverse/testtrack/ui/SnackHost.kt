@@ -86,13 +86,20 @@ import kotlin.math.roundToInt
  * moves there once, so it never drops and climbs back. Its time runs on across pages.
  */
 @Composable
-fun SnackHost(modifier: Modifier = Modifier) {
+fun SnackHost(
+    modifier: Modifier = Modifier,
+    sheetLevel: Int? = null,
+) {
+    // The root host steps aside while a sheet is open, since the sheet is a window of its own and
+    // would hide it. The top sheet's host is the one that draws and keeps time; one below it waits.
+    val covered = if (sheetLevel == null) SnackPlace.overlays > 0 else sheetLevel != SnackPlace.overlays - 1
     val density = LocalDensity.current
     val ime = WindowInsets.ime.getBottom(density)
     val bars = WindowInsets.navigationBars.getBottom(density)
     val gap = with(density) { SnackGap.toPx() }
     var hostBottom by remember { mutableFloatStateOf(0f) }
-    val floor = SnackPlace.floors.values.minOrNull()
+    // A sheet's host has its own window, where the page's floors mean nothing.
+    val floor = if (sheetLevel == null) SnackPlace.floors.values.minOrNull() else null
     val target = maxOf(floor?.let { hostBottom - it } ?: 0f, ime.toFloat(), bars.toFloat()) + gap
     val targetNow by rememberUpdatedState(target)
     val lift = remember { Animatable(target) }
@@ -122,7 +129,8 @@ fun SnackHost(modifier: Modifier = Modifier) {
     var pressed by remember { mutableStateOf(false) }
     val a11y = LocalAccessibilityManager.current
     val haptics = LocalHapticFeedback.current
-    LaunchedEffect(shown?.id) {
+    LaunchedEffect(shown?.id, covered) {
+        if (covered) return@LaunchedEffect
         val item = shown ?: return@LaunchedEffect
         if (item.left < 0) {
             when (item.snack.tone) {
@@ -156,6 +164,7 @@ fun SnackHost(modifier: Modifier = Modifier) {
         Snacks.gone(item.id)
     }
 
+    if (covered) return
     Box(
         modifier
             .fillMaxSize()
