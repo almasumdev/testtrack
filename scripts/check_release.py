@@ -14,6 +14,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -51,7 +52,8 @@ def needed_schema() -> str:
 
 def live_schema() -> str:
     try:
-        with urllib.request.urlopen(VERSION_URL, timeout=10) as response:
+        # A cache-buster, so a cached answer from before the backend was promoted is never read.
+        with urllib.request.urlopen(f"{VERSION_URL}?_={int(time.time() * 1000)}", timeout=10) as response:
             return str(json.load(response)["schema"])
     except urllib.error.HTTPError as error:
         reason = (f"{VERSION_URL} answered {error.code}; the endpoint may not be live yet"
