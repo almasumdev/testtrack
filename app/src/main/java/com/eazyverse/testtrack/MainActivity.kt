@@ -370,7 +370,14 @@ fun AppNav(
                     // Only while this page is the one showing: a second close during its exit
                     // transition would otherwise pop Home from under it.
                     onClose = { if (nav.currentBackStackEntry == entry) nav.popBackStack() },
-                    onOpen = { nav.push(Routes.check(it)) },
+                    // Stacked on top, not single-top: this page's own route would reuse the entry (same
+                    // id, new arguments) and the page would keep showing the request. The check stops
+                    // a double tap from stacking the same review twice.
+                    onOpen = { reviewId ->
+                        if (nav.currentBackStackEntry?.arguments?.getString("id") != reviewId) {
+                            nav.navigate(Routes.check(reviewId))
+                        }
+                    },
                 )
             }
         }

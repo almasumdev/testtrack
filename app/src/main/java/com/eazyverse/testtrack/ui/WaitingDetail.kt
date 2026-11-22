@@ -46,8 +46,7 @@ fun CheckScreen(
             onClose()
         }
     }
-    // The review shown: the one opened, then the next of its app's once one is decided here. Keyed
-    // on the id, since opening another of these from this page reuses the page with a new one.
+    // The review shown: the one opened, then the next of its app's once one is decided here.
     var current by rememberSaveable(id) { mutableStateOf(id) }
     var doneHere by rememberSaveable(id) { mutableStateOf(listOf<String>()) }
     val review = feed.waiting.firstOrNull { it.id == current }
