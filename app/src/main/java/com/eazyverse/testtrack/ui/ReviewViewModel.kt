@@ -91,6 +91,10 @@ class ReviewViewModel : ViewModel() {
     /** A new version of the screenshot is being kept: Send waits for it. */
     val replacing: Boolean get() = gate.replacing
 
+    /** The screenshot is going to TestTrack with the review: the page says so over the picture. */
+    var sending by mutableStateOf(false)
+        private set
+
     init {
         viewModelScope.launch {
             ReviewCaptureService.proof.collect { file ->
@@ -353,7 +357,13 @@ class ReviewViewModel : ViewModel() {
             if (!requirePlayInstall(activity)) return@run
             // The picture is the one kept at this moment, read inside the gate: never one a
             // version with details hidden is still replacing, whatever the page showed.
-            val sent = gate.send({ ProofStore.proof(activity, id) }) { sendProof(activity, current, Uri.fromFile(it), note) }
+            sending = true
+            val sent =
+                try {
+                    gate.send({ ProofStore.proof(activity, id) }) { sendProof(activity, current, Uri.fromFile(it), note) }
+                } finally {
+                    sending = false
+                }
             if (sent == null) {
                 proof = null
                 Snacks.error("Add your screenshot again.")

@@ -141,6 +141,8 @@ internal fun SendProof(
     onRemove: () -> Unit,
     /** Opens the editor that covers anything personal. */
     onEdit: (Uri) -> Unit,
+    /** What is happening to the picture right now, if anything. */
+    working: String? = null,
 ) {
     val rechecking = job.rechecking
     val half = job.noBox && !rechecking
@@ -174,6 +176,7 @@ internal fun SendProof(
             onHideDetails = { shown?.let(onEdit) },
             onRetake = onCapture,
             onOpen = shown?.let { picture -> { onEdit(picture) } },
+            working = working,
         )
         if (!rechecking) {
             Spacer(Modifier.height(20.dp))

@@ -176,7 +176,7 @@ private fun PictureLoading() {
 
 /** Dims the picture and puts [mark] in a dark ring at its middle. */
 @Composable
-private fun OverMark(mark: @Composable () -> Unit) {
+internal fun OverMark(mark: @Composable () -> Unit) {
     val t = Tt.colors
     Box(Modifier.fillMaxSize().background(t.photoScrim.copy(alpha = 0.32f)), contentAlignment = Alignment.Center) {
         Box(Modifier.size(48.dp).clip(CircleShape).background(t.photoScrim), contentAlignment = Alignment.Center) { mark() }

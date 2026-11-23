@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,11 +18,16 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -61,11 +67,13 @@ internal fun ProofBox(
     onOpen: (() -> Unit)? = null,
     /** Which part of a tall screenshot the box shows. */
     alignment: Alignment = Alignment.TopCenter,
+    /** What is happening to the picture ("Uploading picture"): it is shown with a loader over it. */
+    working: String? = null,
 ) {
-    if (picture == null) {
+    if (picture == null && working == null) {
         EmptyProofBox(onCapture, onGallery, modifier)
     } else {
-        FilledProofBox(picture, onRemove, onHideDetails, onRetake, onOpen, alignment, modifier)
+        FilledProofBox(picture, onRemove, onHideDetails, onRetake, onOpen, alignment, working, modifier)
     }
 }
 
@@ -115,12 +123,13 @@ private fun EmptyProofBox(
 
 @Composable
 private fun FilledProofBox(
-    picture: Uri,
+    picture: Uri?,
     onRemove: () -> Unit,
     onHideDetails: () -> Unit,
     onRetake: () -> Unit,
     onOpen: (() -> Unit)?,
     alignment: Alignment,
+    working: String?,
     modifier: Modifier,
 ) {
     val t = Tt.colors
@@ -130,43 +139,76 @@ private fun FilledProofBox(
             .height(BoxHeight)
             .clip(BoxShape),
     ) {
-        SubcomposeAsyncImage(
-            model = picture,
-            contentDescription = "Your review screenshot",
-            loading = { Skeleton(height = BoxHeight, corner = 14.dp) },
+        if (picture == null) {
+            Skeleton(height = BoxHeight, corner = 14.dp)
+        } else {
+            SubcomposeAsyncImage(
+                model = picture,
+                contentDescription = "Your review screenshot",
+                loading = { Skeleton(height = BoxHeight, corner = 14.dp) },
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .then(if (onOpen != null) Modifier.clickable(onClickLabel = "Open the screenshot", onClick = onOpen) else Modifier),
+                contentScale = ContentScale.Crop,
+                alignment = alignment,
+            )
+            Box(Modifier.fillMaxSize().border(1.dp, t.cardLine, BoxShape))
+            Box(
+                Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(8.dp)
+                    .size(28.dp)
+                    .clip(CircleShape)
+                    .background(t.photoScrim)
+                    .clickable(role = Role.Button, onClickLabel = "Remove the screenshot", onClick = onRemove),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(Lucide.X, "Remove", Modifier.size(14.dp), tint = t.onPhoto)
+            }
+            PhotoChip(
+                "Hide details",
+                Modifier.align(Alignment.BottomStart).padding(8.dp),
+                icon = Lucide.EyeOff,
+                size = PartSize.SMALL,
+                onClick = onHideDetails,
+            )
+            PhotoChip(
+                "Retake",
+                Modifier.align(Alignment.BottomEnd).padding(8.dp),
+                icon = Lucide.Camera,
+                size = PartSize.SMALL,
+                onClick = onRetake,
+            )
+        }
+        if (working != null) WorkingOver(working)
+    }
+}
+
+/** The loader over the picture while it is kept or sent, and the words for it. Takes the taps beneath. */
+@Composable
+private fun WorkingOver(words: String) {
+    val t = Tt.colors
+    Box(
+        Modifier
+            .fillMaxSize()
+            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {}
+            .semantics { contentDescription = words },
+    ) {
+        OverMark {
+            CircularProgressIndicator(Modifier.size(26.dp), color = t.onPhoto, strokeWidth = 2.5.dp, trackColor = Color.Transparent)
+        }
+        Text(
+            words,
+            style = MaterialTheme.typography.labelMedium,
+            color = t.onPhoto,
             modifier =
                 Modifier
-                    .fillMaxSize()
-                    .then(if (onOpen != null) Modifier.clickable(onClickLabel = "Open the screenshot", onClick = onOpen) else Modifier),
-            contentScale = ContentScale.Crop,
-            alignment = alignment,
-        )
-        Box(Modifier.fillMaxSize().border(1.dp, t.cardLine, BoxShape))
-        Box(
-            Modifier
-                .align(Alignment.TopEnd)
-                .padding(8.dp)
-                .size(28.dp)
-                .clip(CircleShape)
-                .background(t.photoScrim)
-                .clickable(role = Role.Button, onClickLabel = "Remove the screenshot", onClick = onRemove),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(Lucide.X, "Remove", Modifier.size(14.dp), tint = t.onPhoto)
-        }
-        PhotoChip(
-            "Hide details",
-            Modifier.align(Alignment.BottomStart).padding(8.dp),
-            icon = Lucide.EyeOff,
-            size = PartSize.SMALL,
-            onClick = onHideDetails,
-        )
-        PhotoChip(
-            "Retake",
-            Modifier.align(Alignment.BottomEnd).padding(8.dp),
-            icon = Lucide.Camera,
-            size = PartSize.SMALL,
-            onClick = onRetake,
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 10.dp)
+                    .clip(CircleShape)
+                    .background(t.photoScrim)
+                    .padding(horizontal = 12.dp, vertical = 4.dp),
         )
     }
 }

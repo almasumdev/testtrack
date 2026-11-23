@@ -92,6 +92,7 @@ fun ReviewScreen(
         job = vm.job,
         proof = vm.proof,
         replacing = vm.replacing,
+        sending = vm.sending,
         // The screenshot already got stays until a new one arrives, so a capture abandoned half
         // way does not cost the one there was.
         onCapture = {
@@ -195,6 +196,8 @@ fun ReviewBody(
     proof: Uri? = null,
     /** A new version of [proof] is still being kept: Send waits. */
     replacing: Boolean = false,
+    /** The screenshot is going to TestTrack with the review. */
+    sending: Boolean = false,
     onCapture: () -> Unit = {},
     /** Keeps a picture from the editor; returns once it is kept and throws when it can't be. */
     onPicked: suspend (Uri) -> Unit = {},
@@ -257,6 +260,7 @@ fun ReviewBody(
                     val notYet = opens != null && opens.isAfter(now)
                     Primary(
                         when {
+                            sending && job.step == ReviewStep.PROVE -> "Uploading picture"
                             needsAgreement && !rulesAccepted -> "Read and agree to start"
                             needsAgreement && job.onPhone -> "Start review"
                             needsAgreement -> "Start and open Google Play"
@@ -268,7 +272,7 @@ fun ReviewBody(
                             job.waitingForDay && job.usedOnTwoDays -> "Continue to review"
                             else -> stepAction(job.step, job)
                         },
-                        busy = spinning,
+                        busy = spinning || (sending && job.step == ReviewStep.PROVE),
                         enabled = !waitingForProof && !notYet && (!needsAgreement || rulesAccepted),
                     ) {
                         if (needsAgreement && !rulesAccepted) return@Primary
@@ -355,6 +359,12 @@ fun ReviewBody(
                                 onGallery = galleryPick.takeUnless { job.rechecking },
                                 onRemove = onRemoveProof,
                                 onEdit = { editingProof = it },
+                                working =
+                                    when {
+                                        sending -> "Uploading picture"
+                                        replacing -> "Saving picture"
+                                        else -> null
+                                    },
                             )
                         }
                         return@Crossfade
