@@ -70,7 +70,10 @@ fun CrewScreen(
     // A new visit opens on Open, and slides to Run once if tonight has apps owed. Back from a page
     // opened over the tab is the same visit, which keeps its tab.
     val visit = rememberSaveable { UUID.randomUUID().toString() }
-    remember(visit) { vm.arrive(visit) }
+    remember(visit) {
+        vm.arrive(visit)
+        visit
+    }
     DisposableEffect(vm) { onDispose { vm.leave() } }
 
     // Reloaded on every arrival: a crew fills, an app is sent back and a fortnight starts while
