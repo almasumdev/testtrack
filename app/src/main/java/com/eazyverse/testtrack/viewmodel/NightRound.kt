@@ -176,8 +176,9 @@ object NightRound {
                         ranMs = (ranMs + now - last).coerceAtMost(VISIT_MS)
                         publish()
                     }
-                    // A held app that is already recorded waits for play without asking again.
-                    if (ranMs >= VISIT_MS && window != null && !((paused || single) && recorded != null)) next(context)
+                    // A lone app never moves on by itself: it waits, with its picture, for the tester's Back,
+                    // which records it. A held app that is already recorded waits for play without asking again.
+                    if (ranMs >= VISIT_MS && window != null && !single && !(paused && recorded != null)) next(context)
                     last = now
                 }
             }
