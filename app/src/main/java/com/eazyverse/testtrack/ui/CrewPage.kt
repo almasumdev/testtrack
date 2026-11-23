@@ -223,6 +223,9 @@ internal class CrewDialogs {
     /** Being reported: its seat id, name and owner. */
     var reporting by mutableStateOf<CrewSeat?>(null)
 
+    /** A report being taken back, confirmed first: the night it excused is owed again. */
+    var withdrawing by mutableStateOf<CrewSeat?>(null)
+
     /** Answered "it didn't install", which asks why first. */
     var refusing by mutableStateOf<CrewSeat?>(null)
 
@@ -285,7 +288,7 @@ internal fun crewActions(
             onFindCrew = onFindCrew,
             privateLine = privateLine,
             onPrivateTesters = onPrivateTesters,
-            onWithdrawReport = { seat -> vm.withdrawReport(context, seat.id) },
+            onWithdrawReport = { dialogs.withdrawing = it },
         ),
     )
 }
@@ -347,6 +350,23 @@ internal fun CrewDialogsHost(
                 vm.report(context, seat.id, seat.appName, reason)
             },
             onDismiss = { dialogs.reporting = null },
+        )
+    }
+
+    dialogs.withdrawing?.let { seat ->
+        // Asked once, then held open with its spinner until the row has changed.
+        var sent by remember(seat.id) { mutableStateOf(false) }
+        LaunchedEffect(sent, vm.acting) { if (sent && vm.acting != seat.id) dialogs.withdrawing = null }
+        Ask(
+            title = "Withdraw your report?",
+            body = "${seat.appName} goes back on your list to test tonight.",
+            confirm = "Withdraw",
+            busy = sent,
+            onConfirm = {
+                sent = true
+                vm.withdrawReport(context, seat.id)
+            },
+            onDismiss = { dialogs.withdrawing = null },
         )
     }
 
