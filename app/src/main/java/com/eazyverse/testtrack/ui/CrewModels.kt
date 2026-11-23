@@ -381,6 +381,12 @@ data class Crew(
     /** A member with an app here, or a volunteer with none. */
     val role: CrewRole get() = if (volunteer != null) CrewRole.VOLUNTEER else CrewRole.MEMBER
 
+    /**
+     * A volunteer in a running crew whose own first night has not come: a Run, with nothing owed
+     * yet and the apps to install, as a member's lobby would show them.
+     */
+    val volunteerWaiting: Boolean get() = volunteer?.state == "active" && day < firstNight
+
     /** Days of the run that are this account's: all of them, or what was left when it joined. */
     val ownNights: Int get() = (runDays - firstNight + 1).coerceAtLeast(0)
 
@@ -437,6 +443,7 @@ data class Crew(
         get() =
             when {
                 volunteer?.ended == true -> "You're out"
+                volunteerWaiting -> "Starts in ${untilStart(startsIn)}"
                 out && phase != CrewPhase.RECORD -> "Your app is out"
                 phase == CrewPhase.OPEN -> "${CrewRules.SEATS - taken} seats left"
                 phase == CrewPhase.LOBBY && filling -> "Filling, $filled of ${CrewRules.SEATS}"

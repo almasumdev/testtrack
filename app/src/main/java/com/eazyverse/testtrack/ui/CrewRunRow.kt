@@ -54,6 +54,7 @@ fun CrewListRow(
             Text(
                 when {
                     spot?.ended == true -> "You're out"
+                    crew.volunteerWaiting -> "Starts in ${untilStart(crew.startsIn)}"
                     crew.out -> "Your app is out"
                     crew.nightsDone -> "Your nights are done"
                     crew.owed == 0 -> "Done for tonight"

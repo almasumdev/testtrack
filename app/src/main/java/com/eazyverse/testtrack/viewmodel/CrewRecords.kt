@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiCrewRecord
 import com.eazyverse.testtrack.net.ApiError
+import com.eazyverse.testtrack.net.ApiVolunteerStint
 import com.eazyverse.testtrack.net.answerProdAccess
 import com.eazyverse.testtrack.net.claimPerfect
 import com.eazyverse.testtrack.net.crewRecord
@@ -17,6 +18,7 @@ import com.eazyverse.testtrack.ui.RecordApp
 import com.eazyverse.testtrack.ui.RecordBusy
 import com.eazyverse.testtrack.ui.RecordOutcome
 import com.eazyverse.testtrack.ui.Snacks
+import com.eazyverse.testtrack.ui.VolunteerStint
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -37,6 +39,10 @@ class CrewRecords(
 ) {
     /** Newest crew first; null until the first answer. */
     var items by mutableStateOf<List<CrewRecord>?>(null)
+        private set
+
+    /** Volunteer spots that are over, newest first: every one, a join and leave with no nights too. */
+    var stints by mutableStateOf<List<VolunteerStint>>(emptyList())
         private set
 
     /** The last read failed and nothing is kept to show instead. */
@@ -78,7 +84,10 @@ class CrewRecords(
     }
 
     init {
-        Api.lastCrewRecords()?.let { kept -> items = kept.items.map { it.toRecord() } }
+        Api.lastCrewRecords()?.let { kept ->
+            items = kept.items.map { it.toRecord() }
+            stints = kept.volunteering.map { it.toStint() }
+        }
     }
 
     /** Read them again. Signed out there are none to read. */
@@ -86,6 +95,7 @@ class CrewRecords(
         if (previewing) return
         if (signedOut) {
             items = emptyList()
+            stints = emptyList()
             failed = false
             return
         }
@@ -95,13 +105,16 @@ class CrewRecords(
                 val answer = Api.crewRecords()
                 if (mine != loads) return@launch
                 items = answer.items.map { it.toRecord() }
+                stints = answer.volunteering.map { it.toStint() }
                 failed = false
             } catch (e: CancellationException) {
                 throw e
             } catch (_: Exception) {
                 if (mine != loads) return@launch
                 if (items == null) {
-                    items = Api.lastCrewRecords(afterFailure = true)?.items?.map { it.toRecord() }
+                    val kept = Api.lastCrewRecords(afterFailure = true)
+                    items = kept?.items?.map { it.toRecord() }
+                    kept?.let { stints = it.volunteering.map { s -> s.toStint() } }
                 }
                 failed = items == null
             }
@@ -148,9 +161,13 @@ class CrewRecords(
     }
 
     /** Records put in directly, for the screen gallery. Nothing in the app calls this. */
-    internal fun preview(records: List<CrewRecord>) {
+    internal fun preview(
+        records: List<CrewRecord>,
+        volunteering: List<VolunteerStint> = emptyList(),
+    ) {
         previewing = true
         items = records
+        stints = volunteering
         failed = false
         busy = emptyMap()
         opened = emptyMap()
@@ -206,4 +223,20 @@ private fun ApiCrewRecord.toRecord() =
             crewApps.orEmpty().map {
                 RecordApp(it.appName, it.packageName, it.appIcon, left = !it.outcome.equals("finished", ignoreCase = true))
             },
+    )
+
+internal fun ApiVolunteerStint.toStint() =
+    VolunteerStint(
+        id = id,
+        crewId = crewId,
+        crewName = crewName,
+        crewNumber = crewNumber,
+        state = state,
+        joinedAt = joinedAt,
+        endedAt = endedAt,
+        firstNight = firstNight,
+        lastNight = lastNight,
+        nightsPaid = nightsPaid,
+        tixEarned = tixEarned,
+        endReason = endReason,
     )

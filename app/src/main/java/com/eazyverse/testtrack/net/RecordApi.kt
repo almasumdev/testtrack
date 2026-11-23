@@ -93,6 +93,8 @@ data class ApiRecordTester(
 @Serializable
 data class CrewRecordList(
     val items: List<ApiCrewRecord> = emptyList(),
+    /** Volunteer spots that are over, newest first; empty from an older server. */
+    val volunteering: List<ApiVolunteerStint> = emptyList(),
 )
 
 @Serializable

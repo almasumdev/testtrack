@@ -135,6 +135,14 @@ class CrewViewModel : ViewModel() {
         opened = id
     }
 
+    /**
+     * Take a crew out of the list at once, ahead of the reload that confirms it: a crew's page open
+     * on it closes straight away rather than showing what was just left until the server answers.
+     */
+    internal fun forget(crewId: String) {
+        crews = crews.filterNot { it.id == crewId }
+    }
+
     fun showTab(phase: CrewPhase) {
         settledTab = true
         tab = phase
@@ -236,7 +244,11 @@ class CrewViewModel : ViewModel() {
     }
 
     private fun apply(answer: com.eazyverse.testtrack.net.CrewList) {
-        crews = answer.mine.map { it.toCrew() } + answer.volunteering.map { it.toVolunteerCrew() }
+        // A volunteer spot the reader left is over by their own choice: it lives in the Record tab's
+        // volunteering list, not here. A newer server leaves it out already; an older one sends it.
+        crews =
+            answer.mine.map { it.toCrew() } +
+            answer.volunteering.map { it.toVolunteerCrew() }.filter { it.volunteer?.state != "left" }
         open = answer.open?.toCrew(member = false)
         blocked = answer.blocked
         blockedCrew = answer.blockedCrew

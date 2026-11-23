@@ -4,14 +4,18 @@ import com.eazyverse.testtrack.net.ApiChatPerson
 import com.eazyverse.testtrack.net.ApiCrewPictures
 import com.eazyverse.testtrack.net.ApiVolunteerSpots
 import com.eazyverse.testtrack.net.CrewList
+import com.eazyverse.testtrack.net.CrewRecordList
 import com.eazyverse.testtrack.viewmodel.SpotState
+import com.eazyverse.testtrack.viewmodel.inListOrder
 import com.eazyverse.testtrack.viewmodel.toSpot
+import com.eazyverse.testtrack.viewmodel.toStint
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.ZoneOffset
 
 /**
  * Volunteers, read from a server that does not know them and from one that does. Every new field
@@ -73,12 +77,24 @@ class CrewVolunteerWireTest {
     }
 
     @Test
-    fun `before the first night a volunteer's crew is a lobby with nothing owed`() {
+    fun `before the first night a volunteer's crew is a run that owes nothing yet`() {
         val read = volunteering(",\"first_night\":7,\"starts_in_ms\":60000,\"volunteer\":{\"id\":\"v1\",\"first_night\":7}")
-        assertEquals(CrewPhase.LOBBY, read.phase)
+        // On the Run tab, never the Lobby: the crew is running, only the volunteer's night is to come.
+        assertEquals(CrewPhase.RUN, read.phase)
+        assertTrue(read.volunteerWaiting)
         assertTrue(read.apps.isEmpty())
+        assertEquals(0, read.owed)
+        // The tile still shows the apps to install.
+        assertEquals(listOf("a", "b", "c", "d"), read.strip.map { it.id })
         assertEquals(7, read.firstNight)
         assertEquals(60000L, read.startsIn)
+        assertEquals("Starts in 1m", read.standing)
+    }
+
+    @Test
+    fun `a volunteer on their nights is not waiting`() {
+        val read = volunteering(",\"volunteer\":{\"id\":\"v1\",\"state\":\"active\",\"first_night\":5}")
+        assertFalse(read.volunteerWaiting)
     }
 
     @Test
@@ -149,5 +165,58 @@ class CrewVolunteerWireTest {
         assertEquals(SpotState.FULL, spots[1].state)
         assertEquals(SpotState.OUT, spots[2].state)
         assertTrue(json.decodeFromString<ApiVolunteerSpots>("{}").canJoin)
+    }
+
+    @Test
+    fun `every way a spot ends reads as one the reader can't take again`() {
+        assertEquals(SpotState.LEFT, SpotState.of("left"))
+        assertEquals(SpotState.OUT, SpotState.of("out"))
+        assertEquals(SpotState.OUT, SpotState.of("removed"))
+        assertEquals(SpotState.CLOSED, SpotState.of("released"))
+        assertEquals(SpotState.CLOSED, SpotState.of("done"))
+        assertEquals(SpotState.VOLUNTEERING, SpotState.of("volunteering"))
+    }
+
+    @Test
+    fun `open spots stay on top while the reader volunteers in other crews`() {
+        val got =
+            json.decodeFromString<ApiVolunteerSpots>(
+                "{\"spots\":[{\"crew_id\":\"a\",\"state\":\"volunteering\"},{\"crew_id\":\"b\",\"state\":\"left\"}," +
+                    "{\"crew_id\":\"c\",\"state\":\"full\"},{\"crew_id\":\"d\",\"state\":\"open\"}," +
+                    "{\"crew_id\":\"e\",\"state\":\"member\"},{\"crew_id\":\"f\",\"state\":\"open\"}]}",
+            )
+        val order =
+            got.spots
+                .map { it.toSpot() }
+                .inListOrder()
+                .map { it.crewId }
+        assertEquals(listOf("d", "f", "a", "c", "e", "b"), order)
+    }
+
+    @Test
+    fun `the record reads volunteer spots, and none from an older server`() {
+        assertTrue(json.decodeFromString<CrewRecordList>("""{"items":[]}""").volunteering.isEmpty())
+        val got =
+            json.decodeFromString<CrewRecordList>(
+                "{\"items\":[],\"volunteering\":[{\"id\":\"v1\",\"crew_id\":\"c1\",\"crew_number\":7,\"crew_name\":\"Crew 07\"," +
+                    "\"state\":\"left\",\"joined_at\":\"2026-11-21T18:00:00+00:00\",\"ended_at\":\"2026-11-21T18:05:00+00:00\"," +
+                    "\"first_night\":4,\"last_night\":3,\"nights_paid\":0,\"tix_earned\":0}]}",
+            )
+        val stint = got.volunteering.single().toStint()
+        assertEquals("Crew 07", stint.crewName)
+        assertEquals("You left before your first night" to Tone.QUIET, stintHeadline(stint))
+        assertEquals("Nov 21", stintDates(stint, ZoneOffset.UTC))
+    }
+
+    @Test
+    fun `a stint says how it ended`() {
+        val base = VolunteerStint("v1", "c1", "Crew 07", firstNight = 2)
+        assertEquals("You left after night 5", stintHeadline(base.copy(lastNight = 5)).first)
+        assertEquals(Tone.BAD, stintHeadline(base.copy(state = "out")).second)
+        assertEquals("Your spot closed when an app came back", stintHeadline(base.copy(state = "released")).first)
+        assertEquals(
+            "Nov 21 to 24",
+            stintDates(base.copy(joinedAt = "2026-11-21T10:00:00Z", endedAt = "2026-11-24T10:00:00Z"), ZoneOffset.UTC),
+        )
     }
 }

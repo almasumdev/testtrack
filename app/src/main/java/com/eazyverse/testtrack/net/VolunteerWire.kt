@@ -77,8 +77,31 @@ data class ApiVolunteerSpot(
     @SerialName("first_night") val firstNight: Int = 0,
     /** The most tix the reader could earn here; 0 from a server that does not say. */
     val tix: Int = 0,
-    /** The reader and this crew: open, full, volunteering, member, out or left. */
+    /** The reader and this crew: open, full, volunteering, member, or how their spot ended (left, out, released, removed). */
     val state: String = "open",
+)
+
+/**
+ * One volunteer spot of the reader's that is over, however it ended, as GET /me/crew-records lists
+ * it under `volunteering`. A join and leave with no nights is one too. Absent from an older server.
+ */
+@Serializable
+data class ApiVolunteerStint(
+    val id: String = "",
+    @SerialName("crew_id") val crewId: String = "",
+    @SerialName("crew_number") val crewNumber: Int = 0,
+    @SerialName("crew_name") val crewName: String = "",
+    /** left, out, released, removed or done. */
+    val state: String = "left",
+    @SerialName("joined_at") val joinedAt: String? = null,
+    @SerialName("ended_at") val endedAt: String? = null,
+    @SerialName("run_days") val runDays: Int = 14,
+    @SerialName("first_night") val firstNight: Int = 1,
+    /** The last whole night that counted for them; 0 when they left before their first night. */
+    @SerialName("last_night") val lastNight: Int? = null,
+    @SerialName("nights_paid") val nightsPaid: Int = 0,
+    @SerialName("tix_earned") val tixEarned: Int = 0,
+    @SerialName("end_reason") val endReason: String = "",
 )
 
 @Serializable

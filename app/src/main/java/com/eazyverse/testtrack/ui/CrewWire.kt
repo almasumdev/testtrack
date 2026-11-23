@@ -231,8 +231,9 @@ fun ApiVolunteerRow.toMember() =
  * first night and tonight's marks in the volunteer's own calendar and no seat of theirs.
  *
  * Owed tonight: every confirmed app whose own run has reached the volunteer's night, unless it is
- * marked down or let off. Before the volunteer's first night it is a Lobby, the apps to install;
- * a spot that ended stays a Run with nothing to open, so its page can say what happened.
+ * marked down or let off. It is always a Run, since a volunteer only joins a crew already running:
+ * before their first night it owes nothing yet and its page shows the apps to install
+ * ([Crew.volunteerWaiting]); a spot that ended has nothing to open, so its page can say what happened.
  */
 fun ApiCrew.toVolunteerCrew(): Crew {
     val me = volunteer ?: ApiVolunteerMe()
@@ -251,7 +252,7 @@ fun ApiCrew.toVolunteerCrew(): Crew {
     val going = !waiting && me.state == "active" && day in 1..base.runDays
     val run = members.filter { !it.mine && it.state == "confirmed" }
     return base.copy(
-        phase = if (waiting) CrewPhase.LOBBY else CrewPhase.RUN,
+        phase = CrewPhase.RUN,
         filling = false,
         apps = if (going) run.filter { it.firstNight <= day && !it.offTonight }.map { it.toApp(name, day) } else emptyList(),
         optional = if (going) run.filter { it.optionalTonight }.map { it.toApp(name, day) } else emptyList(),
@@ -261,13 +262,10 @@ fun ApiCrew.toVolunteerCrew(): Crew {
             } else {
                 emptyList()
             },
+        // Waiting too: the tile shows the apps to install before the first night.
         strip =
-            if (waiting) {
-                emptyList()
-            } else {
-                run.map { it.toApp(name, day) } +
-                    members.filter { it.state == "removed" }.map { it.toApp(name, day).copy(outAt = it.outAt.orEmpty(), out = true) }
-            },
+            run.map { it.toApp(name, day) } +
+                members.filter { it.state == "removed" }.map { it.toApp(name, day).copy(outAt = it.outAt.orEmpty(), out = true) },
         firstNight = first,
         startsIn = if (startsInMs > 0) startsInMs else me.startsInMs,
         finishedDays = 0,

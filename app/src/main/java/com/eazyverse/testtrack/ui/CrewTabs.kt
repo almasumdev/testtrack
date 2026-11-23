@@ -175,6 +175,8 @@ fun CrewRecordTab(
 ) {
     val context = LocalContext.current
     val records = vm.records.items
+    // Volunteer spots that are over, kept for good under the finished crews.
+    val stints = vm.records.stints
 
     if (vm.signedOut) {
         RobotState(
@@ -194,7 +196,7 @@ fun CrewRecordTab(
         CrewRecordLoading()
         return
     }
-    if (records.isEmpty()) {
+    if (records.isEmpty() && stints.isEmpty()) {
         RobotState(
             Prop.Calendar,
             "Nothing finished yet",
@@ -221,6 +223,14 @@ fun CrewRecordTab(
                     onAnswer = { vm.records.answerProdAccess(record.crewId, it) },
                     onClaim = { vm.records.claimPerfect(record.crewId) },
                 )
+            }
+        }
+        if (stints.isNotEmpty()) {
+            item("volunteering-head") { CrewHeading("Volunteering", "${stints.size}", top = if (records.isEmpty()) 4.dp else 20.dp) }
+            itemsIndexed(stints, key = { _, stint -> "stint-${stint.id}" }) { index, stint ->
+                Box(Modifier.animateItem().padding(start = Gutter, end = Gutter, top = if (index > 0) 8.dp else 0.dp)) {
+                    VolunteerStintTile(stint)
+                }
             }
         }
     }

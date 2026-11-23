@@ -284,25 +284,28 @@ internal fun InlineAction(
         contentPadding = PaddingValues(horizontal = if (dialog) 10.dp else 8.dp, vertical = 4.dp),
         colors = ButtonDefaults.textButtonColors(contentColor = color, disabledContentColor = Tt.colors.text4),
     ) {
-        if (leading != null) {
-            Icon(leading, null, Modifier.size(16.dp))
-            Spacer(Modifier.width(6.dp))
-        }
+        // Busy is the spinner alone, centred on the whole button: the icons and words keep their room
+        // (so nothing beside it moves) but are not drawn, never an icon beside a spinner.
         Box(contentAlignment = Alignment.Center) {
-            Text(
-                label,
-                Modifier.alpha(if (busy) 0f else 1f),
-                style = MaterialTheme.typography.labelLarge.copy(fontSize = if (dialog) 14.5.sp else 14.sp),
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                textDecoration = if (underline) TextDecoration.Underline else null,
-                maxLines = 2,
-            )
+            Row(Modifier.alpha(if (busy) 0f else 1f), verticalAlignment = Alignment.CenterVertically) {
+                if (leading != null) {
+                    Icon(leading, null, Modifier.size(16.dp))
+                    Spacer(Modifier.width(6.dp))
+                }
+                Text(
+                    label,
+                    style = MaterialTheme.typography.labelLarge.copy(fontSize = if (dialog) 14.5.sp else 14.sp),
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    textDecoration = if (underline) TextDecoration.Underline else null,
+                    maxLines = 2,
+                )
+                if (trailing != null) {
+                    Spacer(Modifier.width(4.dp))
+                    Icon(trailing, null, Modifier.size(16.dp))
+                }
+            }
             if (busy) CircularProgressIndicator(Modifier.size(18.dp), color = color, strokeWidth = 2.dp)
-        }
-        if (trailing != null) {
-            Spacer(Modifier.width(4.dp))
-            Icon(trailing, null, Modifier.size(16.dp))
         }
     }
 }

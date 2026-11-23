@@ -42,6 +42,9 @@ enum class SpotState {
 
     /** Left it before. Never again in this crew. */
     LEFT,
+
+    /** Their spot closed when an app came back. Never again in this crew. */
+    CLOSED,
     ;
 
     companion object {
@@ -51,11 +54,19 @@ enum class SpotState {
                 "volunteering" -> VOLUNTEERING
                 "member" -> MEMBER
                 "out", "removed" -> OUT
-                "left", "released" -> LEFT
+                "left" -> LEFT
+                "released", "done" -> CLOSED
                 else -> OPEN
             }
     }
 }
+
+/** The order the list shows: spots to take first, then the reader's own, then the rest. */
+private val SPOT_ORDER = listOf(SpotState.OPEN, SpotState.VOLUNTEERING, SpotState.FULL, SpotState.MEMBER)
+
+/** Open spots first, so the ones the reader can take stay on top however many they are in already. */
+internal fun List<VolunteerSpot>.inListOrder(): List<VolunteerSpot> =
+    sortedBy { spot -> SPOT_ORDER.indexOf(spot.state).let { if (it < 0) SPOT_ORDER.size else it } }
 
 /** A running crew with volunteer spots, as the Open tab lists it: icons only, never names of apps. */
 data class VolunteerSpot(
@@ -119,7 +130,7 @@ class VolunteerViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val got = Api.volunteerSpots()
-                spots = got.spots.map { it.toSpot() }
+                spots = got.spots.map { it.toSpot() }.inListOrder()
                 blocked = if (got.canJoin) null else got.blocked.orEmpty().ifBlank { "You can't volunteer right now." }
                 failed = false
             } catch (e: CancellationException) {
@@ -171,15 +182,20 @@ class VolunteerViewModel : ViewModel() {
     }
 }
 
-/** Leave a volunteer spot for good. The crew reloads, and its page says the spot is over. */
-fun CrewViewModel.leaveVolunteer(
-    context: Context,
-    crew: Crew,
-) {
+/**
+ * Leave a volunteer spot for good, and go straight on: the crew leaves the list at once, so its
+ * page closes with no "left" screen in between, a snack says it is done, and the spot is in the
+ * Record tab's volunteering list. The crews are read again quietly behind it.
+ */
+fun CrewViewModel.leaveVolunteer(crew: Crew) {
     val spot = crew.volunteer ?: return
     call(
-        context = context,
         seat = spot.id,
-        onDone = { _: Unit -> say("You left ${crew.name}. The tix you earned stay yours.", SnackTone.DONE) },
+        onDone = { _: Unit ->
+            forget(crew.id)
+            records.load(signedOut = false)
+            val kept = if (spot.tixEarned > 0) " You keep the ${spot.tixEarned} tix you earned." else ""
+            say("You left ${crew.name}.$kept", SnackTone.DONE)
+        },
     ) { Api.leaveVolunteer(spot.id) }
 }

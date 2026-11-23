@@ -151,6 +151,8 @@ fun CrewPage(
         CrewChatEntry(crew, record?.pruned == true, onChat, Modifier.padding(padding)) {
             Column(Modifier.fillMaxSize()) {
                 when {
+                    // Shown before and gone now (left, or taken away): the page is closing, so nothing in between.
+                    crew == null && seen -> Unit
                     crew == null && vm.offline -> RobotOffline("This crew didn't load", onRetry = { vm.load(context) })
                     crew == null && !vm.loading ->
                         RobotState(
@@ -161,7 +163,8 @@ fun CrewPage(
                             onAction = onBack,
                         )
                     crew == null -> CrewCardLoading()
-                    crew.phase == CrewPhase.LOBBY -> CrewLobbyPhase(crew, actions)
+                    // A volunteer before their first night: on the Run tab, laid out as the lobby (apps to install).
+                    crew.phase == CrewPhase.LOBBY || crew.volunteerWaiting -> CrewLobbyPhase(crew, actions)
                     crew.phase == CrewPhase.RUN -> CrewRunPhase(crew, actions)
                     else ->
                         CrewRecordPhase(
@@ -370,7 +373,7 @@ internal fun CrewDialogsHost(
         Ask(
             title = "Leave ${crew.name}?",
             body =
-                if (crew.phase == CrewPhase.LOBBY) {
+                if (crew.volunteerWaiting) {
                     "You can't volunteer here again."
                 } else {
                     "${kept}Tonight won't pay, and you can't volunteer here again."
@@ -380,7 +383,7 @@ internal fun CrewDialogsHost(
             destructive = true,
             onConfirm = {
                 dialogs.leavingVolunteer = null
-                vm.leaveVolunteer(context, crew)
+                vm.leaveVolunteer(crew)
             },
             onDismiss = { dialogs.leavingVolunteer = null },
         )

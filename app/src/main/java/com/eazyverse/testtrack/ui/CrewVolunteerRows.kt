@@ -96,8 +96,10 @@ internal fun VolunteerSpotRow(
     onOpen: (VolunteerSpot) -> Unit,
 ) {
     val mine = spot.state == SpotState.VOLUNTEERING
+    // A spot the reader can't take, now or again, is dimmed with no Volunteer on it.
+    val dim = spot.state == SpotState.FULL || spot.state == SpotState.OUT || spot.state == SpotState.LEFT || spot.state == SpotState.CLOSED
     CrewCard(
-        if (spot.state == SpotState.FULL) Modifier.alpha(0.55f) else Modifier,
+        if (dim) Modifier.alpha(0.55f) else Modifier,
         padding = PaddingValues(16.dp),
         onClick = if (mine) ({ onOpen(spot) }) else null,
     ) {
@@ -116,6 +118,7 @@ internal fun VolunteerSpotRow(
                     SpotState.MEMBER -> Triple("Your app is in it", Tone.QUIET, null)
                     SpotState.OUT -> Triple("You were taken out", Tone.BAD, null)
                     SpotState.LEFT -> Triple("You left this crew", Tone.QUIET, null)
+                    SpotState.CLOSED -> Triple("Your spot closed", Tone.QUIET, null)
                 }
             StatusChip(chip, tone, icon)
             Spacer(Modifier.width(8.dp))
@@ -125,7 +128,7 @@ internal fun VolunteerSpotRow(
                     SpotState.FULL -> "Spots open when someone leaves"
                     SpotState.VOLUNTEERING -> ""
                     SpotState.MEMBER -> "Members can't volunteer"
-                    SpotState.OUT, SpotState.LEFT -> "Can't join again"
+                    SpotState.OUT, SpotState.LEFT, SpotState.CLOSED -> "Can't join again"
                 },
                 Modifier.weight(1f),
                 style = TextStyles.NoteLine,
