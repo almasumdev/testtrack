@@ -252,7 +252,10 @@ fun ReviewBody(
                             needsAgreement && job.onPhone -> "Start review"
                             needsAgreement -> "Start and open Google Play"
                             asking -> "Allow usage access"
-                            notYet -> "Opens " + opensWhen(opens, now).removePrefix("today ")
+                            // Timing 2 waits first for the second visit, then for the review.
+                            notYet ->
+                                (if (job.paced && !job.secondVisitDone) "Back " else "Opens ") +
+                                    opensWhen(opens, now).removePrefix("today ")
                             job.waitingForDay && job.usedOnTwoDays -> "Continue to review"
                             else -> stepAction(job.step, job)
                         },

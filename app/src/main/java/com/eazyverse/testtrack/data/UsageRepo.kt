@@ -113,11 +113,11 @@ object UsageRepo {
         source: String,
         settle: Boolean,
     ): Reading {
-        var reading = withContext(Dispatchers.Default) { read(context, pkg, since) }
+        var reading = withContext(Dispatchers.Default) { read(context, pkg, since, needMs) }
         var retried = false
         if (settle && reading.ms < needMs && reading.access) {
             delay(SETTLE_MS)
-            val again = withContext(Dispatchers.Default) { read(context, pkg, since) }
+            val again = withContext(Dispatchers.Default) { read(context, pkg, since, needMs) }
             if (again.ms > reading.ms) reading = again
             retried = true
         }
@@ -125,11 +125,15 @@ object UsageRepo {
         return reading
     }
 
-    /** Time in an app since a moment, the calendar days of it, and when its first day's use began. */
+    /**
+     * Time in an app since a moment, the calendar days of it, when its first day's use began, and when
+     * its time first added up to what was needed (null until it has).
+     */
     class Use(
         val ms: Long,
         val days: Int,
         val firstAt: Long? = null,
+        val reachedAt: Long? = null,
     )
 
     /**
@@ -145,7 +149,7 @@ object UsageRepo {
         settle: Boolean = true,
     ): Use {
         val reading = measured(context, pkg, since, needMs, source, settle)
-        return Use(reading.ms, reading.days, reading.firstAt)
+        return Use(reading.ms, reading.days, reading.firstAt, reading.reachedAt)
     }
 
     private class Reading(
@@ -154,6 +158,7 @@ object UsageRepo {
         val access: Boolean,
         val days: Int = 0,
         val firstAt: Long? = null,
+        val reachedAt: Long? = null,
     )
 
     @Suppress("DEPRECATION")
@@ -161,6 +166,7 @@ object UsageRepo {
         context: Context,
         pkg: String,
         since: Long,
+        needMs: Long,
     ): Reading {
         if (!hasAccess(context)) return Reading(0L, 0, access = false)
         val manager = context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
@@ -185,6 +191,7 @@ object UsageRepo {
                 access = true,
                 days = UsageSessions.daysUsed(events, pkg, since, now, dayOf, helpers = helpers),
                 firstAt = UsageSessions.firstUse(events, pkg, since, now, helpers = helpers),
+                reachedAt = UsageSessions.reachedAt(events, pkg, since, now, needMs, helpers),
             )
         }.getOrDefault(Reading(0L, 0, access = true))
     }

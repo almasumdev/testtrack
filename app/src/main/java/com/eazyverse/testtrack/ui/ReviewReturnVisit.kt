@@ -56,8 +56,12 @@ internal fun ReviewReturnVisit(
     val opens = job.opensAt()
     val waiting = opens?.isAfter(now) == true
     val ready = job.secondDayNow(now) || (opens != null && !waiting)
+    // Timing 2 waits twice: first for the second visit, then for the review to open.
+    val backLater = job.paced && !job.secondVisitDone
+    val minutes = FeedRules.LIVE_STEP_SECONDS / 60
     val label =
         when {
+            waiting && backLater -> "Come back in"
             waiting -> "Review opens in"
             job.usedOnTwoDays -> "Both visits complete"
             ready -> "Return visit ready"
@@ -67,7 +71,9 @@ internal fun ReviewReturnVisit(
         when {
             waiting -> returnCountdown(opens, now)
             job.usedOnTwoDays -> "Ready"
+            ready && job.paced && job.review.step2Ms > 0 -> secondsShort(job.secondVisitSecondsLeft) + " left"
             ready -> "Now"
+            job.paced -> "Later"
             else -> "Another day"
         }
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(ReviewLineGap)) {
@@ -86,7 +92,7 @@ internal fun ReviewReturnVisit(
         }
         if (waiting) {
             Text(
-                "Opens ${opensWhen(opens, now)}",
+                (if (backLater) "From " else "Opens ") + opensWhen(opens, now),
                 Modifier.align(Alignment.CenterHorizontally),
                 style = MaterialTheme.typography.labelLarge,
                 color = t.accentInk,
@@ -95,12 +101,28 @@ internal fun ReviewReturnVisit(
         val instruction =
             when {
                 job.usedOnTwoDays -> "Both visits are done. No more app use needed."
+                job.paced && ready -> "Open the app and use it for $minutes more minutes."
+                job.paced ->
+                    "Then use the app for $minutes more minutes. The review opens ${FeedRules.LIVE_OPEN_HOURS} hours after your first visit."
                 ready -> "Open the app again today to count your return visit."
                 else -> "Open the app again when the timer ends."
             }
-        ReviewBullet(body = instruction, highlights = listOf("No more app use needed", "Open the app again today", "when the timer ends"))
+        ReviewBullet(
+            body = instruction,
+            highlights =
+                listOf(
+                    "No more app use needed",
+                    "Open the app again today",
+                    "when the timer ends",
+                    "$minutes more minutes",
+                    "${FeedRules.LIVE_OPEN_HOURS} hours",
+                ),
+        )
     }
 }
+
+/** "2m 40s" or "40s", for what is left of the second visit. */
+private fun secondsShort(seconds: Int): String = if (seconds >= 60) "${seconds / 60}m ${seconds % 60}s" else "${seconds}s"
 
 /** Round up so the final partial second never reads as an already finished wait. */
 private fun returnCountdown(

@@ -129,24 +129,52 @@ data class ReviewJob(
     /** The amount shown before and after submission must agree with the chosen feedback route. */
     val reward: Int get() = if (noBox) post.reward / 2 else post.reward
 
-    /** A live review with all the time it needs, still waiting on its second day of use. */
-    val waitingForDay: Boolean get() = live && secondsLeft == 0 && review.state == "installed"
+    /**
+     * A live review on timing 2, as the server says: two visits of a few minutes a day apart, and
+     * the review opening two days after the first. False from an older server, which keeps timing 1.
+     */
+    val paced: Boolean get() = live && review.timing >= FeedRules.LIVE_TIMING
 
-    /** Used on two days already, so only the hours since it was taken are still to pass. */
-    val usedOnTwoDays: Boolean get() = review.daysUsed >= 2
+    /** Timing 2: the second visit's time is in. */
+    val secondVisitDone: Boolean get() = review.step2NeededMs > 0 && review.step2Ms >= review.step2NeededMs
+
+    /** Timing 2: seconds of the second visit still to go. */
+    val secondVisitSecondsLeft: Int
+        get() = (((review.step2NeededMs - review.step2Ms).coerceAtLeast(0) + 999) / 1000).toInt()
+
+    /** Timing 2: from when the second visit counts. */
+    val useAgainFrom: java.time.Instant? get() = instantOf(review.useAgainFrom)
+
+    /**
+     * A live review with its first visit done, still waiting on its second: a second day of use under
+     * timing 1, the second visit and the hours under timing 2.
+     */
+    val waitingForDay: Boolean
+        get() {
+            if (review.state != "installed") return false
+            return if (paced) review.step1DoneAt != null || secondsLeft == 0 else live && secondsLeft == 0
+        }
+
+    /**
+     * Used on two days already, so only the hours since it was taken are still to pass. Under timing 2,
+     * the second visit is done, so only the hours since the first are.
+     */
+    val usedOnTwoDays: Boolean get() = if (paced) secondVisitDone else review.daysUsed >= 2
 
     val settled: Boolean
         get() = review.state in setOf("submitted", "approved", "rejected", "disputed", "abandoned", "expired")
 
     /**
      * While [waitingForDay] and not yet used on two days: today is already another calendar day
-     * than the first use, so opening the app now is the second day's use.
+     * than the first use, so opening the app now is the second day's use. Under timing 2, the hours
+     * after the first visit have passed, so using the app now counts as the second visit.
      */
     fun secondDayNow(
         now: java.time.Instant = java.time.Instant.now(),
         zone: java.time.ZoneId = java.time.ZoneId.systemDefault(),
     ): Boolean {
         if (!waitingForDay || usedOnTwoDays) return false
+        if (paced) return useAgainFrom?.let { !now.isBefore(it) } ?: false
         val first = firstUse ?: return false
         return first.atZone(zone).toLocalDate() < now.atZone(zone).toLocalDate()
     }
@@ -155,9 +183,13 @@ data class ReviewJob(
      * The earliest a live review waiting on its second day can open, as the server rules it:
      * used again [LIVE_RETURN_HOURS] after its first use, or used on a second calendar day once
      * that long has passed since it was taken. Null when it is not waiting, or a time is missing.
+     *
+     * Under timing 2, by the server's own times in elapsed hours rather than calendar days: when the
+     * second visit may start while it is still to do, then when the review opens.
      */
     fun opensAt(zone: java.time.ZoneId = java.time.ZoneId.systemDefault()): java.time.Instant? {
         if (!waitingForDay) return null
+        if (paced) return if (secondVisitDone) instantOf(review.reviewFrom) else useAgainFrom
         val back = instantOf(review.returnsAt) ?: return null
         if (usedOnTwoDays) return back
         val first = firstUse ?: return back
@@ -174,8 +206,8 @@ data class ReviewJob(
     }
 
     private companion object {
-        /** rules.LIVE_RETURN_HOURS on the server. */
-        const val LIVE_RETURN_HOURS = 20
+        /** rules.LIVE_RETURN_HOURS on the server: timing 1 only. */
+        const val LIVE_RETURN_HOURS = FeedRules.LIVE_RETURN_HOURS
     }
 }
 
@@ -195,6 +227,9 @@ internal fun previewOf(post: ApiPost) =
                 .now()
                 .toString(),
         isLive = post.isLive,
+        // This build asks for timing 2 on a live request, so its rules are the ones shown before it
+        // is taken. The review the server sends back says what it really runs on.
+        timing = if (post.isLive) FeedRules.LIVE_TIMING else 1,
     )
 
 /** Whether a time the server sent has come. */
@@ -231,6 +266,8 @@ fun reviewOutcome(
     live: Boolean = false,
     /** Why it ended, where its reviewer did not give it up. */
     endedReason: String? = null,
+    /** A timing 2 review whose first visit was done: it ran out four days from that visit. */
+    afterFirstVisit: Boolean = false,
 ): String =
     when (state) {
         "abandoned" ->
@@ -257,7 +294,12 @@ fun reviewOutcome(
         "disputed" -> "The developer disputed it. Three members are deciding."
         "rejected" -> "The members sided with the developer. Nothing was paid, and their fee came from your tix."
         "expired" ->
-            if (live) "It sat unfinished for three days, so the slot went back." else "It sat unfinished for a day, so the slot went back."
+            when {
+                afterFirstVisit ->
+                    "It wasn't sent within ${FeedRules.LIVE_FINISH_HOURS / 24} days of your first visit, so the slot went back."
+                live -> "It sat unfinished for three days, so the slot went back."
+                else -> "It sat unfinished for a day, so the slot went back."
+            }
         else -> ""
     }
 

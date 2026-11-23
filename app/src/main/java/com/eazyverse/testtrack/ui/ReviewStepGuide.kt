@@ -57,7 +57,9 @@ internal fun ReviewStepGuide(
                 when (job.step) {
                     ReviewStep.INSTALL -> {
                         val hours = if (job.live) FeedRules.LIVE_CLAIM_HOURS else FeedRules.CLAIM_HOURS
-                        if (job.onPhone) {
+                        if (job.onPhone && job.paced) {
+                            ReviewBullet(body = "Tap Start review to begin.", highlights = listOf("Start review"))
+                        } else if (job.onPhone) {
                             ReviewBullet(
                                 body = "Tap Start review to begin your $hours-hour finish timer.",
                                 highlights = listOf("Start review", "$hours-hour"),

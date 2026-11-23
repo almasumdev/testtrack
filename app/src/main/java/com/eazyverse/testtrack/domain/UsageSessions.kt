@@ -84,6 +84,28 @@ object UsageSessions {
             .minOfOrNull { it.first }
 
     /**
+     * When [pkg]'s time in front between [since] and [now] first added up to [needMs], or null when it
+     * has not: when a live review's first visit was done, by the phone's own record.
+     */
+    fun reachedAt(
+        events: List<Event>,
+        pkg: String,
+        since: Long,
+        now: Long,
+        needMs: Long,
+        helpers: Set<String> = emptySet(),
+    ): Long? {
+        if (needMs <= 0L) return null
+        var total = 0L
+        for (sitting in sessions(events, pkg, since, now, helpers)) {
+            val length = sitting.last - sitting.first
+            if (total + length >= needMs) return sitting.first + (needMs - total)
+            total += length
+        }
+        return null
+    }
+
+    /**
      * Whether [pkg] is in front at [now], itself or through a browser it handed over to: what the
      * night's picture waits for, so it is never a picture of TestTrack or of whatever came next.
      */

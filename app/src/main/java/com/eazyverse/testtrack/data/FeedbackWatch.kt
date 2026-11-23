@@ -118,7 +118,13 @@ class FeedbackWatch(
                             post(
                                 context,
                                 "Your review of $app ran out",
-                                "It sat unfinished for ${if (review.isLive) "three days" else "a day"}, so the slot went back.",
+                                when {
+                                    // Timing 2 after its first visit: four days from that visit.
+                                    review.timing >= 2 && review.step1DoneAt != null ->
+                                        "It wasn't sent within four days of your first visit, so the slot went back."
+                                    review.isLive -> "It sat unfinished for three days, so the slot went back."
+                                    else -> "It sat unfinished for a day, so the slot went back."
+                                },
                             )
                         }
                 }

@@ -61,7 +61,7 @@ internal fun ReviewDone(
         RobotState(
             prop,
             title,
-            reviewOutcome(state, job.live, job.review.endedReason),
+            reviewOutcome(state, job.live, job.review.endedReason, afterFirstVisit = job.paced && job.review.step1DoneAt != null),
             fill = false,
             robot = (room * 0.2f).coerceIn(96.dp, 132.dp),
             pad = PaddingValues(0.dp),
@@ -92,6 +92,8 @@ private fun FailedCard(
         FailedRow(
             when {
                 state == "abandoned" -> "You gave it up"
+                job.paced && job.review.step1DoneAt != null ->
+                    "Not sent within ${FeedRules.LIVE_FINISH_HOURS / 24} days of your first visit"
                 job.live -> "Not finished within three days"
                 else -> "Not finished within a day"
             },

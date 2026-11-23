@@ -41,6 +41,15 @@ data class MyReview(
     /** When the review was decided, and when it was sent, as the server says. */
     val decidedAt: String? = null,
     val submittedAt: String? = null,
+    /**
+     * Timing 2 (1 from an older server): whether each visit is done, from when the second counts and
+     * the earliest the review opens, as the server says.
+     */
+    val timing: Int = 1,
+    val firstVisitDone: Boolean = false,
+    val secondVisitDone: Boolean = false,
+    val useAgainFrom: String? = null,
+    val reviewFrom: String? = null,
 )
 
 /**

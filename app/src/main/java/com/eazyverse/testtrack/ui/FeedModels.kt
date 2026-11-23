@@ -45,8 +45,21 @@ object FeedRules {
     const val LIVE_USE_SECONDS = 180
     const val CLOSED_USE_SECONDS = 120
 
-    /** rules.LIVE_RETURN_HOURS: a live app is used again this long after its first use. */
+    /** rules.LIVE_RETURN_HOURS: a live app is used again this long after its first use (timing 1). */
     const val LIVE_RETURN_HOURS = 20
+
+    /**
+     * Timing 2 of a live review (rules.LIVE_STEP_SECONDS, LIVE_AGAIN_HOURS, LIVE_OPEN_HOURS and
+     * LIVE_FINISH_HOURS): two visits of this many seconds, the second no sooner than a day after the
+     * first was done, the review opening two days after it, and four days from it to send.
+     */
+    const val LIVE_STEP_SECONDS = 180
+    const val LIVE_AGAIN_HOURS = 24
+    const val LIVE_OPEN_HOURS = 48
+    const val LIVE_FINISH_HOURS = 96
+
+    /** rules.LIVE_TIMING: the pacing this build asks for when it takes a live review. */
+    const val LIVE_TIMING = 2
 
     /** rules.CLAIM_HOURS and rules.LIVE_CLAIM_HOURS: how long a taken review may sit unfinished. */
     const val CLAIM_HOURS = 24

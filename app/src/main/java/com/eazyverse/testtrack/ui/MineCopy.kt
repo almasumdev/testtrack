@@ -93,6 +93,7 @@ internal fun liveUseLine(
     review: MyReview,
     now: Instant = Instant.now(),
 ): String {
+    if (review.timing >= FeedRules.LIVE_TIMING) return pacedUseLine(review, now)
     val opens = instantOf(review.opensAt)
     return when {
         review.daysUsed >= 2 && opens != null && opens.isAfter(now) -> "Opens ${opensShort(opens, now)}"
@@ -100,6 +101,26 @@ internal fun liveUseLine(
         review.daysUsed >= 2 -> "Use it a bit longer"
         review.usedEnough || review.daysUsed == 1 -> "Open it on another day"
         else -> "Use it on two days"
+    }
+}
+
+/**
+ * The same under timing 2, by the server's times: the first visit, when to come back, the second
+ * visit, then when it opens. "Back tomorrow 12:30 PM" is the longest.
+ */
+private fun pacedUseLine(
+    review: MyReview,
+    now: Instant,
+): String {
+    val minutes = FeedRules.LIVE_STEP_SECONDS / 60
+    val again = instantOf(review.useAgainFrom)
+    val opens = instantOf(review.reviewFrom)
+    return when {
+        !review.firstVisitDone -> "Use it for $minutes minutes"
+        !review.secondVisitDone && again != null && again.isAfter(now) -> "Back ${opensShort(again, now)}"
+        !review.secondVisitDone -> "Use it $minutes more minutes"
+        opens != null && opens.isAfter(now) -> "Opens ${opensShort(opens, now)}"
+        else -> "Ready for your review"
     }
 }
 

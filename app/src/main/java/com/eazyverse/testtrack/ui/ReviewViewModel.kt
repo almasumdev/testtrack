@@ -19,6 +19,7 @@ import com.eazyverse.testtrack.data.ReviewKeep
 import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiError
 import com.eazyverse.testtrack.net.ApiPost
+import com.eazyverse.testtrack.net.claimTimed
 import com.eazyverse.testtrack.viewmodel.LiveReload
 import com.eazyverse.testtrack.viewmodel.ProofGate
 import com.eazyverse.testtrack.viewmodel.keepEdited
@@ -240,7 +241,7 @@ class ReviewViewModel : ViewModel() {
                 failure = "This phone will not identify itself, so a review from it cannot count."
                 return@run
             }
-            val review = Api.claim(current.post.id, fingerprint)
+            val review = Api.claimTimed(current.post.id, fingerprint, FeedRules.LIVE_TIMING)
             // Taken again after it was given up: same id, so its clock starts again.
             ReviewClock.restart(context, review.id)
             keep(ReviewJob(current.post, review, leftReview = leftFor(context, review.id)))

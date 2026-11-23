@@ -125,7 +125,11 @@ internal fun AskTrackLines(
     var how by remember { mutableStateOf(false) }
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         if (live) {
-            InfoLine("Testers use it on two days, then rate and review it on Google Play.", icon = Lucide.Star)
+            InfoLine(
+                "Testers use it twice, ${FeedRules.LIVE_AGAIN_HOURS} hours apart, then rate and review it on Google Play " +
+                    "${FeedRules.LIVE_OPEN_HOURS} hours after their first visit.",
+                icon = Lucide.Star,
+            )
             InfoLine(
                 AnnotatedString("Google doesn't allow rewarding reviews and may remove ones it doubts."),
                 tone = Tone.WARN,

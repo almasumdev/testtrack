@@ -254,20 +254,6 @@ data class ApiActionParts(
 )
 
 @Serializable
-data class ClaimIn(
-    @SerialName("device_fp") val deviceFp: String,
-    /** This app shows what a request asks for, so the server lets it take written ones. */
-    @SerialName("knows_feedback") val knowsFeedback: Boolean,
-)
-
-@Serializable
-data class UsedIn(
-    @SerialName("used_ms") val usedMs: Long,
-    /** Calendar days the app was used on since the review was taken. */
-    val days: Int = 0,
-)
-
-@Serializable
 data class SubmitIn(
     @SerialName("proof_ref") val proofRef: String = "",
     val written: String = "",
@@ -352,6 +338,17 @@ data class ApiReview(
     /** What the request asks for (stars, written or detailed) and the characters of text that takes. */
     val feedback: String = "stars",
     @SerialName("needs_chars") val needsChars: Int = 0,
+    /**
+     * The pacing a live review runs on: 2 when this app asked for it, 1 otherwise and from an older
+     * server. Under 2: when the first visit was done, from when the second visit counts, the earliest
+     * the review opens, and the second visit's time so far and needed (0 under timing 1).
+     */
+    val timing: Int = 1,
+    @SerialName("step1_done_at") val step1DoneAt: String? = null,
+    @SerialName("use_again_from") val useAgainFrom: String? = null,
+    @SerialName("review_from") val reviewFrom: String? = null,
+    @SerialName("step2_ms") val step2Ms: Long = 0,
+    @SerialName("step2_needed_ms") val step2NeededMs: Long = 0,
 )
 
 @Serializable

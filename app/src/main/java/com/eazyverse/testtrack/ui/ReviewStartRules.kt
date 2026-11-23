@@ -39,7 +39,15 @@ internal fun ReviewStartRules(job: ReviewJob) {
             body = "Use the app for at least $duration.",
             highlights = listOf(duration),
         )
-        if (job.live) {
+        if (job.paced) {
+            val again = "${FeedRules.LIVE_AGAIN_HOURS} hours"
+            ReviewBullet(
+                body = "Come back after $again and use it for $duration more.",
+                highlights = listOf(again, "$duration more"),
+            )
+            val opens = "${FeedRules.LIVE_OPEN_HOURS} hours"
+            ReviewBullet(body = "The review opens $opens after your first $duration.", highlights = listOf(opens))
+        } else if (job.live) {
             ReviewBullet(
                 body = "Return on another day, at least ${FeedRules.LIVE_RETURN_HOURS} hours later.",
                 highlights = listOf("another day", "${FeedRules.LIVE_RETURN_HOURS} hours"),
@@ -49,10 +57,15 @@ internal fun ReviewStartRules(job: ReviewJob) {
             body = if (job.live) "Give a 5-star review on Play." else "Send useful private feedback to the developer on Play.",
             highlights = if (job.live) listOf("5-star review") else listOf("private feedback", "developer"),
         )
-        ReviewBullet(
-            body = "Send a screenshot within $within hours of installation.",
-            highlights = listOf("$within hours"),
-        )
+        if (job.paced) {
+            val days = "${FeedRules.LIVE_FINISH_HOURS / 24} days"
+            ReviewBullet(body = "Send a screenshot within $days of your first $duration.", highlights = listOf(days))
+        } else {
+            ReviewBullet(
+                body = "Send a screenshot within $within hours of installation.",
+                highlights = listOf("$within hours"),
+            )
+        }
         ReviewBullet(
             body = "Earn ${job.post.reward} tix after approval.",
             highlights = listOf("${job.post.reward} tix", "after approval"),

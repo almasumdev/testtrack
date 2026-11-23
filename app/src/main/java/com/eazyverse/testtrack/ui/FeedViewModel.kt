@@ -376,6 +376,11 @@ class FeedViewModel : ViewModel() {
             checkBy = it.checkBy,
             decidedAt = it.decidedAt,
             submittedAt = it.submittedAt,
+            timing = it.timing,
+            firstVisitDone = it.step1DoneAt != null,
+            secondVisitDone = it.step2NeededMs > 0 && it.step2Ms >= it.step2NeededMs,
+            useAgainFrom = it.useAgainFrom,
+            reviewFrom = it.reviewFrom,
         )
 
     // Mapped here, not drawn raw: a post id means nothing on a card, nor should a screen know the database's names.
