@@ -30,8 +30,9 @@ import java.time.ZoneId
  * somebody else's app. With "display over other apps" allowed, the testing control floats over
  * each app with its ten seconds, its sign-in and one button; a counted app is recorded and the next
  * opens by itself once its twenty seconds are up, or sooner with the button, without a trip back
- * to TestTrack. Without it, a round is the old one: open, come
- * back, and the next opens on its own.
+ * to TestTrack. One app opened on its own does not leave by itself: its button goes back to
+ * TestTrack. Without the control, a round is the old one: open, come back, and the next opens on
+ * its own.
  *
  * Every step is written to [RoundStore], so Android closing TestTrack mid-visit loses nothing: the
  * next time TestTrack comes to the front, the app that was on screen is measured and recorded. The
@@ -70,6 +71,9 @@ object NightRound {
 
     /** The move to the next app is under way, so the clock and the button do not start another. */
     private var advancing = false
+
+    /** One app opened on its own (not Open all): once it counts it stays up till the tester goes back. */
+    private val single get() = round?.stops?.size == 1
 
     /**
      * Set when TestTrack came back to the front during the move: the round ends once the app on
@@ -173,7 +177,7 @@ object NightRound {
                         publish()
                     }
                     // A held app that is already recorded waits for play without asking again.
-                    if (ranMs >= VISIT_MS && window != null && !(paused && recorded != null)) next(context)
+                    if (ranMs >= VISIT_MS && window != null && !((paused || single) && recorded != null)) next(context)
                     last = now
                 }
             }
@@ -190,7 +194,7 @@ object NightRound {
             } else {
                 null
             }
-        window?.state(stop, now.index, now.stops.size, ranMs, paused, picture)
+        window?.state(stop, now.index, now.stops.size, ranMs, paused, picture, single)
     }
 
     /**
@@ -237,10 +241,6 @@ object NightRound {
             }
     }
 
-    /** [now] with what the recording changed on the live round: the missing-picture count and the held mark. */
-    private fun fresh(now: RoundStore.Round): RoundStore.Round =
-        round?.let { now.copy(noPicture = it.noPicture, recordedIndex = it.recordedIndex) } ?: now
-
     /** A picture still being taken is waited for, briefly, before the app is left. */
     private suspend fun picture(): File? {
         if (!pictures) return null
@@ -253,6 +253,11 @@ object NightRound {
      * once the time is in, play moves on at once, and play before that waits only the time left.
      */
     private fun playPause(context: Context) {
+        // A lone app that has counted: the button goes back to TestTrack, which ends the round there.
+        if (single && ranMs >= VISIT_MS) {
+            bringBack(context)
+            return
+        }
         if (advancing) {
             // The recording is under way: a play now is the go-ahead for the move after it.
             if (paused) {
@@ -338,8 +343,8 @@ object NightRound {
                         // Its picture may have come while the visit was being recorded.
                         queueLate(context, stop)
                     }
-                    // Held: it is recorded and stays on screen until the tester plays.
-                    if (paused) {
+                    // Held: it is recorded and stays on screen until the tester plays (or, for a lone app, goes back).
+                    if (paused || single) {
                         advancing = false
                         publish()
                         return@launch

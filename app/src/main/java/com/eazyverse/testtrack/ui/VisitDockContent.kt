@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -85,6 +86,8 @@ data class DockUi(
     val signIn: List<Pair<String, String>>,
     val upright: Boolean,
     val open: Boolean,
+    /** One app opened on its own: no next app, so once counted the button goes back to TestTrack. */
+    val single: Boolean = false,
     /**
      * Where along the card's own width and height its docked edge holds it, from 0 (left, top) to 1
      * (right, bottom): the point that stays put while the card grows and shrinks.
@@ -258,7 +261,9 @@ private fun ClosedBody(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Ring(ui)
-            Column {
+            // The text gives way: the buttons are measured first and keep their size, and a long
+            // name (or a large font) ends in dots instead of pushing the button out of the pill.
+            Column(Modifier.weight(1f, fill = false).widthIn(max = 150.dp)) {
                 Text(
                     ui.app,
                     style = MaterialTheme.typography.titleSmall,
@@ -266,7 +271,13 @@ private fun ClosedBody(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                Text("${ui.index + 1} of ${ui.total}", style = TextStyles.DeveloperStyle, color = t.text4)
+                Text(
+                    if (ui.single && ui.counted) "Counted" else "${ui.index + 1} of ${ui.total}",
+                    style = TextStyles.DeveloperStyle,
+                    color = t.text4,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
             }
             if (ui.signIn.isNotEmpty()) Icon(Lucide.KeyRound, "Has a sign-in", Modifier.size(15.dp), tint = t.accentInk)
             PlayPause(ui, onPlayPause)
@@ -349,6 +360,7 @@ private fun MinimiseButton(
 
 private fun status(ui: DockUi) =
     when {
+        ui.single && ui.counted -> "Counted. Go back to TestTrack when you are done"
         ui.counted && ui.picture == true -> "Counted with its picture, app ${ui.index + 1} of ${ui.total}"
         ui.counted && ui.picture == false -> "No picture yet, app ${ui.index + 1} of ${ui.total}"
         ui.counted -> "Taking its picture, app ${ui.index + 1} of ${ui.total}"

@@ -38,6 +38,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Check
+import com.composables.icons.lucide.ChevronLeft
 import com.composables.icons.lucide.Copy
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Pause
@@ -169,6 +170,10 @@ internal fun PlayPause(
     ui: DockUi,
     onClick: () -> Unit,
 ) {
+    if (ui.single && ui.counted) {
+        BackPill(onClick)
+        return
+    }
     val play = ui.counted || ui.paused
     // 34 to look at, 48 to touch.
     Box(
@@ -193,6 +198,25 @@ internal fun PlayPause(
     }
 }
 
+/** A lone app that has counted: a green pill, kept at its own size, that goes back to TestTrack. */
+@Composable
+private fun BackPill(onClick: () -> Unit) {
+    val ink = Tt.colors.inkOn(Status.posted)
+    Row(
+        Modifier
+            .minimumInteractiveComponentSize()
+            .clip(RoundedCornerShape(percent = 50))
+            .background(Status.posted)
+            .clickable(onClick = onClick)
+            .semantics { contentDescription = "Back to TestTrack" }
+            .padding(start = 8.dp, end = 12.dp, top = 7.dp, bottom = 7.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(Lucide.ChevronLeft, null, Modifier.size(16.dp), tint = ink)
+        Text("Back", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = ink, maxLines = 1)
+    }
+}
+
 @Composable
 internal fun BigPlayPause(
     ui: DockUi,
@@ -200,6 +224,7 @@ internal fun BigPlayPause(
 ) {
     val label =
         when {
+            ui.single && ui.counted -> "Back to TestTrack"
             ui.counted -> if (ui.index + 1 < ui.total) "Next app" else "Finish"
             ui.paused -> "Play"
             else -> "Pause"
@@ -214,7 +239,13 @@ internal fun BigPlayPause(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         val ink = Tt.colors.inkOn(if (ui.counted) Status.posted else Tt.colors.accent)
-        Icon(if (ui.counted || ui.paused) Lucide.Play else Lucide.Pause, null, Modifier.size(16.dp), tint = ink)
+        val icon =
+            when {
+                ui.single && ui.counted -> Lucide.ChevronLeft
+                ui.counted || ui.paused -> Lucide.Play
+                else -> Lucide.Pause
+            }
+        Icon(icon, null, Modifier.size(16.dp), tint = ink)
         Spacer(Modifier.width(6.dp))
         Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = ink)
     }

@@ -35,6 +35,10 @@ internal sealed interface Outcome {
     ) : Outcome
 }
 
+/** [now] with what the recording changed on the live round: the missing-picture count and the held mark. */
+internal fun NightRound.fresh(now: RoundStore.Round): RoundStore.Round =
+    round?.let { now.copy(noPicture = it.noPicture, recordedIndex = it.recordedIndex) } ?: now
+
 internal suspend fun NightRound.record(
     context: Context,
     stop: RoundStore.Stop,

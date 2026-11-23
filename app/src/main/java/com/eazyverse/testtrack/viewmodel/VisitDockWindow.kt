@@ -95,6 +95,7 @@ class VisitDockWindow(
         ranMs: Long,
         paused: Boolean,
         picture: Boolean? = null,
+        single: Boolean = false,
     ) {
         ui =
             DockUi(
@@ -109,6 +110,7 @@ class VisitDockWindow(
                 signIn = signInParts(stop.notes),
                 upright = spot.edge.upright,
                 open = open,
+                single = single,
             )
     }
 
