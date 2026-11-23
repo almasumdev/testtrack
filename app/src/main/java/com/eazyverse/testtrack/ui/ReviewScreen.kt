@@ -89,7 +89,7 @@ fun ReviewScreen(
 
     ReviewBody(
         post = post,
-        job = vm.job,
+        job = vm.pageJob,
         proof = vm.proof,
         replacing = vm.replacing,
         sending = vm.sending,

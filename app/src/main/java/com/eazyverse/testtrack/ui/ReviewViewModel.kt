@@ -83,13 +83,26 @@ class ReviewViewModel : ViewModel() {
     private var app: Context? = null
 
     /** A capture that landed before the review was known; kept once it is. */
-    private var pending: File? = null
+    private var pending: File? by mutableStateOf(null)
 
     /** Writing and sending the kept screenshot take turns here. See [ProofGate]. */
     private val gate = ProofGate()
 
-    /** A new version of the screenshot is being kept: Send waits for it. */
-    val replacing: Boolean get() = gate.replacing
+    /** A new version of the screenshot is being kept, or one is waiting to be: Send waits for it. */
+    val replacing: Boolean get() = gate.replacing || (pending != null && app != null && job?.review?.id?.isNotEmpty() == true)
+
+    /**
+     * [job] as the page draws it. Coming back from the screenshot button, the picture is still
+     * being kept for a moment, and until it is the job reads as the Play step: the page would flash
+     * "Open Google Play" before the proof page. While it is kept the page stays on the proof step
+     * (its picture box says Saving picture); if it could not be kept the page returns to the Play step.
+     */
+    val pageJob: ReviewJob?
+        get() {
+            val current = job ?: return null
+            val keeping = replacing && !current.leftReview && !current.settled && ReviewStep.of(current.review) == ReviewStep.LEAVE
+            return if (keeping) current.copy(leftReview = true) else current
+        }
 
     /** The screenshot is going to TestTrack with the review: the page says so over the picture. */
     var sending by mutableStateOf(false)
