@@ -22,6 +22,16 @@ object ApiCache {
 
     @Volatile private var app: Context? = null
 
+    /**
+     * Held by a write from its session check to its last byte, and by [clear]. The session's
+     * generation moves before [clear] runs, so a write either sees the new generation and stops,
+     * or finishes before the files go: never an old account's answer left behind a sign-out.
+     */
+    private val lock = Any()
+
+    /** Runs inside a write, between its session check and the file, for a test to pause it there. */
+    @Volatile internal var afterCheckForTest: (() -> Unit)? = null
+
     /** A test's say-so about the connection, so a frame does not depend on the machine's. */
     @Volatile internal var onlineForTest: Boolean? = null
 
@@ -48,12 +58,15 @@ object ApiCache {
         text: String,
         generation: Long,
     ) {
-        if (generation != ApiSession.generation) return
-        runCatching { file(path)?.apply { parentFile?.mkdirs() }?.writeText(text) }
+        synchronized(lock) {
+            if (generation != ApiSession.generation) return
+            afterCheckForTest?.invoke()
+            runCatching { file(path)?.apply { parentFile?.mkdirs() }?.writeText(text) }
+        }
     }
 
-    /** Forget every answer, for a sign-out. */
+    /** Forget every answer, for a sign-out. Waits for a write already past its check. */
     fun clear() {
-        dir?.listFiles()?.forEach { it.delete() }
+        synchronized(lock) { dir?.listFiles()?.forEach { it.delete() } }
     }
 }

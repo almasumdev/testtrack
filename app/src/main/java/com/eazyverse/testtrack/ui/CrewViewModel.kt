@@ -150,8 +150,12 @@ class CrewViewModel : ViewModel() {
     /**
      * Take a crew out of the list at once, ahead of the reload that confirms it: a crew's page open
      * on it closes straight away rather than showing what was just left until the server answers.
+     * A load already on its way was asked before the crew was left and would bring it back, so it
+     * no longer counts; the reload after the call is the one that does.
      */
     internal fun forget(crewId: String) {
+        loads++
+        reloading = false
         crews = crews.filterNot { it.id == crewId }
     }
 
@@ -245,15 +249,20 @@ class CrewViewModel : ViewModel() {
                 ReviewMoment.noteFinished(context, crews.filter { it.phase == CrewPhase.RECORD && !it.out }.map { it.id }.toSet())
                 offline = false
             } catch (e: ApiError) {
+                // An older load's failure says nothing about the newer one's answer.
+                if (mine != loads) return@launch
                 Snacks.error(e.message)
                 offline = true
             } catch (e: Exception) {
+                if (mine != loads) return@launch
                 offline = true
                 // No connection and nothing shown yet: the kept crews stand in. Not for a server fault.
                 if (e is java.io.IOException && crews.isEmpty() && open == null) seedFromPhone(afterFailure = true)
             } finally {
-                loading = false
-                if (mine == loads) reloading = false
+                if (mine == loads) {
+                    loading = false
+                    reloading = false
+                }
             }
         }
     }
@@ -447,8 +456,20 @@ class CrewViewModel : ViewModel() {
 
     fun stopLive() = live.stop()
 
+    /**
+     * A quiet [load] after a call made without a context: the same newest-wins count, but no
+     * [reloading], so a crew's page that was just left closes at once rather than waiting.
+     */
     private suspend fun reload() {
-        runCatching { apply(Api.crews()) }
+        val mine = ++loads
+        try {
+            runCatching { Api.crews() }.onSuccess { if (mine == loads) apply(it) }
+        } finally {
+            if (mine == loads) {
+                loading = false
+                reloading = false
+            }
+        }
     }
 }
 

@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiCrewRecord
 import com.eazyverse.testtrack.net.ApiError
+import com.eazyverse.testtrack.net.ApiSession
 import com.eazyverse.testtrack.net.ApiVolunteerStint
 import com.eazyverse.testtrack.net.answerProdAccess
 import com.eazyverse.testtrack.net.claimPerfect
@@ -93,24 +94,29 @@ class CrewRecords(
     /** Read them again. Signed out there are none to read. */
     fun load(signedOut: Boolean) {
         if (previewing) return
+        // Before the clearing: a read still on its way from before sign-out must not fill it again.
+        val mine = ++loads
         if (signedOut) {
             items = emptyList()
             stints = emptyList()
             failed = false
             return
         }
-        val mine = ++loads
+        val generation = ApiSession.generation
+
+        // Newest read only, and from the session it was asked in.
+        fun stale() = mine != loads || generation != ApiSession.generation
         scope.launch {
             try {
                 val answer = Api.crewRecords()
-                if (mine != loads) return@launch
+                if (stale()) return@launch
                 items = answer.items.map { it.toRecord() }
                 stints = answer.volunteering.map { it.toStint() }
                 failed = false
             } catch (e: CancellationException) {
                 throw e
             } catch (_: Exception) {
-                if (mine != loads) return@launch
+                if (stale()) return@launch
                 if (items == null) {
                     val kept = Api.lastCrewRecords(afterFailure = true)
                     items = kept?.items?.map { it.toRecord() }

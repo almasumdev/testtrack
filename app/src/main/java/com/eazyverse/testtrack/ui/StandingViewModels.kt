@@ -190,6 +190,8 @@ class MeViewModel : ViewModel() {
                 val generation = ApiSession.generation
                 val ref = if (photo == null) profile?.photoUrl.orEmpty() else ProfileUpload.photo(photo)
                 val me = Api.updateMe(MeIn(displayName = name.trim(), photoRef = ref))
+                // A load already on its way was asked before the change and would put the old name back.
+                loads++
                 // The page and the kept copy take the change now; the reload below fills in the rest.
                 profile?.copy(displayName = me.displayName, photoUrl = me.photoUrl)?.let {
                     profile = it
@@ -220,25 +222,34 @@ class MeViewModel : ViewModel() {
         seedFromPhone()
     }
 
+    /** Which load is the latest: an older answer, or one from before a save, is dropped. */
+    private var loads = 0
+
     fun load(context: Context) {
+        val mine = ++loads
         viewModelScope.launch {
             try {
                 if (!ApiAuth.ensure(context)) {
+                    if (mine != loads) return@launch
                     // Nothing of the last account stays in memory for the next one to see.
                     signedOut = true
                     profile = null
                     return@launch
                 }
+                if (mine != loads) return@launch
                 signedOut = false
                 // Signed in on this page just now: whatever is kept for the account shows first.
                 if (profile == null) seedFromPhone()
                 val generation = ApiSession.generation
                 val fresh = Api.profile()
-                // Signed out or switched while it was on its way: it is not this account's.
-                if (generation != ApiSession.generation) return@launch
+                // Signed out or switched while it was on its way: it is not this account's. Or a
+                // newer load or a save came after it: what it says is older than the page.
+                if (generation != ApiSession.generation || mine != loads) return@launch
                 profile = fresh
+                ProfileCache.keep(fresh, generation)
                 offline = false
             } catch (e: ApiError) {
+                if (mine != loads) return@launch
                 if (e.isAuth) {
                     signedOut = true
                     profile = null
@@ -246,10 +257,11 @@ class MeViewModel : ViewModel() {
                     offline = true
                 }
             } catch (_: Exception) {
+                if (mine != loads) return@launch
                 // The kept profile, if any, is already showing. Nothing kept: the offline robot.
                 offline = true
             } finally {
-                loading = false
+                if (mine == loads) loading = false
             }
         }
     }

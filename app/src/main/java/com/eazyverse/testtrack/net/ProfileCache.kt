@@ -11,7 +11,7 @@ import kotlinx.serialization.encodeToString
  * it had and the next answer replaces it quietly, figures included. Only with nothing kept, which
  * is the first sign-in on this phone, does the page shimmer.
  *
- * It is the same file [Api.profile] writes, so every fresh answer keeps it current, and it goes
+ * The You page keeps every fresh answer from [Api.profile] here, so it stays current, and it goes
  * with everything else in [ApiCache] when the session ends. Belt and braces on top of that: it is
  * only handed back while signed in, and never for an address other than the signed-in one.
  */

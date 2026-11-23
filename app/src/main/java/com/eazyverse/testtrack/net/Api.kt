@@ -313,7 +313,8 @@ object Api {
 
     suspend fun board(): ApiBoard = kept(BOARD)
 
-    suspend fun profile(): ApiProfile = kept(PROFILE)
+    /** Not kept here: the You page keeps it ([ProfileCache.keep]) only while it is the newest answer. */
+    suspend fun profile(): ApiProfile = get(PROFILE)
 
     /** Change this account's name or face. Nothing else about it is ours to set. */
     suspend fun updateMe(body: MeIn): Me = patch("/me", body)
