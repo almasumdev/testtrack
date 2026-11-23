@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Crew private feedback: picture loading</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,500,0,0" rel="stylesheet">
+<link href="https://unpkg.com/lucide-static@0.460.0/font/lucide.css" rel="stylesheet">
+<style>
+:root{
+  --bg:#F7FCFF;--text:#142F43;--text2:#203A4E;--text3:#223D50;--text4:#59758A;
+  --glass:#F2F9FD;--glass2:#DFEDF6;--glassBorderStrong:#789AAF;--cardLine:#E1ECF3;
+  --accent:#3A5B73;--onAccent:#fff;--accentInk:#22394B;--tile:#DCE6EE;--tileInk:#3A5B73;
+  --band:#ECF2F6;--ok:#246B59;--warn:#8A611C;--bad:#9E3B2E;
+  --scrim:rgba(20,34,48,.46);--inverse:#172F42;--onInverse:#EFF7FC;--snackOk:#83D8C4;--snackBad:#E4938A;
+  --photoScrim:rgba(0,0,0,.5);--surface3:#C7DEED;--red:#E0453A;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#E3ECF2;font-family:Barlow,system-ui,sans-serif;color:var(--text);padding:26px 22px 60px}
+h1{font-size:22px;margin:0 0 4px;font-weight:700}
+.sub{color:var(--text4);font-size:14px;margin:0 0 22px}
+.rowhead{display:flex;align-items:center;gap:10px;margin:26px 0 12px}
+.rowtag{background:var(--text);color:#fff;border-radius:999px;padding:5px 14px;font-weight:700;font-size:15px}
+.rowtag.fix{background:var(--ok)}
+.rowtag.alt{background:var(--accent)}
+.rowtag + span{color:var(--text4);font-size:14px;font-weight:600}
+.row{display:flex;gap:18px;overflow-x:auto;padding-bottom:8px;align-items:flex-start}
+.cell{flex:0 0 auto;width:262px}
+.lab{font-weight:700;font-size:15px;margin:0 0 8px;display:flex;align-items:center;gap:8px}
+.lab b{display:inline-flex;width:22px;height:22px;border-radius:50%;background:#fff;border:1px solid #c9d8e2;font-size:12px;align-items:center;justify-content:center;color:var(--text4)}
+.same{width:150px;height:540px;border:2px dashed #b7cad7;border-radius:30px;display:flex;align-items:center;justify-content:center;text-align:center;color:var(--text4);font-weight:600;font-size:14px;padding:12px}
+
+/* phone */
+.phone{width:262px;height:540px;border-radius:30px;border:7px solid #18242d;background:var(--bg);position:relative;overflow:hidden;font-size:13px}
+.sb{height:22px;display:flex;justify-content:space-between;align-items:center;padding:0 16px;font-size:11px;font-weight:600;color:var(--text2)}
+.bar{height:48px;display:flex;align-items:center;padding:0 12px;gap:6px}
+.bar .material-symbols-rounded{font-size:20px;color:var(--text)}
+.bar .t{font-size:18px;font-weight:700}
+.night{padding:0 12px 10px;font-size:12px;color:var(--text4);font-weight:500}
+
+.tile{margin:0 10px 10px;border:1px solid var(--cardLine);border-radius:14px;background:var(--bg);padding:12px}
+.head{display:flex;align-items:center;gap:10px}
+.appic{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;flex:0 0 auto}
+.appic.a{background:#DDE9F0;color:#285068}
+.appic.b{background:#EFE3D8;color:#6E4426}
+.name{font-weight:600;font-size:14.5px;line-height:1.15}
+.pkg{font-size:11.5px;color:var(--text4)}
+.act{font-weight:700;color:var(--accentInk);font-size:13px;display:inline-flex;align-items:center;gap:4px;padding:4px 6px;border-radius:999px}
+.act.off{color:var(--text4)}
+.act i{font-size:14px}
+.band{margin-top:10px;background:var(--band);border-radius:10px;padding:4px 4px 4px 10px;min-height:36px;display:flex;align-items:center;gap:6px;color:var(--text3)}
+.band i{font-size:14px}
+.band .w{flex:1;font-size:13.5px}
+.fb{margin-top:8px;display:flex;align-items:center;gap:7px;color:var(--text2);font-size:12.5px}
+.fb i{font-size:13px}
+.fb .w{flex:1}
+.fb .w span{color:var(--text4)}
+
+/* dialog */
+.scrim{position:absolute;inset:0;background:var(--scrim)}
+.dialog{position:absolute;left:14px;right:14px;top:120px;background:#fff;border-radius:20px;padding:15px 14px 8px}
+.dialog .dt{font-weight:700;font-size:17px;display:flex;align-items:center;gap:7px}
+.dialog .dt i{font-size:17px;color:var(--accentInk)}
+.steps{margin-top:12px;display:flex;flex-direction:column;gap:6px}
+.st{display:flex;gap:8px;font-size:13px;color:var(--text2);line-height:1.35}
+.st b{flex:0 0 auto;width:20px;height:20px;border-radius:50%;background:var(--tile);color:var(--tileInk);font-size:11px;display:flex;align-items:center;justify-content:center}
+.note{margin-top:8px;font-size:12px;color:var(--text4)}
+.btns{display:flex;align-items:center;margin-top:10px;gap:4px}
+.btns .sp{flex:1}
+.btns .act,.small{white-space:nowrap}
+.small{background:var(--accent);color:#fff;border-radius:10px;padding:8px 14px;font-weight:700;font-size:13.5px}
+
+/* play */
+.play{background:#fff;height:100%;position:relative}
+.play .pb{height:44px;display:flex;align-items:center;padding:0 12px;gap:10px;color:#444}
+.play .pb .material-symbols-rounded{font-size:20px}
+.play .ph{display:flex;gap:12px;padding:6px 16px 12px}
+.play .ph .appic{width:56px;height:56px;border-radius:14px;font-size:24px}
+.play .pn{font-size:18px;font-weight:600;color:#202124;font-family:Roboto,system-ui,sans-serif}
+.play .pd{font-size:12px;color:#01875f;font-weight:600;font-family:Roboto,system-ui,sans-serif}
+.play .pbt{display:flex;gap:8px;padding:0 16px 14px}
+.play .pbt div{flex:1;height:34px;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:600;font-family:Roboto,system-ui,sans-serif}
+.play .o{border:1px solid #ccc;color:#01875f}
+.play .f{background:#01875f;color:#fff}
+.play .sec{padding:4px 16px;font-family:Roboto,system-ui,sans-serif}
+.play .sec .h{font-size:14px;font-weight:600;color:#202124;margin-bottom:8px}
+.play .box{border:1px solid #bbb;border-radius:8px;padding:10px;min-height:110px;font-size:12.5px;color:#333;line-height:1.4}
+.play .send{margin-top:10px;float:right;background:#01875f;color:#fff;border-radius:16px;padding:7px 16px;font-size:12.5px;font-weight:600}
+.cam{position:absolute;right:8px;top:330px;width:52px;height:52px;border-radius:50%;background:#1D5C82;box-shadow:0 2px 6px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;color:#fff}
+.cam i{font-size:22px}
+.chipbar{position:absolute;top:2px;left:50%;transform:translateX(-50%);width:16px;height:16px;border-radius:50%;background:#1a73e8}
+
+/* sheet */
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--glass);border-radius:22px 22px 0 0;padding:0 14px 16px}
+.handle{width:38px;height:4px;border-radius:4px;background:rgba(89,117,138,.5);margin:10px auto 14px}
+.sh{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.sh .appic{width:36px;height:36px;font-size:16px;border-radius:10px}
+.sh .stt{font-weight:700;font-size:16.5px;line-height:1.15}
+.sh .sst{font-size:12px;color:var(--text4)}
+.proof{height:150px;border-radius:14px;position:relative;overflow:hidden;border:1px solid var(--cardLine);background:#fff}
+.shot{position:absolute;inset:0;background:#fff;padding:10px 12px;font-family:Roboto,system-ui,sans-serif}
+.shot .l1{display:flex;gap:8px;align-items:center}
+.shot .mi{width:26px;height:26px;border-radius:7px;background:#DDE9F0}
+.shot .bar1{height:8px;width:90px;background:#d8dde2;border-radius:4px}
+.shot .tb{margin-top:10px;border:1px solid #c3c3c3;border-radius:6px;padding:7px;font-size:10.5px;color:#333;line-height:1.35}
+.shot .gb{margin-top:8px;float:right;background:#01875f;width:54px;height:20px;border-radius:10px}
+.skel{position:absolute;inset:0;background:linear-gradient(90deg,#E4EEF4 0%,#EEF5F9 50%,#E4EEF4 100%);background-size:200% 100%;animation:sh 1.4s linear infinite}
+@keyframes sh{to{background-position:-200% 0}}
+.x{position:absolute;top:7px;right:7px;width:26px;height:26px;border-radius:50%;background:var(--photoScrim);color:#fff;display:flex;align-items:center;justify-content:center}
+.x i{font-size:13px}
+.pchip{position:absolute;bottom:7px;height:28px;border-radius:999px;background:var(--photoScrim);color:#fff;font-size:12px;font-weight:600;display:flex;align-items:center;gap:5px;padding:0 11px}
+.pchip i{font-size:13px}
+.pchip.r{right:7px}
+.dim{position:absolute;inset:0;background:rgba(0,0,0,.16);display:flex;align-items:center;justify-content:center}
+.ring{width:46px;height:46px;border-radius:50%;background:var(--photoScrim);display:flex;align-items:center;justify-content:center}
+.spin{width:24px;height:24px;border:2.5px solid transparent;border-top-color:#fff;border-right-color:#fff;border-radius:50%;animation:s .8s linear infinite}
+.spin.sm{width:15px;height:15px;border-width:2px}
+.spin.ink{border-top-color:var(--accentInk);border-right-color:var(--accentInk)}
+@keyframes s{to{transform:rotate(360deg)}}
+.wpill{position:absolute;bottom:9px;left:50%;transform:translateX(-50%);background:var(--photoScrim);color:#fff;border-radius:999px;padding:3px 12px;font-size:12px;font-weight:500;white-space:nowrap}
+.primary{margin-top:16px;height:48px;border-radius:999px;background:var(--accent);color:#fff;font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;gap:10px}
+.primary.off{background:rgba(20,47,67,.12);color:rgba(20,47,67,.38)}
+
+/* snack */
+.snack{position:absolute;left:10px;right:10px;bottom:14px;background:var(--inverse);color:var(--onInverse);border-radius:12px;padding:11px 12px;display:flex;align-items:center;gap:9px;font-size:13px;box-shadow:0 4px 12px rgba(16,47,70,.25)}
+.snack i{font-size:16px;color:var(--snackOk)}
+.snack.err i{color:var(--snackBad)}
+.snack .ra{margin-left:auto;font-weight:700;color:#A9C3D6}
+
+/* marks */
+.mk{position:absolute;border:2.5px solid var(--red);border-radius:12px;pointer-events:none}
+.n{position:absolute;width:24px;height:24px;border-radius:50%;background:var(--red);color:#fff;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.key{margin-top:10px;display:flex;gap:18px;flex-wrap:wrap;font-size:14px;font-weight:600;color:var(--text2)}
+.key span{display:inline-flex;align-items:center;gap:6px}
+.key b{width:20px;height:20px;border-radius:50%;background:var(--red);color:#fff;font-size:12px;display:inline-flex;align-items:center;justify-content:center}
+.gone{opacity:.35}
+.ferr{margin-top:10px;color:var(--bad);font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:6px}
+.ferr i{font-size:14px}
+.ferr + .primary{margin-top:10px}
+
+.tap{position:absolute;width:34px;height:34px;border-radius:50%;background:rgba(224,69,58,.28);border:2px solid var(--red)}
+.side{margin-left:22px;padding-left:22px;border-left:2px dashed #b7cad7}
+.ed{position:absolute;inset:0;background:#000;display:flex;flex-direction:column}
+.edbar{height:48px;display:flex;align-items:center;gap:6px;padding:0 8px}
+.eb{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.14);color:#fff;display:flex;align-items:center;justify-content:center}
+.eb i{font-size:15px}
+.eb.dis{color:rgba(255,255,255,.35)}
+.edpic{flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.mini{width:150px;height:300px;overflow:hidden;background:#fff;position:relative}
+.mini-in{width:248px;transform:scale(.605);transform-origin:top left}
+.mini .pb{height:40px;display:flex;align-items:center;padding:0 12px;gap:10px;color:#444}
+.mini .pb .material-symbols-rounded{font-size:20px}
+.mini .ph{display:flex;gap:12px;padding:6px 16px 12px}
+.mini .ph .appic{width:56px;height:56px;border-radius:14px;font-size:24px}
+.mini .pn{font-size:18px;font-weight:600;color:#202124;font-family:Roboto,system-ui,sans-serif}
+.mini .pd{font-size:12px;color:#01875f;font-weight:600;font-family:Roboto,system-ui,sans-serif}
+.mini .sec{padding:4px 16px;font-family:Roboto,system-ui,sans-serif}
+.mini .h{font-size:15px;font-weight:600;color:#202124;margin-bottom:10px}
+.mini .acct{position:relative;display:flex;gap:10px;align-items:center;margin-bottom:10px}
+.mini .av{width:34px;height:34px;border-radius:50%;background:#c9a27a;color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center}
+.mini .an{font-size:14px;color:#202124;font-weight:600}
+.mini .ae{font-size:12px;color:#5f6368}
+.mini .hidebox{position:absolute;left:-4px;top:-4px;width:200px;height:44px;background:#000;border-radius:3px;outline:2px solid #fff}
+.mini .box{border:1px solid #bbb;border-radius:8px;padding:10px;min-height:110px;font-size:13px;color:#333;line-height:1.4}
+.mini .send{margin-top:10px;float:right;background:#01875f;color:#fff;border-radius:16px;padding:7px 16px;font-size:13px;font-weight:600}
+.edfoot{padding:8px 14px 14px;color:#fff}
+.eft{font-weight:600;font-size:15px}
+.efc{font-size:12px;color:rgba(255,255,255,.75);margin-top:3px}
+.edfoot .primary{margin-top:10px}
+</style>
+</head>
+<body>
+<h1>Crew private feedback: picture loading</h1>
+<p class="sub">TestTrack 2.7.7, light theme</p>
+
+<div class="rowhead"><span class="rowtag">Now</span></div>
+<div class="row" id="now"></div>
+<div class="key">
+  <span><b>1</b>Nothing after the tap</span>
+  <span><b>2</b>No picture, no loader</span>
+  <span><b>3</b>Line stays</span>
+  <span><b>4</b>Picture lost</span>
+</div>
+
+<div class="rowhead"><span class="rowtag fix">New flow</span></div>
+<div class="row" id="newflow"></div>
+
+<script>
+const sb = `<div class="sb"><span>21:40</span><span>5G 82%</span></div>`;
+const bar = `<div class="bar"><span class="material-symbols-rounded">arrow_back_ios_new</span><span class="t">Night owls</span></div><div class="night">Night 3 of 14</div>`;
+
+function tileA(opts={}){
+  const write = opts.writeOff ? `<span class="act off">Write</span>` : `<span class="act">Write</span>`;
+  const fb = opts.noFb ? '' : `<div class="fb ${opts.fbGone?'gone':''}"><i class="icon-message-circle"></i><span class="w">Private feedback <span>by night 4</span></span>${write}</div>`;
+  return `<div class="tile">
+    <div class="head"><div class="appic a">L</div><div style="flex:1"><div class="name">Lumo Notes</div><div class="pkg">com.lumo.notes</div></div><span class="act"><i class="icon-flag"></i>Report</span></div>
+    <div class="band"><i class="icon-moon"></i><span class="w">Ready to test</span><span class="act">Open</span></div>
+    ${fb}
+  </div>`;
+}
+const tileB = `<div class="tile">
+    <div class="head"><div class="appic b">P</div><div style="flex:1"><div class="name">Pocket Budget</div><div class="pkg">app.pocketbudget</div></div><span class="act"><i class="icon-flag"></i>Report</span></div>
+    <div class="band" style="color:var(--ok)"><i class="icon-circle-check"></i><span class="w">Opened tonight</span></div>
+  </div>`;
+
+function crewPage(opts={}){ return sb + bar + tileA(opts) + tileB; }
+
+const dialog = `<div class="scrim"></div><div class="dialog">
+  <div class="dt"><i class="icon-message-square-text"></i>Private feedback</div>
+  <div class="steps">
+    <div class="st"><b>1</b><span>Tap Start and allow screen sharing.</span></div>
+    <div class="st"><b>2</b><span>On Play, tap Send private feedback and write it.</span></div>
+    <div class="st"><b>3</b><span>Before sending, tap the round camera button.</span></div>
+  </div>
+  <div class="note">Once a run per app. Only our team sees the picture.</div>
+  <div class="btns"><span class="act">Use saved</span><span class="sp"></span><span class="act">Not now</span><span class="small">Start</span></div>
+</div>`;
+
+function play(cam){ return `<div class="play">${sb}<div class="chipbar"></div>
+  <div class="pb"><span class="material-symbols-rounded">arrow_back</span><span style="flex:1"></span><span class="material-symbols-rounded">search</span><span class="material-symbols-rounded">more_vert</span></div>
+  <div class="ph"><div class="appic a">L</div><div><div class="pn">Lumo Notes</div><div class="pd">Lumo Labs</div></div></div>
+  <div class="pbt"><div class="o">Uninstall</div><div class="f">Open</div></div>
+  <div class="sec"><div class="h">Send private feedback to the developer</div>
+  <div class="box">The search box hides behind the keyboard on small phones. Notes sync fast, nice work.</div>
+  <div class="send">Send</div></div>
+  ${cam ? `<div class="cam"><i class="icon-camera"></i></div>` : ''}
+</div>`; }
+
+const shot = `<div class="shot"><div class="l1"><div class="mi"></div><div class="bar1"></div></div>
+  <div class="tb">The search box hides behind the keyboard on small phones. Notes sync fast, nice work.</div></div>`;
+
+function proof(state){
+  // state: saving | ready | uploading
+  const over = (w) => `<div class="dim"><div class="ring"><div class="spin"></div></div></div><div class="wpill">${w}</div>`;
+  if (state === 'saving') return `<div class="proof"><div class="skel"></div>${over('Saving picture')}</div>`;
+  if (state === 'uploading') return `<div class="proof">${shot}${over('Uploading picture')}</div>`;
+  return `<div class="proof">${shot}<div class="x"><i class="icon-x"></i></div><div class="pchip r"><i class="icon-camera"></i>Retake</div></div>`;
+}
+
+function sheet(state, button, err){
+  return `<div class="scrim"></div><div class="sheet"><div class="handle"></div>
+    <div class="sh"><div class="appic a">L</div><div><div class="stt">Private feedback</div><div class="sst">Lumo Notes</div></div></div>
+    ${proof(state)}${err ? `<div class="ferr"><i class="icon-triangle-alert"></i>Couldn't send. Check your connection.</div>` : ''}${button}</div>`;
+}
+const btnSendOff = `<div class="primary off">Send</div>`;
+const btnSend = `<div class="primary">Send</div>`;
+const btnUploading = `<div class="primary"><div class="spin sm"></div>Uploading picture</div>`;
+const btnTry = `<div class="primary">Try again</div>`;
+const snackOk = `<div class="snack"><i class="icon-circle-check"></i>Feedback for Lumo Notes sent. Thank you.</div>`;
+const snackErr = `<div class="snack err"><i class="icon-triangle-alert"></i>Couldn't reach TestTrack.</div>`;
+const snackErrRetry = `<div class="snack err"><i class="icon-triangle-alert"></i>Couldn't reach TestTrack.<span class="ra">Retry</span></div>`;
+
+const mark = (l,t,w,h,num,nl,nt) => `<div class="mk" style="left:${l}px;top:${t}px;width:${w}px;height:${h}px"></div><div class="n" style="left:${nl}px;top:${nt}px">${num}</div>`;
+
+function cell(num, label, inner){
+  return `<div class="cell"><div class="lab"><b>${num}</b>${label}</div><div class="phone">${inner}</div></div>`;
+}
+const same = (t) => `<div class="cell" style="width:150px"><div class="lab">&nbsp;</div><div class="same">${t}</div></div>`;
+
+// Row: Now
+document.getElementById('now').innerHTML = [
+  cell(1, 'Tap Write', crewPage()),
+  cell(2, 'How it goes', crewPage() + dialog),
+  cell(3, 'Tap camera', play(true)),
+  cell(4, 'Camera tapped', play(false) + mark(6,96,236,330,1,226,86)),
+  cell(5, 'Back in app', crewPage({writeOff:true}) + mark(4,108,240,168,2,224,98)),
+  cell(6, 'Sent', crewPage() + snackOk + mark(4,218,240,34,3,224,206)),
+  cell(7, "Didn't go", crewPage() + snackErrRetry + mark(4,470,240,52,4,224,458)),
+].join('');
+
+// Row: New flow
+const sbDark = `<div class="sb" style="color:#fff"><span>21:41</span><span>5G 82%</span></div>`;
+function miniPlay(hidden){ return `<div class="mini"><div class="mini-in">
+  <div class="pb"><span class="material-symbols-rounded">arrow_back</span><span style="flex:1"></span><span class="material-symbols-rounded">search</span><span class="material-symbols-rounded">more_vert</span></div>
+  <div class="ph"><div class="appic a">L</div><div><div class="pn">Lumo Notes</div><div class="pd">Lumo Labs</div></div></div>
+  <div class="sec"><div class="h">Send private feedback to the developer</div>
+  <div class="acct"><div class="av">S</div><div><div class="an">Sam Rahman</div><div class="ae">sam.rahman@gmail.com</div></div>${hidden ? '<div class="hidebox"></div>' : ''}</div>
+  <div class="box">The search box hides behind the keyboard on small phones. Notes sync fast, nice work.</div>
+  <div class="send">Send</div></div>
+</div></div>`; }
+function editor(hidden){
+  return `<div class="ed">${sbDark}
+    <div class="edbar"><span class="eb"><i class="icon-x"></i></span><span style="flex:1"></span><span class="eb"><i class="icon-crop"></i></span><span class="eb"><i class="icon-eye-off"></i></span><span class="eb ${hidden?'':'dis'}"><i class="icon-undo-2"></i></span></div>
+    <div class="edpic">${miniPlay(hidden)}</div>
+    <div class="edfoot"><div class="eft">Check your picture</div><div class="efc">Only our team sees it. Hide anything personal first.</div><div class="primary">Send</div></div>
+  </div>`;
+}
+const upLine = `<div class="fb"><i class="icon-cloud-upload"></i><span class="w">Uploading picture</span><span class="act"><span class="spin sm ink"></span></span></div>`;
+const failLine = `<div class="fb" style="color:var(--warn)"><i class="icon-triangle-alert"></i><span class="w">Picture not sent</span><span class="act">Retry</span></div>`;
+function crewWith(line){
+  return sb + bar + tileA({noFb:true}).replace(/<\/div>\s*$/, line + '</div>') + tileB;
+}
+const tap = (l,t) => `<div class="tap" style="left:${l}px;top:${t}px"></div>`;
+const snackFail = `<div class="snack err"><i class="icon-triangle-alert"></i>Feedback picture not sent.</div>`;
+document.getElementById('newflow').innerHTML = [
+  cell(1, 'Tap camera', play(true) + tap(197,339)),
+  cell(2, 'Editor opens', editor(false)),
+  cell(3, 'Detail hidden', editor(true) + tap(118,486)),
+  cell(4, 'Uploading on tile', crewWith(upLine)),
+  cell(5, 'Sent', crewPage({noFb:true}) + snackOk),
+  `<div class="cell side">` + `<div class="lab"><b>!</b>Didn't go</div><div class="phone">${crewWith(failLine) + snackFail}</div></div>`,
+].join('');
+</script>
+</body>
+</html>
