@@ -97,13 +97,13 @@ internal fun VolunteerSpotRow(
 ) {
     val mine = spot.state == SpotState.VOLUNTEERING
     // A spot the reader can't take, now or again, is dimmed with no Volunteer on it.
-    val dim = spot.state == SpotState.FULL || spot.state == SpotState.OUT || spot.state == SpotState.LEFT || spot.state == SpotState.CLOSED
+    val dim = spot.state != SpotState.OPEN && spot.state != SpotState.VOLUNTEERING && spot.state != SpotState.MEMBER
     CrewCard(
         if (dim) Modifier.alpha(0.55f) else Modifier,
         padding = PaddingValues(16.dp),
         onClick = if (mine) ({ onOpen(spot) }) else null,
     ) {
-        CrewTileHeading(spot.name, "Night ${spot.day} of ${spot.runDays}")
+        CrewTileHeading(spot.name, spot.nightLine)
         if (spot.icons.isNotEmpty()) {
             Spacer(Modifier.height(14.dp))
             SpotIcons(spot.icons)
@@ -119,6 +119,8 @@ internal fun VolunteerSpotRow(
                     SpotState.OUT -> Triple("You were taken out", Tone.BAD, null)
                     SpotState.LEFT -> Triple("You left this crew", Tone.QUIET, null)
                     SpotState.CLOSED -> Triple("Your spot closed", Tone.QUIET, null)
+                    SpotState.TOO_LATE -> Triple("Too late", Tone.QUIET, null)
+                    SpotState.UNAVAILABLE -> Triple("Not open", Tone.QUIET, null)
                 }
             StatusChip(chip, tone, icon)
             Spacer(Modifier.width(8.dp))
@@ -129,6 +131,8 @@ internal fun VolunteerSpotRow(
                     SpotState.VOLUNTEERING -> ""
                     SpotState.MEMBER -> "Members can't volunteer"
                     SpotState.OUT, SpotState.LEFT, SpotState.CLOSED -> "Can't join again"
+                    SpotState.TOO_LATE -> "No nights left to join"
+                    SpotState.UNAVAILABLE -> "Can't join right now"
                 },
                 Modifier.weight(1f),
                 style = TextStyles.NoteLine,

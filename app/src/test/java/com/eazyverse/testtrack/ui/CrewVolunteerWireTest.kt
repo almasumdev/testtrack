@@ -6,6 +6,7 @@ import com.eazyverse.testtrack.net.ApiVolunteerSpots
 import com.eazyverse.testtrack.net.CrewList
 import com.eazyverse.testtrack.net.CrewRecordList
 import com.eazyverse.testtrack.viewmodel.SpotState
+import com.eazyverse.testtrack.viewmodel.VolunteerSpot
 import com.eazyverse.testtrack.viewmodel.inListOrder
 import com.eazyverse.testtrack.viewmodel.toSpot
 import com.eazyverse.testtrack.viewmodel.toStint
@@ -175,6 +176,29 @@ class CrewVolunteerWireTest {
         assertEquals(SpotState.CLOSED, SpotState.of("released"))
         assertEquals(SpotState.CLOSED, SpotState.of("done"))
         assertEquals(SpotState.VOLUNTEERING, SpotState.of("volunteering"))
+    }
+
+    @Test
+    fun `too late and unknown states can never be joined`() {
+        assertEquals(SpotState.TOO_LATE, SpotState.of("too_late"))
+        assertEquals(SpotState.OPEN, SpotState.of("open"))
+        assertEquals(SpotState.UNAVAILABLE, SpotState.of("paused"))
+        assertEquals(SpotState.UNAVAILABLE, SpotState.of(""))
+        val got =
+            json.decodeFromString<ApiVolunteerSpots>(
+                "{\"spots\":[{\"crew_id\":\"a\",\"state\":\"too_late\"},{\"crew_id\":\"b\",\"state\":\"something_new\"}," +
+                    "{\"crew_id\":\"c\",\"state\":\"open\"}]}",
+            )
+        val spots = got.spots.map { it.toSpot() }.inListOrder()
+        assertEquals(listOf("c", "a", "b"), spots.map { it.crewId })
+        assertEquals(listOf(SpotState.OPEN, SpotState.TOO_LATE, SpotState.UNAVAILABLE), spots.map { it.state })
+    }
+
+    @Test
+    fun `a spot's night never reads past the run`() {
+        val spot = VolunteerSpot("c1", "Crew 1", 15, 14, 0, emptyList(), 16, 0, SpotState.TOO_LATE)
+        assertEquals("Night 14 of 14", spot.nightLine)
+        assertEquals("Night 6 of 14", spot.copy(day = 6).nightLine)
     }
 
     @Test

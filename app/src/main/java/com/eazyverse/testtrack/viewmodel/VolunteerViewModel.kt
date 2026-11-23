@@ -45,6 +45,12 @@ enum class SpotState {
 
     /** Their spot closed when an app came back. Never again in this crew. */
     CLOSED,
+
+    /** The crew is on or past its last night: no night left to volunteer in. */
+    TOO_LATE,
+
+    /** A state this build does not know yet. Never joinable: the server may have a reason we can't read. */
+    UNAVAILABLE,
     ;
 
     companion object {
@@ -56,7 +62,9 @@ enum class SpotState {
                 "out", "removed" -> OUT
                 "left" -> LEFT
                 "released", "done" -> CLOSED
-                else -> OPEN
+                "too_late" -> TOO_LATE
+                "open" -> OPEN
+                else -> UNAVAILABLE
             }
     }
 }
@@ -81,7 +89,10 @@ data class VolunteerSpot(
     /** The most tix the reader could earn here, one whole night at a time. */
     val tix: Int,
     val state: SpotState,
-)
+) {
+    /** "Night 6 of 14", never past the run's last night. */
+    val nightLine: String get() = "Night ${if (runDays > 0) minOf(day, runDays) else day} of $runDays"
+}
 
 internal fun ApiVolunteerSpot.toSpot(): VolunteerSpot {
     val first = if (firstNight > 0) firstNight else day + 1

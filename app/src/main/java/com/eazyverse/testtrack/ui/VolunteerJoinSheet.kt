@@ -49,7 +49,7 @@ internal fun VolunteerJoinSheet(
     PickerSheet(
         title = "Volunteer in ${spot.name}",
         onDismiss = onDismiss,
-        subtitle = "Night ${spot.day} of ${spot.runDays}, $apps apps",
+        subtitle = "${spot.nightLine}, $apps apps",
         skipHalf = true,
         leading = { IconTile(Lucide.HandHeart, 36.dp, corner = 12.dp) },
     ) { close ->
