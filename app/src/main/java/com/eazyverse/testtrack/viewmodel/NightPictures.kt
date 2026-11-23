@@ -11,6 +11,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.eazyverse.testtrack.data.PictureQueue
 import com.eazyverse.testtrack.data.RoundStore
+import com.eazyverse.testtrack.data.Session
 import com.eazyverse.testtrack.data.VisitCameraService
 import com.eazyverse.testtrack.data.VisitPictures
 import com.eazyverse.testtrack.ui.Snacks
@@ -34,6 +35,11 @@ class NightPictures(
     var waitingFor by mutableStateOf<List<RoundStore.Stop>?>(null)
         private set
     private var float = true
+
+    /** "Don't show again" was ticked on the explainer: a round goes straight to Android's own ask. */
+    val explainerHidden get() = Session.pictureTipHidden
+
+    fun hideExplainer() = Session.hidePictureTip()
 
     /** The pictures still on the phone, so a row can say "sending" rather than "missing". */
     val waiting get() = VisitPictures.waiting

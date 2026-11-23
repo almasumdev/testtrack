@@ -21,6 +21,7 @@ object Session {
     fun init(context: Context) {
         prefs = context.applicationContext.getSharedPreferences("testtrack", Context.MODE_PRIVATE)
         onboardingDone = prefs.getBoolean(KEY_ONBOARDED, false)
+        pictureTipHidden = prefs.getBoolean(KEY_PICTURE_TIP_HIDDEN, false)
         email = prefs.getString(KEY_EMAIL, null)
         DebugOverrides.init(context)
         memberCached = prefs.getBoolean(KEY_MEMBER, false)
@@ -36,6 +37,15 @@ object Session {
 
     var onboardingDone by mutableStateOf(false)
         private set
+
+    /** "Don't show again" ticked on the picture explainer before a round: Android's own ask still comes. */
+    var pictureTipHidden by mutableStateOf(false)
+        private set
+
+    fun hidePictureTip() {
+        prefs.edit().putBoolean(KEY_PICTURE_TIP_HIDDEN, true).apply()
+        pictureTipHidden = true
+    }
 
     var email by mutableStateOf<String?>(null)
         private set
@@ -150,7 +160,8 @@ object Session {
     }
 
     /**
-     * Clears everything except onboarding, nobody wants to watch the intro twice, and except the
+     * Clears everything except onboarding, nobody wants to watch the intro twice, the hidden
+     * picture explainer, which is this phone's own choice, and except the
      * cached update policy, which is about this copy of the app rather than about whoever is signed
      * into it.
      */
@@ -159,6 +170,7 @@ object Session {
             .edit()
             .clear()
             .putBoolean(KEY_ONBOARDED, true)
+            .putBoolean(KEY_PICTURE_TIP_HIDDEN, pictureTipHidden)
             .putInt(KEY_UPDATE_CACHE_AVAILABLE, cachedUpdateAvailableBuild)
             .putInt(KEY_UPDATE_CACHE_STALENESS, cachedUpdateStalenessDays)
             .putInt(KEY_UPDATE_CACHE_LATEST, cachedUpdateLatestBuild)
@@ -172,6 +184,7 @@ object Session {
     }
 
     private const val KEY_ONBOARDED = "onboarding_done"
+    private const val KEY_PICTURE_TIP_HIDDEN = "picture_tip_hidden"
     private const val KEY_EMAIL = "email"
     private const val KEY_MEMBER = "is_member"
     private const val KEY_UPDATE_CACHE_AVAILABLE = "update_cache_available_build"

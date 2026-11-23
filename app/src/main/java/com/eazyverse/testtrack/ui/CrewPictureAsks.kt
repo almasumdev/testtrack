@@ -1,6 +1,11 @@
 package com.eazyverse.testtrack.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import com.composables.icons.lucide.Camera
 import com.composables.icons.lucide.Lucide
@@ -26,17 +31,31 @@ internal fun CrewPictureAsks(vm: CrewViewModel) {
             },
         )
 
-    pictures.waitingFor?.let { stops ->
-        Ask(
-            title = "A picture of each app",
-            icon = Lucide.Camera,
-            body =
-                "Each app stays open ${CrewRules.OPEN_SECONDS} seconds and its owner gets a picture. " +
-                    "Android asks once to share your screen.",
-            confirm = "Start",
-            dismiss = "Not now",
-            onConfirm = { askCapture() },
-            onDismiss = { pictures.skip() },
-        )
+    // Ticked "Don't show again": the round goes straight to Android's own ask.
+    val explained = pictures.explainerHidden
+    LaunchedEffect(pictures.waitingFor, explained) {
+        if (explained && pictures.waitingFor != null) askCapture()
+    }
+
+    if (!explained) {
+        pictures.waitingFor?.let {
+            var hide by remember { mutableStateOf(false) }
+            Ask(
+                title = "A picture of each app",
+                icon = Lucide.Camera,
+                body =
+                    "Each app stays open ${CrewRules.OPEN_SECONDS} seconds and its owner gets a picture. " +
+                        "Android asks once to share your screen.",
+                confirm = "Start",
+                dismiss = "Not now",
+                onConfirm = {
+                    if (hide) pictures.hideExplainer()
+                    askCapture()
+                },
+                onDismiss = { pictures.skip() },
+            ) {
+                AskCheck("Don't show again", hide) { hide = it }
+            }
+        }
     }
 }
