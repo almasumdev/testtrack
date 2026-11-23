@@ -249,7 +249,7 @@ private fun ClosedBody(
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Ring(ui)
-            Text("${ui.index + 1} of ${ui.total}", style = TextStyles.DeveloperStyle, color = t.text4)
+            Text(counter(ui), style = TextStyles.DeveloperStyle, color = t.text4)
             if (ui.signIn.isNotEmpty()) Icon(Lucide.KeyRound, "Has a sign-in", Modifier.size(15.dp), tint = t.accentInk)
             PlayPause(ui, onPlayPause)
         }
@@ -272,7 +272,7 @@ private fun ClosedBody(
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    if (ui.single && ui.counted) "Counted" else "${ui.index + 1} of ${ui.total}",
+                    counter(ui),
                     style = TextStyles.DeveloperStyle,
                     color = t.text4,
                     maxLines = 1,
@@ -357,6 +357,9 @@ private fun MinimiseButton(
         Icon(Lucide.Minimize2, "Make smaller", Modifier.size(16.dp), tint = Tt.colors.text4)
     }
 }
+
+/** The short line under the app's name: a lone app has no "of", so once it counts it just says done. */
+private fun counter(ui: DockUi) = if (ui.single) (if (ui.counted) "Done" else "Testing") else "${ui.index + 1} of ${ui.total}"
 
 private fun status(ui: DockUi) =
     when {

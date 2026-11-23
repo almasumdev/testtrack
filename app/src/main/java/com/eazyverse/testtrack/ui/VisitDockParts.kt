@@ -31,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -43,6 +44,7 @@ import com.composables.icons.lucide.Copy
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Pause
 import com.composables.icons.lucide.Play
+import com.eazyverse.testtrack.R
 import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.ui.theme.tabular
 import kotlinx.coroutines.delay
@@ -164,16 +166,13 @@ internal fun SignInLine(
     }
 }
 
-/** The one button: pause while the clock runs, play to carry on, and play for the next app once it counts. */
+/** The one button: pause while the clock runs, play to carry on, play for the next app once it counts, back for a lone app. */
 @Composable
 internal fun PlayPause(
     ui: DockUi,
     onClick: () -> Unit,
 ) {
-    if (ui.single && ui.counted) {
-        BackPill(onClick)
-        return
-    }
+    val back = ui.single && ui.counted
     val play = ui.counted || ui.paused
     // 34 to look at, 48 to touch.
     Box(
@@ -185,35 +184,22 @@ internal fun PlayPause(
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(
-            if (play) Lucide.Play else Lucide.Pause,
-            when {
-                ui.counted -> "Next app"
-                ui.paused -> "Play"
-                else -> "Pause"
-            },
-            Modifier.size(15.dp),
-            tint = Tt.colors.inkOn(if (ui.counted) Status.posted else Tt.colors.accent),
-        )
-    }
-}
-
-/** A lone app that has counted: a green pill, kept at its own size, that goes back to TestTrack. */
-@Composable
-private fun BackPill(onClick: () -> Unit) {
-    val ink = Tt.colors.inkOn(Status.posted)
-    Row(
-        Modifier
-            .minimumInteractiveComponentSize()
-            .clip(RoundedCornerShape(percent = 50))
-            .background(Status.posted)
-            .clickable(onClick = onClick)
-            .semantics { contentDescription = "Back to TestTrack" }
-            .padding(start = 8.dp, end = 12.dp, top = 7.dp, bottom = 7.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(Lucide.ChevronLeft, null, Modifier.size(16.dp), tint = ink)
-        Text("Back", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = ink, maxLines = 1)
+        val tint = Tt.colors.inkOn(if (ui.counted) Status.posted else Tt.colors.accent)
+        if (back) {
+            // A lone app has no next one: the same round button, with the page back arrow, and no words.
+            Icon(painterResource(R.drawable.ic_arrow_back_ios_new), "Back to TestTrack", Modifier.size(15.dp), tint = tint)
+        } else {
+            Icon(
+                if (play) Lucide.Play else Lucide.Pause,
+                when {
+                    ui.counted -> "Next app"
+                    ui.paused -> "Play"
+                    else -> "Pause"
+                },
+                Modifier.size(15.dp),
+                tint = tint,
+            )
+        }
     }
 }
 
