@@ -8,15 +8,15 @@ approval: never
 sandbox: workspace-write [workdir, /tmp, $TMPDIR]
 reasoning effort: none
 reasoning summaries: none
-session id: 01a20871-6922-7811-b8c4-be79da8718a2
+session id: 01a208a4-6235-7762-b54f-f063bd39b75e
 --------
 user
-Generate one photorealistic PORTRAIT image, 1024x1536, saved as photo_proof.png in the current folder. Use EXACTLY the phone in the attached phone_template.png: slim black body, thin even bezel, rounded corners, small punch-hole camera, screen height 2.17 x screen width; never taller, narrower or thicker. Only men in the picture: no women or girls anywhere, not even in the background. A focused Bangladeshi man in his late 20s, short black hair, rimless glasses, white oxford shirt with rolled sleeves, an app developer, sits at the desk and holds the phone out close to the lens in his left hand, as if showing the proof he just checked; a calm, focused, satisfied half smile, looking at the camera. Because the phone is near the camera it looks LARGE: its green screen is a full 40% of the image width (about 410 px wide and 890 px tall), much bigger than his face. The phone screen faces the camera almost flat (under 10 degrees of tilt) and is one flat, evenly lit, full-brightness pure green #00FF00 from edge to edge, with no reflections, glare, icons, UI or gradient, and it casts no green light on the hand, face or clothes. The WHOLE phone is visible with clear space below it (it is never cut by the frame edge), and thumb and fingers touch only its side edges and back: no finger, thumb or object covers any part of the green screen. Framing: the phone's screen is about 38% of the image width, its centre about 40% from the left edge, phone top edge at about 32% of the image height and phone bottom no lower than 86%. His face is beside the phone (to its right), fully visible, eyes at about 30 to 36% of the image height, never covered by the phone or a hand. The top 22% of the image is softly blurred real background with no head, face or hand in it, because the title goes there. Keep the person and phone inside the middle 84% of the width. Scene: a bright home office desk by a window: an open laptop beside him, a white mug, a light oak desk, a white wall and window light behind, softly out of focus. The laptop screen shows a code editor: a dark theme with soft, out-of-focus coloured lines of code that cannot be read, no logos, no window titles.  Real, candid, premium app-store lifestyle photography, bright natural daylight, faces clearly lit and in sharp focus, eyes open, natural friendly expressions, shallow depth of field on a real, recognisable background. Colours: white, light oak, sky blue, denim and ocean blue with a small warm golden accent; no green anywhere except the phone screen (no plants, no green clothes). No text, letters, numbers, signs, logos or brand marks anywhere (laptop lids, mugs, clothes and bags are plain). Real hands with five fingers. 
+Generate one photorealistic image, exactly 1024x1536 pixels, and save it as photo_proof.png in the current folder. ATTACHED character_ref.png is the MAIN CHARACTER. The man in this photo must be EXACTLY that same person: the same face, face shape, nose, eyes, skin tone, the same thin black rectangular glasses, the same hair cut and the same short beard. Do not make him older, younger, thinner or heavier and do not change his features. ATTACHED phone_template.png shows the phone: use EXACTLY that phone, slim black body, thin even bezel, rounded corners, small punch-hole camera, screen height 2.17 x screen width; never taller, narrower or thicker. Only men in the picture: no women or girls anywhere, not even in the background. The main character, a Bangladeshi software developer, about 28 years old, warm medium-brown skin, short thick black hair with a soft side part, swept up a little at the front, short neat tapered sides; a neatly trimmed short full black beard joined to a moustache; thin black rectangular glasses with full rims; slim build; friendly dark brown eyes, wearing an open light-wash denim shirt with the sleeves rolled to mid forearm, over a plain white crew-neck tee, sits at his developer desk and holds the phone out toward the lens in his left hand, as if showing the proof he just checked; calm, focused, satisfied half smile, looking at the camera through his glasses. SIZE IS THE MOST IMPORTANT RULE: he stretches his arm toward the camera so the phone is much nearer the lens than his face and looks BIG through perspective, like a phone held up to a selfie camera; the phone is clearly taller than his whole head (about twice his head height). The phone screen faces the camera almost flat (under 10 degrees of tilt) and is one flat, evenly lit, full-brightness pure green #00FF00 from edge to edge, with no reflections, glare, icons, UI or gradient, and it casts no green light on hands, face or clothes. The WHOLE phone is visible with clear space around it (never cut by the frame edge), and the thumb and fingers touch only its side edges and back: no finger, thumb or object covers any part of the green screen. Exact framing in the 1024x1536 image: the green screen spans about x=180 to x=590 (410 px wide, 40% of the width) and y=450 to y=1340 (890 px tall); the black phone body is just outside that. His face is to the RIGHT of the phone, fully visible and never covered by the phone or a hand, his head roughly x=620 to x=960, eyes at about y=500 to 550. The top 22% (y < 340) is softly blurred real background with no head, face or hand in it, because the title goes there. Nothing important touches the left or right 4%. Scene: a real developer's desk: an open laptop and an external monitor both showing a code editor in a dark theme with soft, out-of-focus coloured lines of code that cannot be read (no logos, no window titles, no readable words), a plain keyboard, a plain white or sky-blue coffee mug, a light oak desk, white walls, a light oak shelf with plain-spined books, softly out of focus behind and beside him, bright window daylight. Real, candid, premium app-store lifestyle photography, bright natural daylight, the face clearly lit and in sharp focus, eyes open, shallow depth of field on a real, recognisable background. Colours: white, light oak, sky blue, denim and ocean blue with a small warm golden accent; no green anywhere except the phone screen (no plants, no green clothes or objects). No text, letters, numbers, signs, logos or brand marks anywhere (laptops, monitors, keyboards, mugs and clothes are plain). Real hands with exactly five fingers each. 
 codex
-I’ll use the imagegen skill to create the requested photo, then check the saved image’s dimensions and composition.
+I’ll use the imagegen skill to create the photo from both references, then check the saved image’s dimensions.
 exec
-"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "Get-Content 'C:/Users/namcs/.codex/skills/.system/imagegen/SKILL.md'" in H:\android\onGoing\test_track\store\art\photos
- succeeded in 63ms:
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "Get-Content -LiteralPath 'C:\\Users\\namcs\\.codex\\skills\\.system\\imagegen\\SKILL.md'" in H:\android\onGoing\test_track\store\art\photos
+ succeeded in 58ms:
 ---
 name: "imagegen"
 description: "Generate or edit raster images when the task benefits from AI-created bitmap visuals such as photos, illustrations, textures, sprites, mockups, or transparent-background cutouts. Use when Codex should create a brand-new image, transform an existing image, or derive visual variants from references, and the output should be a bitmap asset rather than repo-native code or vector. Do not use when the task is better handled by editing existing SVG/vector/code-native assets, extending an established icon or logo system, or building the visual directly in HTML/CSS/canvas."
@@ -334,27 +334,16 @@ If installation is not possible in this environment, tell the user which depende
 - `scripts/image_gen.py`: fallback-only CLI implementation. Use only when the user explicitly chooses or confirms CLI mode.
 
 exec
-"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "Get-ChildItem 'C:/Users/namcs/.codex/generated_images' -Recurse -File | Sort-Object LastWriteTime -Descending | Select-Object -First 3 FullName,Length,LastWriteTime" in H:\android\onGoing\test_track\store\art\photos
- succeeded in 154ms:
-
-FullName
---------                                                                                                               
-C:\Users\namcs\.codex\generated_images\01a20871-6922-7811-b8c4-be79da8718a2\exec-39479678-02f3-4410-a381-2361cd1d837f.…
-C:\Users\namcs\.codex\generated_images\01a20871-691f-7f21-ad84-7f7de7cd6b21\exec-def829c7-1559-4284-9185-c78c1eb91dd5.…
-C:\Users\namcs\.codex\generated_images\01a2086d-90c5-78b3-96eb-a4f7a64e9e07\exec-b8a5109e-aa62-4e58-8f5d-02fc66eb16de.…
-
-
-exec
-"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command '$img = Get-ChildItem '"'C:/Users/namcs/.codex/generated_images' -Recurse -File | Sort-Object LastWriteTime -Descending | Select-Object -First 1; Copy-Item -LiteralPath "'$img.FullName -Destination '"'H:/android/onGoing/test_track/store/art/photos/photo_proof.png'; Add-Type -AssemblyName System.Drawing; "'$bitmap = [System.Drawing.Image]::FromFile('"'H:/android/onGoing/test_track/store/art/photos/photo_proof.png'); Write-Output \""'$($bitmap.Width) x $($bitmap.Height)"; $bitmap.Dispose()' in H:\android\onGoing\test_track\store\art\photos
- succeeded in 151ms:
-1024 x 1536
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "Copy-Item -LiteralPath 'C:\\Users\\namcs\\.codex\\generated_images\\01a208a4-6235-7762-b54f-f063bd39b75e\\exec-ef7094cc-597e-40dc-8b81-070b34845f0c.png' -Destination 'H:\\android\\onGoing\\test_track\\store\\art\\photos\\photo_proof.png'; Add-Type -AssemblyName System.Drawing; "'$img = [System.Drawing.Image]::FromFile('"'H:\\android\\onGoing\\test_track\\store\\art\\photos\\photo_proof.png'); Write-Output \""'$($img.Width)x$($img.Height)"; $img.Dispose()' in H:\android\onGoing\test_track\store\art\photos
+ succeeded in 88ms:
+1024x1536
 
 codex
-Saved [photo_proof.png](H:/android/onGoing/test_track/store/art/photos/photo_proof.png) at 1024 × 1536.
+Saved [photo_proof.png](H:/android/onGoing/test_track/store/art/photos/photo_proof.png) at exactly 1024 × 1536 pixels.
 
-The generated image follows the requested scene and uses the supplied phone as a reference. The phone screen is smaller than requested—about 24% of the image width—and the generated phone is an approximation of the template.
+The generated phone and face are smaller and lower than the requested coordinates, so the framing is approximate.
 tokens used
-14,723
-Saved [photo_proof.png](H:/android/onGoing/test_track/store/art/photos/photo_proof.png) at 1024 × 1536.
+13,671
+Saved [photo_proof.png](H:/android/onGoing/test_track/store/art/photos/photo_proof.png) at exactly 1024 × 1536 pixels.
 
-The generated image follows the requested scene and uses the supplied phone as a reference. The phone screen is smaller than requested—about 24% of the image width—and the generated phone is an approximation of the template.
+The generated phone and face are smaller and lower than the requested coordinates, so the framing is approximate.
