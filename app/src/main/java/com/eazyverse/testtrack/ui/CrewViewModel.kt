@@ -11,6 +11,7 @@ import androidx.lifecycle.viewModelScope
 import com.eazyverse.testtrack.data.InstalledApps
 import com.eazyverse.testtrack.data.RoundStore
 import com.eazyverse.testtrack.data.UsageRepo
+import com.eazyverse.testtrack.domain.AppNight
 import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiAuth
 import com.eazyverse.testtrack.net.ApiError
@@ -38,6 +39,17 @@ class CrewViewModel : ViewModel() {
     /** Every crew this account is in, at whatever point each has reached. */
     var crews by mutableStateOf<List<Crew>>(emptyList())
         private set
+
+    /** What the server last said, before any picture that has landed since is marked on it. */
+    private var served: List<Crew> = emptyList()
+
+    /** The nights whose picture has reached the server, as last seen: marked opened on [crews]. */
+    private var landed: Set<AppNight> = emptySet()
+
+    private fun showCrews(list: List<Crew>) {
+        served = list
+        crews = withLandedPictures(list, landed)
+    }
 
     /**
      * The crew a new seat would go into, or null when none is filling and the next seat starts
@@ -152,7 +164,7 @@ class CrewViewModel : ViewModel() {
     internal fun forget(crewId: String) {
         loads++
         reloading = false
-        crews = crews.filterNot { it.id == crewId }
+        showCrews(served.filterNot { it.id == crewId })
     }
 
     fun showTab(phase: CrewPhase) {
@@ -205,7 +217,7 @@ class CrewViewModel : ViewModel() {
         this.records.preview(records)
         previewing = true
         previewInstalled = installed
-        crews = mine
+        showCrews(mine)
         this.open = open
         this.blocked = blocked
         this.blockedCrew = blockedCrew
@@ -216,12 +228,19 @@ class CrewViewModel : ViewModel() {
         offline = false
     }
 
-    /** Everything the tab shows, in one call. Safe to run on every resume. [then] runs once a fresh answer is in. */
+    /**
+     * Everything the tab shows, in one call. Safe to run on every resume. [then] runs once a fresh
+     * answer is in; [settled] runs once the load is over, whatever came of it.
+     */
     fun load(
         context: Context,
         then: () -> Unit = {},
+        settled: () -> Unit = {},
     ) {
-        if (previewing) return
+        if (previewing) {
+            settled()
+            return
+        }
         val mine = ++loads
         reloading = true
         viewModelScope.launch {
@@ -257,6 +276,7 @@ class CrewViewModel : ViewModel() {
                     loading = false
                     reloading = false
                 }
+                settled()
             }
         }
     }
@@ -264,7 +284,7 @@ class CrewViewModel : ViewModel() {
     private fun apply(answer: com.eazyverse.testtrack.net.CrewList) {
         // A volunteer spot the reader left is over by their own choice: it lives in the Record tab's
         // volunteering list, not here. A newer server leaves it out already; an older one sends it.
-        crews = crewsOf(answer)
+        showCrews(crewsOf(answer))
         open = answer.open?.toCrew(member = false)
         blocked = answer.blocked
         blockedCrew = answer.blockedCrew
@@ -382,6 +402,8 @@ class CrewViewModel : ViewModel() {
         /** The seat this is for. One call at a time: another tap while it runs is dropped. */
         seat: String? = null,
         onDone: (T) -> Unit = {},
+        /** Say the result only once the fresh answer is in, so the snack and the row agree. The seat stays busy till then. */
+        holdTillRead: Boolean = false,
         block: suspend () -> T,
     ) {
         if (acting != null) {
@@ -390,15 +412,25 @@ class CrewViewModel : ViewModel() {
         }
         acting = seat
         viewModelScope.launch {
+            var handed = false
             try {
-                onDone(block())
-                context?.let { load(it) } ?: reload()
+                val result = block()
+                if (holdTillRead && context != null) {
+                    handed = true
+                    load(context, settled = {
+                        acting = null
+                        onDone(result)
+                    })
+                } else {
+                    onDone(result)
+                    context?.let { load(it) } ?: reload()
+                }
             } catch (e: ApiError) {
                 Snacks.error(e.message)
             } catch (_: Exception) {
-                Snacks.error("Couldn't reach TestTrack. Check your connection.") { call(context, seat, onDone, block) }
+                Snacks.error("Couldn't reach TestTrack. Check your connection.") { call(context, seat, onDone, holdTillRead, block) }
             } finally {
-                acting = null
+                if (!handed) acting = null
             }
         }
     }
@@ -420,6 +452,15 @@ class CrewViewModel : ViewModel() {
 
     init {
         seedFromPhone()
+        // A picture reaching the server settles its row at once, and a quiet read follows to confirm it.
+        viewModelScope.launch {
+            pictures.landed.collect { now ->
+                val grew = !landed.containsAll(now)
+                landed = now
+                crews = withLandedPictures(served, now)
+                if (grew && !previewing && served.isNotEmpty()) viewModelScope.launch { reload() }
+            }
+        }
     }
 
     /** Redraw when anything in your crews changes while showing; a burst of events is one fetch. */

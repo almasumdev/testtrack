@@ -99,6 +99,7 @@ internal fun withLandedPictures(
     landed: Set<AppNight>,
 ): List<Crew> {
     if (landed.isEmpty()) return crews
+
     fun marked(apps: List<CrewApp>) =
         apps.map { if (!it.done && AppNight(it.id, it.day) in landed) it.copy(done = true, pictureDue = false) else it }
     return crews.map { it.copy(apps = marked(it.apps), optional = marked(it.optional), strip = marked(it.strip)) }

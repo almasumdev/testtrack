@@ -73,6 +73,7 @@ fun CrewViewModel.withdrawReport(
 ) = call(
     context = context,
     seat = seatId,
+    holdTillRead = true,
     onDone = { answer: ReportWithdrawal ->
         when (answer) {
             is ReportWithdrawal.Done -> say("Report withdrawn.", SnackTone.DONE)
