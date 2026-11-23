@@ -24,6 +24,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.composables.icons.lucide.Clock
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Timer
+import com.eazyverse.testtrack.domain.AppNight
 import com.eazyverse.testtrack.findActivity
 import com.eazyverse.testtrack.viewmodel.AppsViewModel
 import com.eazyverse.testtrack.viewmodel.PrivateTestsViewModel
@@ -260,6 +261,7 @@ internal fun crewActions(
         }
     val waiting by vm.pictures.waiting.collectAsState()
     val stuck by vm.pictures.stuck.collectAsState()
+    val recording by vm.pictures.recording.collectAsState()
     return withCrewExtras(
         vm,
         CrewActions(
@@ -279,7 +281,7 @@ internal fun crewActions(
                 pickPicture()
             },
             // Read through [waiting], so a row redraws when its picture goes.
-            sendingPicture = { app -> waiting.any { it.seatId == app.id && it.day == app.day } },
+            sendingPicture = { app -> waiting.any { it.seatId == app.id && it.day == app.day } || recording == AppNight(app.id, app.day) },
             waitingPicture = { id -> waiting.any { it.seatId == id } },
             latePicture = { id -> waiting.any { it.seatId == id && it.late() } },
             picturesStuck = stuck,

@@ -41,6 +41,9 @@ class NightPictures(
     /** The nights whose picture has reached the server since the app started. */
     val landed get() = VisitPictures.landed
 
+    /** The app being recorded now, its picture on the way, so its row says so from the moment TestTrack is back. */
+    val recording get() = NightRound.recording
+
     /** Why the last try to send them stopped; null while they are going, or once they went. */
     val stuck get() = VisitPictures.stuck
 

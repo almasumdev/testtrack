@@ -5,11 +5,14 @@ import com.eazyverse.testtrack.data.InstalledApps
 import com.eazyverse.testtrack.data.RoundStore
 import com.eazyverse.testtrack.data.UsageRepo
 import com.eazyverse.testtrack.data.VisitPictures
+import com.eazyverse.testtrack.domain.AppNight
 import com.eazyverse.testtrack.domain.RoundRules
 import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiError
 import com.eazyverse.testtrack.net.PrivateVisitIn
 import com.eazyverse.testtrack.net.privateVisit
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -39,6 +42,11 @@ internal sealed interface Outcome {
 internal fun NightRound.fresh(now: RoundStore.Round): RoundStore.Round =
     round?.let { now.copy(noPicture = it.noPicture, recordedIndex = it.recordedIndex) } ?: now
 
+private val recordingNow = MutableStateFlow<AppNight?>(null)
+
+/** The app being recorded right now, with its picture on the way: its row says "Uploading screenshot" meanwhile. */
+internal val NightRound.recording: StateFlow<AppNight?> get() = recordingNow
+
 internal suspend fun NightRound.record(
     context: Context,
     stop: RoundStore.Stop,
@@ -48,6 +56,22 @@ internal suspend fun NightRound.record(
     // The visit is dated by the night it is recorded on, and the stop's picture by the night
     // the round began: across midnight the two differ, so nothing is recorded.
     if (newNightFor(stop, round?.startedAt ?: 0L)) return Outcome.Failed(NEW_NIGHT_LINE)
+    // A private test takes no picture, so its row never says one is uploading.
+    val night = AppNight(stop.seatId, stop.day).takeIf { stop.privateTestId.isBlank() }
+    if (night != null) recordingNow.value = night
+    try {
+        return recordVisit(context, stop, since, taken)
+    } finally {
+        if (night != null) recordingNow.compareAndSet(night, null)
+    }
+}
+
+private suspend fun NightRound.recordVisit(
+    context: Context,
+    stop: RoundStore.Stop,
+    since: Long,
+    taken: File?,
+): Outcome {
     val used = UsageRepo.measure(context, stop.packageName, since, needMs = COUNT_MS, source = "crew")
     if (used < COUNT_MS) return Outcome.Short(used)
     return try {
