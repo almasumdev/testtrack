@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.compose.runtime.mutableStateMapOf
 import com.eazyverse.testtrack.data.ProofImages
 import com.eazyverse.testtrack.data.ServerUpload
+import com.eazyverse.testtrack.data.Session
 import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.FeedbackIn
 import com.eazyverse.testtrack.net.sendFeedback
@@ -12,7 +13,11 @@ import com.eazyverse.testtrack.ui.Snacks
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -24,8 +29,14 @@ data class FeedbackUpload(
     val uri: Uri,
     val label: String,
     val state: UploadState,
-    /** The picture's id once the server holds it, so another try sends only the feedback, not the picture again. */
-    val uploadedId: String? = null,
+    /** The signed-in account it belongs to: nobody else sees it or sends it again. */
+    val account: String?,
+    /** The picture's id, made before the first try so a lost answer is tried again under the same one. */
+    val pictureId: String,
+    /** The server holds the picture, so another try sends only the feedback. */
+    val uploaded: Boolean = false,
+    /** When it was sent, so a sent one never outlives its night. */
+    val sentAt: Long = 0L,
 ) {
     val failed get() = state == UploadState.FAILED
     val sent get() = state == UploadState.SENT
@@ -33,14 +44,27 @@ data class FeedbackUpload(
 
 /**
  * The private feedback pictures being sent, kept for the life of the process so leaving a crew's page
- * never stops one, and the Run tab and a crew's page both see the same ones. Only the crews' own answer
- * clears a sent one ([clearSent]): until then the tile can't offer Write for feedback that has gone.
+ * never stops one, and the Run tab and a crew's page both see the same ones. A sent one stays until the
+ * crews read that the seat has its feedback ([clearSent]), or a day passes. Each belongs to the account
+ * that sent it and goes with it ([clear] at sign out).
  */
 object CrewFeedbackUploads {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val jobs = HashMap<String, Job>()
+    private val ticks = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
 
-    /** By seat. */
-    val uploads = mutableStateMapOf<String, FeedbackUpload>()
+    /** Ticks each time a picture's feedback has landed, so a screen reads the crews again. */
+    val landed: SharedFlow<Unit> = ticks.asSharedFlow()
+
+    private const val SENT_KEPT_MS = 24 * 60 * 60 * 1000L
+
+    private val uploads = mutableStateMapOf<String, FeedbackUpload>()
+
+    /** The upload for [seatId] that belongs to the signed-in account, or null. */
+    fun of(seatId: String): FeedbackUpload? = uploads[seatId]?.takeIf { it.account == Session.email }
+
+    /** The seats with a sent picture, so a screen can read the crews against them. */
+    fun sentSeats(): Set<String> = uploads.filterValues { it.sent && it.account == Session.email }.keys
 
     /** Starts sending [uri] for [seatId]; turned away while that seat already has one going, failed or sent. */
     fun send(
@@ -48,11 +72,10 @@ object CrewFeedbackUploads {
         seatId: String,
         label: String,
         uri: Uri,
-        reload: () -> Unit,
     ): Boolean {
-        if (uploads.containsKey(seatId)) return false
-        uploads[seatId] = FeedbackUpload(uri, label, UploadState.SENDING)
-        run(context, seatId, reload)
+        if (of(seatId) != null) return false
+        uploads[seatId] = FeedbackUpload(uri, label, UploadState.SENDING, Session.email, ServerUpload.newId())
+        run(context, seatId)
         return true
     }
 
@@ -60,44 +83,64 @@ object CrewFeedbackUploads {
     fun retry(
         context: Context,
         seatId: String,
-        reload: () -> Unit,
     ) {
-        val up = uploads[seatId]?.takeIf { it.failed } ?: return
+        val up = of(seatId)?.takeIf { it.failed } ?: return
         uploads[seatId] = up.copy(state = UploadState.SENDING)
-        run(context, seatId, reload)
+        run(context, seatId)
     }
 
-    /** Takes away the sent ones whose seat [owes] says no longer owes feedback, as the crews now read. */
-    fun clearSent(owes: (String) -> Boolean) {
-        uploads.filterValues { it.sent }.keys.forEach { if (!owes(it)) uploads.remove(it) }
+    /** Takes away the sent ones the crews now show with their feedback ([landed]), or a day old. */
+    fun clearSent(landed: Set<String>) {
+        val now = System.currentTimeMillis()
+        uploads.filterValues { it.sent }.forEach { (seat, up) ->
+            if (seat in landed || now - up.sentAt > SENT_KEPT_MS) uploads.remove(seat)
+        }
     }
+
+    /** Signed out: every picture still on its way is stopped and forgotten. */
+    fun clear() {
+        jobs.values.forEach { it.cancel() }
+        jobs.clear()
+        uploads.clear()
+    }
+
+    /** Changes the entry only while it is still there, so a stopped upload never brings one back. */
+    private fun change(
+        seatId: String,
+        edit: (FeedbackUpload) -> FeedbackUpload,
+    ): FeedbackUpload? = uploads[seatId]?.let(edit)?.also { uploads[seatId] = it }
 
     private fun run(
         context: Context,
         seatId: String,
-        reload: () -> Unit,
     ) {
         val app = context.applicationContext
-        scope.launch {
-            try {
-                val up = uploads[seatId] ?: return@launch
-                val id =
-                    up.uploadedId
-                        ?: ServerUpload
-                            .send(ServerUpload.newId(), ServerUpload.CREW_FEEDBACK, "image/jpeg", seatId = seatId) {
-                                ProofImages.bytes(app, up.uri, ProofImages.CREW_MAX_BYTES)
-                            }.also { uploads[seatId] = up.copy(uploadedId = it) }
-                Api.sendFeedback(seatId, FeedbackIn(id))
-                uploads[seatId] = up.copy(state = UploadState.SENT, uploadedId = id)
-                withContext(Dispatchers.IO) { ProofEditing.discard(app, up.uri) }
-                Snacks.done("Feedback for ${up.label} sent. Thank you.")
-                reload()
-            } catch (e: CancellationException) {
-                throw e
-            } catch (_: Exception) {
-                uploads[seatId]?.let { uploads[seatId] = it.copy(state = UploadState.FAILED) }
-                Snacks.error("Feedback picture not sent.")
+        jobs[seatId]?.cancel()
+        jobs[seatId] =
+            scope.launch {
+                try {
+                    var up = uploads[seatId] ?: return@launch
+                    if (!up.uploaded) {
+                        val id =
+                            ServerUpload.send(
+                                up.pictureId,
+                                ServerUpload.CREW_FEEDBACK,
+                                "image/jpeg",
+                                seatId = seatId,
+                                remint = { fresh -> change(seatId) { it.copy(pictureId = fresh) } },
+                            ) { ProofImages.bytes(app, up.uri, ProofImages.CREW_MAX_BYTES) }
+                        up = change(seatId) { it.copy(pictureId = id, uploaded = true) } ?: return@launch
+                    }
+                    Api.sendFeedback(seatId, FeedbackIn(up.pictureId))
+                    change(seatId) { it.copy(state = UploadState.SENT, sentAt = System.currentTimeMillis()) } ?: return@launch
+                    withContext(Dispatchers.IO) { ProofEditing.discard(app, up.uri) }
+                    Snacks.done("Feedback for ${up.label} sent. Thank you.")
+                    ticks.tryEmit(Unit)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (_: Exception) {
+                    if (change(seatId) { it.copy(state = UploadState.FAILED) } != null) Snacks.error("Feedback picture not sent.")
+                }
             }
-        }
     }
 }

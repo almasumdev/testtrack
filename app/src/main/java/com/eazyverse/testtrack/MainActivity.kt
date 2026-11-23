@@ -60,6 +60,7 @@ import com.eazyverse.testtrack.ui.theme.TestTrackTheme
 import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.ui.theme.exchangeBackground
 import com.eazyverse.testtrack.viewmodel.AppsViewModel
+import com.eazyverse.testtrack.viewmodel.CrewFeedbackUploads
 import com.eazyverse.testtrack.viewmodel.CrewPicturesViewModel
 import com.eazyverse.testtrack.viewmodel.MembershipViewModel
 import com.eazyverse.testtrack.viewmodel.ThemeChoice
@@ -103,6 +104,7 @@ class MainActivity : ComponentActivity() {
         AccountGone.onGone = {
             AuthRepo.signOut()
             Session.signOut()
+            CrewFeedbackUploads.clear()
         }
         // The last update decision proven online, until Play answers in onStart. Here rather than in
         // App because it reads Session, which is only loaded now.
@@ -353,6 +355,7 @@ fun AppNav(
                         PushRepo.forgetOnServer()
                         AuthRepo.signOut()
                         Session.signOut()
+                        CrewFeedbackUploads.clear()
                         // Back to the app rather than out of it. There is something worth looking at
                         // signed out now, so sending somebody to a sign-in screen for choosing to
                         // sign out would be taking the app away as a punishment.

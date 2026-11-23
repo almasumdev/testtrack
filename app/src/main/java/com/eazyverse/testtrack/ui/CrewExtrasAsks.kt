@@ -82,8 +82,8 @@ internal fun withCrewExtras(
                 }
             }
         },
-        feedbackUpload = { id -> extras.uploads[id] },
-        onRetryFeedback = { app -> extras.retryFeedback(context, app.id) { vm.load(context.applicationContext) } },
+        feedbackUpload = { id -> extras.upload(id) },
+        onRetryFeedback = { app -> extras.retryFeedback(context.applicationContext, app.id) },
         onPickFeedback = { app ->
             extras.askFeedback(app.id, app.label, app.packageName, asking = false)
             pickPicture()
@@ -127,13 +127,14 @@ internal fun CrewExtrasAsks(vm: CrewViewModel) {
         onDispose { owner.lifecycle.removeObserver(watcher) }
     }
 
-    // A sent picture's tile stays as sent until the crews read that the seat no longer owes feedback.
-    LaunchedEffect(vm.crews) {
-        if (vm.crews.isEmpty()) return@LaunchedEffect
+    // A sent picture's tile stays as sent until a crew list shows that seat with its feedback in.
+    val sentSeats = extras.sentSeats()
+    LaunchedEffect(vm.crews, sentSeats) {
         val seats = vm.crews.flatMap { it.apps + it.optional + it.left }
-        val owing = seats.filter { !it.feedbackSent }.mapTo(HashSet()) { it.id }
-        extras.clearSentUploads { it in owing }
+        extras.clearSentUploads(seats.filter { it.feedbackSent }.mapTo(HashSet()) { it.id })
     }
+    // Its feedback has landed: the crews are read again, by the screen and not by the upload.
+    LaunchedEffect(Unit) { extras.landed.collect { vm.load(context.applicationContext) } }
 
     val askCapture =
         rememberCaptureConsent(
@@ -174,7 +175,7 @@ internal fun CrewExtrasAsks(vm: CrewViewModel) {
     extras.editing?.let { picture ->
         ProofPictureEditor(
             picture,
-            onKeep = { edited -> extras.sendEdited(context, edited) { vm.load(context.applicationContext) } },
+            onKeep = { edited -> extras.sendEdited(context.applicationContext, edited) },
             onClose = { extras.closeEditor() },
             title = "Check your picture",
             copy = "Only the TestTrack team sees it. Hide anything personal first.",

@@ -60,11 +60,17 @@ class CrewExtrasViewModel : ViewModel() {
     /** The camera's own file behind [editing], gone once the edited copy is sent or given up. */
     private var raw: File? = null
 
-    /** Pictures being sent, waiting for another try or sent, by seat: [CrewFeedbackUploads] keeps them past this page. */
-    val uploads get() = CrewFeedbackUploads.uploads
+    /** The picture being sent, waiting for another try or sent for this seat: [CrewFeedbackUploads] keeps it past this page. */
+    fun upload(seatId: String): FeedbackUpload? = CrewFeedbackUploads.of(seatId)
 
-    /** Takes away the sent pictures whose seat [owes] says no longer owes feedback. */
-    fun clearSentUploads(owes: (String) -> Boolean) = CrewFeedbackUploads.clearSent(owes)
+    /** The seats with a sent picture. */
+    fun sentSeats(): Set<String> = CrewFeedbackUploads.sentSeats()
+
+    /** Takes away the sent pictures whose seat the crews now show with its feedback. */
+    fun clearSentUploads(landed: Set<String>) = CrewFeedbackUploads.clearSent(landed)
+
+    /** Ticks when a picture's feedback has landed: the crews are read again. */
+    val landed get() = CrewFeedbackUploads.landed
 
     /** "Don't show again" was ticked on the private feedback ask: Write goes straight to Android's own ask. */
     val askHidden get() = Session.feedbackTipHidden
@@ -225,15 +231,14 @@ class CrewExtrasViewModel : ViewModel() {
 
     /**
      * The checked picture is sent in the background by [CrewFeedbackUploads]: its tile says so, other
-     * crew acts stay free, and leaving this page does not stop it. [reload] reads the crews again.
+     * crew acts stay free, and leaving this page does not stop it.
      */
     fun sendEdited(
         context: Context,
         uri: Uri,
-        reload: () -> Unit,
     ) {
         val job = feedbackFor ?: return
-        if (!CrewFeedbackUploads.send(context, job.seatId, job.label, uri, reload)) return
+        if (!CrewFeedbackUploads.send(context, job.seatId, job.label, uri)) return
         editing = null
         feedbackFor = null
         dropRaw()
@@ -243,8 +248,7 @@ class CrewExtrasViewModel : ViewModel() {
     fun retryFeedback(
         context: Context,
         seatId: String,
-        reload: () -> Unit,
-    ) = CrewFeedbackUploads.retry(context, seatId, reload)
+    ) = CrewFeedbackUploads.retry(context, seatId)
 
     /**
      * The editor closed. After Send, [editing] is already empty and nothing is undone; closed with
