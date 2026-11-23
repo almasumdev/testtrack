@@ -43,16 +43,28 @@ class RoundRulesTest {
     }
 
     @Test
-    fun `a resume just after the round opened its app is TestTrack's own`() {
-        assertTrue(RoundRules.ownResume(beganAt = 50_000, now = 50_000))
-        assertTrue(RoundRules.ownResume(beganAt = 50_000, now = 50_000 + RoundRules.OWN_RESUME_MS - 1))
+    fun `the first resume just after the screen-share yes is TestTrack's own`() {
+        val resume = ConsentResume().apply { yes(50_000) }
+        assertTrue(resume.swallows(50_000 + RoundRules.OWN_RESUME_MS - 1))
     }
 
     @Test
-    fun `a resume after that, or for a round found on disk, is a way back`() {
-        assertFalse(RoundRules.ownResume(beganAt = 50_000, now = 50_000 + RoundRules.OWN_RESUME_MS))
-        assertFalse(RoundRules.ownResume(beganAt = 50_000, now = 70_000))
-        assertFalse(RoundRules.ownResume(beganAt = 0, now = 500))
-        assertFalse(RoundRules.ownResume(beganAt = 50_000, now = 40_000))
+    fun `a second resume within the second is the tester back`() {
+        val resume = ConsentResume().apply { yes(50_000) }
+        assertTrue(resume.swallows(50_100))
+        assertFalse(resume.swallows(50_400))
+    }
+
+    @Test
+    fun `a resume without the yes is the tester back`() {
+        assertFalse(ConsentResume().swallows(500))
+    }
+
+    @Test
+    fun `a resume after the second, or before the yes, is the tester back and uses the yes up`() {
+        val late = ConsentResume().apply { yes(50_000) }
+        assertFalse(late.swallows(50_000 + RoundRules.OWN_RESUME_MS))
+        assertFalse(late.swallows(50_000 + RoundRules.OWN_RESUME_MS + 1))
+        assertFalse(ConsentResume().apply { yes(50_000) }.swallows(40_000))
     }
 }

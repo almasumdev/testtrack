@@ -2,7 +2,6 @@ package com.eazyverse.testtrack.viewmodel
 
 import android.content.Context
 import android.os.PowerManager
-import android.os.SystemClock
 import android.provider.Settings
 import com.eazyverse.testtrack.data.InstalledApps
 import com.eazyverse.testtrack.data.RoundStore
@@ -90,12 +89,6 @@ object NightRound {
     /** Said on the Crew page the next time it is in front: the round's last word. */
     private var pendingSay: Snack? = null
 
-    /**
-     * When the app on screen was asked to open, on the clock since boot; 0 when no app was opened
-     * by this process. A resume of TestTrack just after it is TestTrack's own ([RoundRules.ownResume]).
-     */
-    private var beganAt = 0L
-
     /** The recording that TestTrack coming to the front started, so a second resume call waits for it. */
     private var settling: Job? = null
 
@@ -147,7 +140,6 @@ object NightRound {
         advancing = false
         shot = null
         shotFailed = false
-        beganAt = SystemClock.elapsedRealtime()
         window?.show()
         if (window == null) keepAwake(context)
         publish()
@@ -377,6 +369,8 @@ object NightRound {
         say: (Snack?) -> Unit,
     ) {
         val app = context.applicationContext
+        // Asked first, so the yes is used up by the first resume after it, whatever that resume does.
+        val own = OwnResume.take()
         pendingSay?.let {
             pendingSay = null
             say(it)
@@ -391,9 +385,9 @@ object NightRound {
             stopSay = say
             return
         }
-        // TestTrack's own resume, a moment after the round opened its app (Android hands over the
-        // screen-share yes just before it): nobody came back from the app, so the round goes on.
-        if (round != null && RoundRules.ownResume(beganAt, SystemClock.elapsedRealtime())) return
+        // TestTrack's own resume just after the screen-share yes: nobody came back from the app, so
+        // the round goes on. Any later resume is a real way back, however soon it comes.
+        if (own) return
         // A second call for the same resume (two pages listening): the first is recording already.
         if (settling?.isActive == true) return
         // The process was closed mid-visit: the round is only on disk now.
@@ -471,7 +465,6 @@ object NightRound {
         window?.hide()
         window = null
         stopSay = null
-        beganAt = 0L
         awake?.takeIf { it.isHeld }?.release()
         round = null
         RoundStore.save(context, null)

@@ -82,6 +82,8 @@ class NightPictures(
         val stops = waitingFor ?: return
         waitingFor = null
         val float = float
+        // Only the resume that follows this yes is TestTrack's own; a later one is a way back.
+        OwnResume.yes()
         Handler(Looper.getMainLooper()).post {
             VisitCameraService.start(activity, code, data)
             NightRound.start(activity, stops, float = float && NightRound.canFloat(activity), pictures = true)

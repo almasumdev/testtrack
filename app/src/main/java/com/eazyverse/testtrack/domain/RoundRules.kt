@@ -37,23 +37,35 @@ object RoundRules {
     ) = maxOf(since, startOfToday)
 
     /**
-     * How soon after the round opens an app a resume of TestTrack is still TestTrack's own. Android
-     * hands over the screen-share yes just before TestTrack resumes, so the round starts first and
-     * that resume follows it; nobody comes back from an app this quickly.
+     * How soon after Android's screen-share yes the resume that follows it is still TestTrack's own.
+     * Android hands over the yes just before TestTrack resumes.
      */
     const val OWN_RESUME_MS = 1_000L
-
-    /**
-     * Whether a resume at [now] is TestTrack's own, a moment after the app on screen was asked to
-     * open at [beganAt] (both on the clock since boot), rather than a way back from that app. A
-     * round found on disk has no start in hand ([beganAt] 0), so its resume always counts.
-     */
-    fun ownResume(
-        beganAt: Long,
-        now: Long,
-    ) = beganAt > 0 && now >= beganAt && now - beganAt < OWN_RESUME_MS
 
     /** The round's last line: tonight done, or how many were left out and why the first was. */
     fun lastWord(skipped: List<String>): String =
         if (skipped.isEmpty()) "That is tonight done." else "${skipped.size} left. ${skipped.first()}"
+}
+
+/**
+ * TestTrack's own resume after Android's screen-share yes. The yes comes just before that resume,
+ * so the first resume within [RoundRules.OWN_RESUME_MS] of it is TestTrack's own and the round goes
+ * on. Only that one: a later resume, or one after the window, is the tester back from the app, even
+ * a second after it opened (it closed at once, or Back was pressed). A round found on disk, or one
+ * started without the yes (a private test), never has a yes in hand.
+ */
+class ConsentResume {
+    private var yesAt = 0L
+
+    /** Android said yes at [at], on the clock since boot. */
+    fun yes(at: Long) {
+        yesAt = at
+    }
+
+    /** Whether the resume at [now] is TestTrack's own. The yes is used up by this, either way. */
+    fun swallows(now: Long): Boolean {
+        val at = yesAt
+        yesAt = 0L
+        return at > 0 && now >= at && now - at < RoundRules.OWN_RESUME_MS
+    }
 }
