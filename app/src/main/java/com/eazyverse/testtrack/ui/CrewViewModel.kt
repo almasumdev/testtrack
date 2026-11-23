@@ -63,6 +63,18 @@ class CrewViewModel : ViewModel() {
     var tab by mutableStateOf(CrewPhase.OPEN)
         internal set
 
+    /**
+     * Whether [tab] is worth showing yet: chosen by hand, by the first answer, or guessed from the
+     * kept crews. Until then the screen shows one plain placeholder under no tab, so the first frame
+     * is never the Open tab's page about to be swapped for the Run tab's.
+     */
+    var tabKnown by mutableStateOf(false)
+        private set
+
+    /** The last tab change was a tap (it fades through) rather than the first answer settling it (it does not). */
+    var tabByHand = false
+        private set
+
     /** Which crew's own page is showing, or null for the tab itself. */
     var opened by mutableStateOf<String?>(null)
         internal set
@@ -145,6 +157,8 @@ class CrewViewModel : ViewModel() {
 
     fun showTab(phase: CrewPhase) {
         settledTab = true
+        tabByHand = true
+        tabKnown = true
         tab = phase
         opened = null
     }
@@ -200,6 +214,7 @@ class CrewViewModel : ViewModel() {
         this.blockedCrew = blockedCrew
         this.signedOut = signedOut
         this.tab = tab
+        tabKnown = true
         opened = null
         loading = false
         offline = false
@@ -246,9 +261,7 @@ class CrewViewModel : ViewModel() {
     private fun apply(answer: com.eazyverse.testtrack.net.CrewList) {
         // A volunteer spot the reader left is over by their own choice: it lives in the Record tab's
         // volunteering list, not here. A newer server leaves it out already; an older one sends it.
-        crews =
-            answer.mine.map { it.toCrew() } +
-            answer.volunteering.map { it.toVolunteerCrew() }.filter { it.volunteer?.state != "left" }
+        crews = crewsOf(answer)
         open = answer.open?.toCrew(member = false)
         blocked = answer.blocked
         blockedCrew = answer.blockedCrew
@@ -259,13 +272,9 @@ class CrewViewModel : ViewModel() {
         // opening on the wrong one.
         if (!settledTab) {
             settledTab = true
-            tab =
-                when {
-                    crews.any { it.phase == CrewPhase.RUN } -> CrewPhase.RUN
-                    crews.any { it.phase == CrewPhase.LOBBY } -> CrewPhase.LOBBY
-                    crews.any { it.phase == CrewPhase.RECORD } -> CrewPhase.RECORD
-                    else -> CrewPhase.OPEN
-                }
+            tabByHand = false
+            tabKnown = true
+            tab = firstTabOf(crews)
         }
     }
 
@@ -413,8 +422,22 @@ class CrewViewModel : ViewModel() {
         }
     }
 
+    /**
+     * Online the kept crews are not shown, but they still say which tab the answer will most likely
+     * open on, so the first frame is that tab's placeholder rather than Open's. Only a guess: the
+     * first answer still settles the tab, in case a crew moved on since.
+     */
+    private fun guessTab() {
+        if (settledTab) return
+        Api.lastCrews(afterFailure = true)?.let {
+            tab = firstTabOf(crewsOf(it))
+            tabKnown = true
+        }
+    }
+
     init {
         seedFromPhone()
+        guessTab()
     }
 
     /** Redraw when anything in your crews changes while showing; a burst of events is one fetch. */
@@ -428,3 +451,17 @@ class CrewViewModel : ViewModel() {
         runCatching { apply(Api.crews()) }
     }
 }
+
+/** Your crews out of an answer, without any volunteer spot the reader left. */
+internal fun crewsOf(answer: com.eazyverse.testtrack.net.CrewList): List<Crew> =
+    answer.mine.map { it.toCrew() } +
+        answer.volunteering.map { it.toVolunteerCrew() }.filter { it.volunteer?.state != "left" }
+
+/** The tab Crew opens on: whichever has something owed, so a running crew (a volunteer's too) wins. */
+internal fun firstTabOf(crews: List<Crew>): CrewPhase =
+    when {
+        crews.any { it.phase == CrewPhase.RUN } -> CrewPhase.RUN
+        crews.any { it.phase == CrewPhase.LOBBY } -> CrewPhase.LOBBY
+        crews.any { it.phase == CrewPhase.RECORD } -> CrewPhase.RECORD
+        else -> CrewPhase.OPEN
+    }

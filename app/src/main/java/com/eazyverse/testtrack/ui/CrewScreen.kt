@@ -78,7 +78,7 @@ fun CrewScreen(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             // The tabs bring their own gutter and room above, the same as Circle's.
-            PhaseTabs(vm.tab, { vm.badge(it) }, { chatUnreadOf(vm.crews, it) > 0 }) { vm.showTab(it) }
+            PhaseTabs(vm.tab.takeIf { vm.tabKnown }, { vm.badge(it) }, { chatUnreadOf(vm.crews, it) > 0 }) { vm.showTab(it) }
         },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
@@ -87,13 +87,35 @@ fun CrewScreen(
             }
             // An invite waits over every tab until it is answered.
             PrivateInviteRows(invites, { privates.pick(it) }, Modifier.padding(start = Gutter, end = Gutter, top = 12.dp))
-            // The first answer moves the tab itself (Open to Run when a crew is running), so the page
-            // changes under the reader. Fade through, as the main tabs do, rather than cut. Null is
-            // the offline page. Nothing animates on a return: the tab is already settled then.
-            val page = if (vm.offline && vm.crews.isEmpty()) null else vm.tab
-            AnimatedContent(page, Modifier.fillMaxSize(), transitionSpec = fadeThrough(), label = "crew page") { shown ->
-                when (shown) {
-                    null -> RobotOffline("Crews didn't load", onRetry = { vm.load(context) })
+            // Until the tab is known (first ever load, nothing kept) one plain placeholder under no tab,
+            // never the Open page about to be swapped. A tap fades through, as the main tabs do; the
+            // first answer settling the tab only cross-fades, the way a placeholder gives way anywhere.
+            val page =
+                when {
+                    vm.offline && vm.crews.isEmpty() -> CrewPane.Offline
+                    !vm.tabKnown -> CrewPane.Waiting
+                    else -> CrewPane.Tab(vm.tab)
+                }
+            val tapped = fadeThrough<CrewPane>()
+            AnimatedContent(
+                page,
+                Modifier.fillMaxSize(),
+                transitionSpec = {
+                    if (initialState is CrewPane.Tab && targetState is CrewPane.Tab && vm.tabByHand) {
+                        tapped()
+                    } else {
+                        loadSwap()
+                    }
+                },
+                label = "crew page",
+            ) { shown ->
+                when ((shown as? CrewPane.Tab)?.phase) {
+                    null ->
+                        if (shown == CrewPane.Offline) {
+                            RobotOffline("Crews didn't load", onRetry = { vm.load(context) })
+                        } else {
+                            CrewTabLoading()
+                        }
                     CrewPhase.RUN ->
                         LoadSwap(vm.firstLoad) {
                             if (it) CrewRunLoading() else CrewRunTab(vm, onSignIn, actions, onOpenCrew, onOpenChat, privateRun)
@@ -112,6 +134,17 @@ fun CrewScreen(
     CrewDialogsHost(vm, dialogs)
     VolunteerJoinHost(vm, viewModel(), onOpenCrew)
     PrivateInviteHost(privates)
+}
+
+/** What the crew page shows: one of the four tabs, the offline page, or the placeholder before any tab is known. */
+private sealed interface CrewPane {
+    data object Offline : CrewPane
+
+    data object Waiting : CrewPane
+
+    data class Tab(
+        val phase: CrewPhase,
+    ) : CrewPane
 }
 
 /** The sheet for the invite picked over the tabs. Yes asks for the testers group first. */
@@ -213,14 +246,15 @@ class CrewActions(
  */
 @Composable
 private fun PhaseTabs(
-    selected: CrewPhase,
+    /** Null while no tab is known yet: none is lit. */
+    selected: CrewPhase?,
     badge: (CrewPhase) -> Int,
     chatDot: (CrewPhase) -> Boolean,
     onSelect: (CrewPhase) -> Unit,
 ) {
     SegmentedTabs(
         labels = CrewPhase.entries.map { it.name.lowercase().replaceFirstChar(Char::uppercase) },
-        selected = CrewPhase.entries.indexOf(selected),
+        selected = selected?.let { CrewPhase.entries.indexOf(it) } ?: -1,
         counts = CrewPhase.entries.map(badge),
         chatDots = CrewPhase.entries.map(chatDot),
     ) { onSelect(CrewPhase.entries[it]) }

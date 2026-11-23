@@ -122,6 +122,10 @@ fun CrewLobbyLoading() {
     }
 }
 
+/** Before any tab is known: plain crew rows, the shape every tab's list shares. */
+@Composable
+fun CrewTabLoading() = CrewRowsLoading("Loading your crews")
+
 /** Finished: rows of crews that are over, no heading. */
 @Composable
 fun CrewRecordLoading() = CrewRowsLoading("Loading finished crews")

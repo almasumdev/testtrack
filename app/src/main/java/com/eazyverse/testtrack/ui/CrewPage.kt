@@ -72,7 +72,14 @@ fun CrewPage(
     val context = LocalContext.current
     val dialogs = rememberCrewDialogs()
     val crew = vm.crews.firstOrNull { it.id == id }
-    LaunchedEffect(id) { if (crew == null) vm.load(context) }
+    // Read again on every open, even when the list has it: a crew listed hours ago may have finished
+    // since. What the list holds shows meanwhile. Until this read has started nothing is decided, so a
+    // crew missing from the list shows the placeholder, not "You're not in this crew".
+    var asked by remember { mutableStateOf(false) }
+    LaunchedEffect(id) {
+        vm.load(context)
+        asked = true
+    }
     // Shown once and then gone from your crews: you took your app out, or it was sent back. The
     // page has nothing left to show, so it closes rather than waiting for a crew that is not coming.
     var seen by remember { mutableStateOf(false) }
@@ -153,8 +160,10 @@ fun CrewPage(
                 when {
                     // Shown before and gone now (left, or taken away): the page is closing, so nothing in between.
                     crew == null && seen -> Unit
+                    // A read on its way: wait for it rather than say what the last one found.
+                    crew == null && (!asked || vm.reloading) -> CrewCardLoading()
                     crew == null && vm.offline -> RobotOffline("This crew didn't load", onRetry = { vm.load(context) })
-                    crew == null && !vm.loading ->
+                    crew == null ->
                         RobotState(
                             Prop.Notes,
                             "You're not in this crew",
@@ -162,7 +171,6 @@ fun CrewPage(
                             action = "Back",
                             onAction = onBack,
                         )
-                    crew == null -> CrewCardLoading()
                     // A volunteer before their first night: on the Run tab, laid out as the lobby (apps to install).
                     crew.phase == CrewPhase.LOBBY || crew.volunteerWaiting -> CrewLobbyPhase(crew, actions)
                     crew.phase == CrewPhase.RUN -> CrewRunPhase(crew, actions)

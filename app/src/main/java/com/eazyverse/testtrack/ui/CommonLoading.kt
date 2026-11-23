@@ -177,6 +177,10 @@ private const val LOAD_SWAP_MS = 320
 fun <S> fadeThrough(): AnimatedContentTransitionScope<S>.() -> ContentTransform =
     { fadeIn(tween(160, delayMillis = 80)) togetherWith fadeOut(tween(80)) }
 
+/** A placeholder giving way to what it stood for, at [LoadSwap]'s pace, inside an [AnimatedContent] that fades through on taps. */
+fun <S> AnimatedContentTransitionScope<S>.loadSwap(): ContentTransform =
+    fadeIn(tween(LOAD_SWAP_MS)) togetherWith fadeOut(tween(LOAD_SWAP_MS))
+
 /**
  * The one thin bar: 3dp with round ends, the primary ink on the empty track, no gap and no end mark.
  * With no [progress] it runs to and fro while something is on its way; with one it fills.
