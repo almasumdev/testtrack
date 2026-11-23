@@ -29,7 +29,7 @@ class CrewTabState(
         private set
 
     /**
-     * The last tab change moves like a tap (it fades through): a tap itself, or the slide to Run
+     * The last tab change moves like a tap (the page slides across): a tap itself, or the move to Run
      * after arriving. Only a placeholder giving way to a tab cross-fades instead.
      */
     var byHand = false

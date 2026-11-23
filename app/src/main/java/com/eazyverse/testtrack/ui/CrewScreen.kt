@@ -2,6 +2,13 @@ package com.eazyverse.testtrack.ui
 
 import android.content.Context
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Column
@@ -26,6 +33,7 @@ import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eazyverse.testtrack.domain.ChatSignals
@@ -111,21 +119,22 @@ fun CrewScreen(
             }
             // An invite waits over every tab until it is answered.
             PrivateInviteRows(invites, { privates.pick(it) }, Modifier.padding(start = Gutter, end = Gutter, top = 12.dp))
-            // Until the tab is known one plain placeholder under no tab. A tap, and the slide to Run
-            // after arriving, fade through as the main tabs do; a placeholder giving way only cross-fades.
+            // Until the tab is known one plain placeholder under no tab. A tap, and the move to Run
+            // after arriving, slide across like a pager swipe; a placeholder giving way only cross-fades.
             val page =
                 when {
                     vm.offline && vm.crews.isEmpty() -> CrewPane.Offline
                     !vm.tabKnown -> CrewPane.Waiting
                     else -> CrewPane.Tab(vm.tab)
                 }
-            val tapped = fadeThrough<CrewPane>()
             AnimatedContent(
                 page,
                 Modifier.fillMaxSize(),
                 transitionSpec = {
-                    if (initialState is CrewPane.Tab && targetState is CrewPane.Tab && vm.tabByHand) {
-                        tapped()
+                    val from = (initialState as? CrewPane.Tab)?.phase
+                    val to = (targetState as? CrewPane.Tab)?.phase
+                    if (from != null && to != null && vm.tabByHand) {
+                        tabSlide(to.ordinal > from.ordinal)
                     } else {
                         loadSwap()
                     }
@@ -157,6 +166,13 @@ fun CrewScreen(
     CrewDialogsHost(vm, dialogs)
     VolunteerJoinHost(vm, viewModel(), onOpenCrew)
     PrivateInviteHost(privates)
+}
+
+/** A tab to another slides across like a pager swipe, the pill above moving with it. */
+private fun AnimatedContentTransitionScope<CrewPane>.tabSlide(forward: Boolean): ContentTransform {
+    val spec = tween<IntOffset>(TAB_SLIDE_MS, easing = FastOutSlowInEasing)
+    val sign = if (forward) 1 else -1
+    return slideInHorizontally(spec) { it * sign } togetherWith slideOutHorizontally(spec) { -it * sign }
 }
 
 /** What the crew page shows: one of the four tabs, the offline page, or the placeholder before any tab is known. */

@@ -1,6 +1,9 @@
 package com.eazyverse.testtrack.ui
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -29,10 +32,16 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -45,6 +54,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.eazyverse.testtrack.ui.theme.Tt
+import kotlinx.coroutines.launch
 
 /**
  * The tab row as one round track with the current tab filled in it.
@@ -140,6 +150,14 @@ fun SegmentedTabs(
             }
         }
 
+        // The pill is one shape that slides to the chosen tab, drawn behind the segments.
+        val pill = Tt.colors.leafAccentSoft
+        val at = selected.coerceAtLeast(0)
+        val pillLeft = widths.take(at).sum() + px(SegGap) * at
+        val pillWidth = widths.getOrElse(at) { 0f }
+        val slide = rememberPillSlide(selected >= 0, pillLeft, pillWidth)
+        val pillAlpha by animateFloatAsState(if (selected >= 0) 1f else 0f, tween(200), label = "pill-alpha")
+
         Box(
             Modifier
                 .fillMaxWidth()
@@ -156,7 +174,17 @@ fun SegmentedTabs(
                 Modifier
                     .heightIn(min = SegHeight)
                     .height(IntrinsicSize.Min)
-                    .horizontalScroll(scroll, enabled = overflow),
+                    .horizontalScroll(scroll, enabled = overflow)
+                    .drawBehind {
+                        if (pillAlpha > 0f) {
+                            drawRoundRect(
+                                pill.copy(alpha = pill.alpha * pillAlpha),
+                                Offset(slide.left, 0f),
+                                Size(slide.width, size.height),
+                                CornerRadius(size.height / 2f),
+                            )
+                        }
+                    },
                 horizontalArrangement = Arrangement.spacedBy(SegGap),
             ) {
                 labels.forEachIndexed { index, label ->
@@ -195,18 +223,12 @@ private fun Segment(
         tween(durationMillis = 200),
         label = "segment-ink",
     )
-    val fill by animateColorAsState(
-        if (current) t.leafAccentSoft else t.leafAccentSoft.copy(alpha = 0f),
-        tween(durationMillis = 200),
-        label = "segment-fill",
-    )
     Box(
         Modifier
             .width(width)
             .fillMaxHeight()
             .heightIn(min = SegHeight)
             .clip(RoundedCornerShape(percent = 50))
-            .background(fill)
             // The tab you are already on does not answer, and `selectable` keeps its announcement.
             .selectable(
                 selected = current,
@@ -257,6 +279,46 @@ private fun Segment(
             }
         }
     }
+}
+
+/** How long the pill and a page take to move to another tab. */
+internal const val TAB_SLIDE_MS = 350
+
+/** Where the pill is now, in pixels from the row's start. */
+private class PillSlide(
+    left: Float,
+    width: Float,
+) {
+    var left by mutableStateOf(left)
+    var width by mutableStateOf(width)
+}
+
+/**
+ * The pill's place, sliding to a new tab and stretching to its width. It jumps, not slides, when
+ * it first appears. The system's animation scale applies to it as to any other animation.
+ */
+@Composable
+private fun rememberPillSlide(
+    visible: Boolean,
+    left: Float,
+    width: Float,
+): PillSlide {
+    val state = remember { PillSlide(left, width) }
+    var seen by remember { mutableStateOf(visible) }
+    LaunchedEffect(visible, left, width) {
+        if (!seen) {
+            state.left = left
+            state.width = width
+            seen = visible
+            return@LaunchedEffect
+        }
+        val l = Animatable(state.left)
+        val w = Animatable(state.width)
+        val spec = tween<Float>(TAB_SLIDE_MS, easing = FastOutSlowInEasing)
+        launch { l.animateTo(left, spec) { state.left = value } }
+        w.animateTo(width, spec) { state.width = value }
+    }
+    return state
 }
 
 private const val MIN_SCALE = 0.7f
