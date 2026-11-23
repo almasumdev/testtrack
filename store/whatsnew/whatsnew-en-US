@@ -1,5 +1,3 @@
-Withdraw asks once, then shows its progress on the app's row.
-The picture tip has a "Don't show again" box.
-Crews tabs slide when they change, so you see the move to Run.
-A feedback picture shows when it is saving and uploading.
-One app opened on its own stays open; when its time is in, tap the back arrow on the timer.
+Ticking "Don't show again" before Start now opens the app as it should.
+Back from taking a feedback picture, the page stays on your feedback while the picture saves.
+On a crew card, the side note now sits on the right.
