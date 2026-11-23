@@ -11,6 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.platform.LocalContext
+import com.eazyverse.testtrack.domain.OneAtATime
 
 /*
  * The system screens a page hands over to and gets an answer back from: the photo picker, and the
@@ -31,7 +32,8 @@ internal fun rememberImagePicker(onPicked: (Uri?) -> Unit): () -> Unit {
 /**
  * Android's ask to record the whole screen. Answers what a tap does: show the ask. [onGranted] gets
  * the result code and data the capture service starts from; [onRefused] runs when the reader says
- * no or backs out.
+ * no or backs out. An ask already showing is not started again: a second launch would cancel the
+ * first and read as a no.
  */
 @Composable
 internal fun rememberCaptureConsent(
@@ -41,10 +43,12 @@ internal fun rememberCaptureConsent(
     val context = LocalContext.current
     val granted by rememberUpdatedState(onGranted)
     val refused by rememberUpdatedState(onRefused)
+    val gate = remember { OneAtATime() }
     val consent =
         rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            gate.end()
             val data = result.data
             if (result.resultCode == Activity.RESULT_OK && data != null) granted(result.resultCode, data) else refused()
         }
-    return remember(consent, context) { { consent.launch(wholeScreenCapture(context)) } }
+    return remember(consent, context) { { if (gate.begin()) consent.launch(wholeScreenCapture(context)) } }
 }

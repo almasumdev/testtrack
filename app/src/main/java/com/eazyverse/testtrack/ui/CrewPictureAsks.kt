@@ -31,13 +31,13 @@ internal fun CrewPictureAsks(vm: CrewViewModel) {
             },
         )
 
-    // Ticked "Don't show again": the round goes straight to Android's own ask.
-    val explained = pictures.explainerHidden
-    LaunchedEffect(pictures.waitingFor, explained) {
-        if (explained && pictures.waitingFor != null) askCapture()
+    // A round that arrives with the explainer already hidden goes straight to Android's own ask.
+    // Keyed on the round only: ticking the box on an open dialog must not ask a second time.
+    LaunchedEffect(pictures.waitingFor) {
+        if (pictures.explainerHidden && pictures.waitingFor != null) askCapture()
     }
 
-    if (!explained) {
+    if (!pictures.explainerHidden) {
         pictures.waitingFor?.let {
             var hide by remember { mutableStateOf(false) }
             Ask(
