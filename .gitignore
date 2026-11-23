@@ -59,3 +59,8 @@ gate.gs
 todo.txt
 # Videos: the Remotion project, its voices and renders. Large, and rebuilt from its own sources.
 /media/
+
+# Store photo work files: generator runs, old sets, builder composites.
+/store/art/photos/_run/
+/store/art/photos/_old/
+/store/art/photos/_comp/

@@ -34,7 +34,7 @@ shot = "tonight.png"
 title = "12 testers, 14 days|Free and proven"
 chips = ["Opens proven", "Tix come back", "Real feedback"]
 chip_icons = ["check", "ticket", "chat"]
-chip_size = 28
+chip_size = 26
 [[hero.card]]
 kind = "notify"
 tile = "tick"
@@ -50,17 +50,17 @@ shot = "tonight.png"
 title = "Get your 12 testers|free, in 14 days"
 chips = ["Opens proven", "Tix come back"]
 chip_icons = ["check", "ticket"]
-chip_size = 22
+chip_size = 20
 
 [[slide]]
 id = "proof"
 photo = "photo_proof.png"
 shot = "members.png"
 phone_w = 200
-photo_x = 0.375
+photo_x = 1.0
 squeeze = false
 title = "Every open|is proven"
-lift = [{ box = [40, 555, 1040, 1066], width = 1000, radius = 40, dy = 349 }]
+lift = [{ box = [40, 555, 1040, 1066], width = 1000, radius = 40, dy = 404 }]
 [[slide.card]]
 kind = "notify"
 tile = "tick"
@@ -77,7 +77,7 @@ phone_w = 200
 photo_x = 0.75
 squeeze = false
 title = "Free to join.|Your tix come back"
-lift = [{ box = [24, 1120, 1056, 1250], width = 1000, radius = 36, dy = 353 }]
+lift = [{ box = [24, 1120, 1056, 1380], width = 1000, radius = 36, dy = 436 }]
 [[slide.card]]
 kind = "gopill"
 title = "All 100 tix come back"
@@ -123,7 +123,7 @@ phone_w = 200
 photo_x = 0.48
 squeeze = false
 title = "No app yet?|Volunteer, earn tix"
-lift = [{ box = [24, 740, 1056, 1100], width = 1000, radius = 40, dy = 417 }]
+lift = [{ box = [24, 740, 1056, 1100], width = 1000, radius = 40, dy = 564 }]
 [[slide.card]]
 kind = "gopill"
 title = "5 tix a night"
