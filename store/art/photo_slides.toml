@@ -1,0 +1,142 @@
+# Photo slides for TestTrack (read by mkit scripts/photo_slides/build_app.py).
+# Direction: store/art/photos/direction.md. Build: python H:\tools\mkit\scripts\photo_slides\build_app.py .
+# Owner's structure: slide 1 landscape hero, the rest portrait, the last slide dark.
+# The people photos hold small phones beside the face. phone_w = 200 keeps every photo at its
+# native cover scale (no zoom), squeeze = false keeps the photo's own shape (the capture is padded
+# instead), and photo_x moves the crop window so the face beside the phone stays whole.
+# A lift carries the app detail.
+[app]
+name = "TestTrack"
+shots = "store/art/shots"
+photos = "store/art/photos"
+icon = "store/art/icon_mono.svg"
+font = "Barlow"
+erase = []                    # the captures already have a clean 9:41 status bar
+status_inset = [0, 0]         # and it sits clear of the phone corners as it is
+
+[palette]
+fade = "29,92,130"            # accent #1D5C82
+fade_deep = "23,76,110"       # deep #174C6E
+fade_dark = "10,22,32"        # the app's dark ground
+shadow = "20,47,67"           # ink #142F43
+yellow = "#FFC94A"            # tix gold
+ink = "#142F43"
+sub = "#4F6B80"
+go = "#FFC94A"
+go_ink = "#142F43"
+chip_ink = "#142F43"
+ok = "#1D5C82"
+avatar = "#5BA9D6"
+
+[hero]
+photo = "land_hero.png"
+shot = "tonight.png"
+title = "12 testers, 14 days|Free and proven"
+chips = ["Opens proven", "Tix come back", "Real feedback"]
+chip_icons = ["check", "ticket", "chat"]
+chip_size = 28
+[[hero.card]]
+kind = "notify"
+tile = "tick"
+title = "9 of 12 opened tonight"
+sub = "Crew 17, night 6 of 14"
+left = 100
+top = 770
+width = 640
+
+[feature]
+photo = "land_feature.png"
+shot = "tonight.png"
+title = "Get your 12 testers|free, in 14 days"
+chips = ["Opens proven", "Tix come back"]
+chip_icons = ["check", "ticket"]
+chip_size = 22
+
+[[slide]]
+id = "proof"
+photo = "photo_proof.png"
+shot = "members.png"
+phone_w = 200
+photo_x = 0.375
+squeeze = false
+title = "Every open|is proven"
+lift = [{ box = [40, 555, 1040, 1066], width = 1000, radius = 40, dy = 349 }]
+[[slide.card]]
+kind = "notify"
+tile = "tick"
+title = "9 of 12 opened tonight"
+sub = "Crew 17, night 6 of 14"
+below = true
+width = 1000
+
+[[slide]]
+id = "free"
+photo = "photo_free.png"
+shot = "tix.png"
+phone_w = 200
+photo_x = 0.75
+squeeze = false
+title = "Free to join.|Your tix come back"
+lift = [{ box = [24, 1120, 1056, 1250], width = 1000, radius = 36, dy = 353 }]
+[[slide.card]]
+kind = "gopill"
+title = "All 100 tix come back"
+below = true
+dy = 30
+
+[[slide]]
+id = "crew"
+photo = "photo_crew.png"
+shot = "crew_open.png"
+phone_w = 200
+photo_x = 0.6
+squeeze = false
+title = "A crew of 15|testing every night"
+lift = [{ box = [44, 470, 1036, 890], width = 1000, radius = 40, dy = 245 }]
+[[slide.card]]
+kind = "gopill"
+title = "4 of 15 seats left"
+below = true
+dy = 30
+
+[[slide]]
+id = "feedback"
+photo = "photo_feedback.png"
+shot = "circle.png"
+phone_w = 200
+photo_x = 0.36
+squeeze = false
+title = "Real feedback|from developers"
+lift = [{ box = [24, 1140, 1056, 1550], width = 1000, radius = 40, dy = 165 }]
+[[slide.card]]
+kind = "notify"
+title = "Review apps, earn tix"
+sub = "Developers review yours too"
+below = true
+width = 1000
+
+[[slide]]
+id = "volunteer"
+photo = "photo_volunteer.png"
+shot = "volunteer.png"
+phone_w = 200
+photo_x = 0.48
+squeeze = false
+title = "No app yet?|Volunteer, earn tix"
+lift = [{ box = [24, 740, 1056, 1100], width = 1000, radius = 40, dy = 417 }]
+[[slide.card]]
+kind = "gopill"
+title = "5 tix a night"
+below = true
+dy = 30
+
+[[slide]]
+id = "dark"
+dark = true
+photo = "photo_dark.png"
+shot = "run_dark.png"
+phone_w = 200
+photo_x = 0.62
+squeeze = false
+title = "Every run|on record"
+lift = [{ box = [24, 1290, 1056, 1700], width = 1000, radius = 40, dy = 140, frame = false }]

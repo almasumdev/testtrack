@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TestTrack store slides</title>
+<style>
+  :root { --bg: #EEF4F8; --ink: #142F43; --sub: #4F6B80; --card: #fff; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #0A1620; --ink: #E6EEF4; --sub: #8FA6B6; --card: #122634; } }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--bg); color: var(--ink); font: 15px/1.4 system-ui, 'Segoe UI', sans-serif; padding: 24px 16px 48px; }
+  h1 { font-size: 22px; margin-bottom: 4px; }
+  p.note { color: var(--sub); margin-bottom: 24px; }
+  h2 { font-size: 16px; margin: 28px 0 10px; }
+  .row { display: flex; gap: 16px; overflow-x: auto; padding-bottom: 8px; }
+  figure { background: var(--card); border-radius: 14px; padding: 10px; flex: none; }
+  figure img { display: block; border-radius: 8px; height: 520px; width: auto; }
+  figure.land img { height: 360px; }
+  figure.feat img { height: 300px; }
+  figcaption { font-size: 13px; color: var(--sub); margin-top: 8px; }
+  @media (max-width: 600px) { figure img { height: 420px; } figure.land img, figure.feat img { height: auto; width: 100%; max-width: 92vw; } }
+</style>
+</head>
+<body>
+<h1>TestTrack store slides (English)</h1>
+<p class="note">Built from photo_slides.toml. Open this page from store/art after a build so the pictures load.</p>
+
+<h2>Hero (landscape)</h2>
+<div class="row">
+  <figure class="land"><img src="../screenshots/en/01_hero.png" alt="Slide 1, hero"><figcaption>1. 12 testers, 14 days. Free and proven</figcaption></figure>
+</div>
+
+<h2>Portrait slides</h2>
+<div class="row">
+  <figure><img src="../screenshots/en/02_proof.png" alt="Slide 2"><figcaption>2. Every open is proven</figcaption></figure>
+  <figure><img src="../screenshots/en/03_free.png" alt="Slide 3"><figcaption>3. Free to join. Your tix come back</figcaption></figure>
+  <figure><img src="../screenshots/en/04_crew.png" alt="Slide 4"><figcaption>4. A crew of 15 testing every night</figcaption></figure>
+  <figure><img src="../screenshots/en/05_feedback.png" alt="Slide 5"><figcaption>5. Real feedback from developers</figcaption></figure>
+  <figure><img src="../screenshots/en/06_volunteer.png" alt="Slide 6"><figcaption>6. No app yet? Volunteer, earn tix</figcaption></figure>
+  <figure><img src="../screenshots/en/07_dark.png" alt="Slide 7, dark"><figcaption>7. Every run on record (dark, last)</figcaption></figure>
+</div>
+
+<h2>Feature graphic (1024 x 500)</h2>
+<div class="row">
+  <figure class="feat"><img src="../feature/en.png" alt="Feature graphic"><figcaption>Get your 12 testers free, in 14 days</figcaption></figure>
+</div>
+</body>
+</html>
