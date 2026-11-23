@@ -247,6 +247,20 @@ class MainActivity : ComponentActivity() {
 
         /** A chat notification was tapped: open that crew's chat. */
         const val EXTRA_OPEN_CHAT = "openChat"
+
+        /** TestTrack to the front as the launcher would, so Android shows the page as it was rather than the launch splash. */
+        fun bringForward(
+            context: Context,
+            openCrew: Boolean = false,
+        ) {
+            val intent =
+                Intent(context, MainActivity::class.java)
+                    .setAction(Intent.ACTION_MAIN)
+                    .addCategory(Intent.CATEGORY_LAUNCHER)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+            if (openCrew) intent.putExtra(EXTRA_OPEN_CREW, true)
+            runCatching { context.startActivity(intent) }
+        }
     }
 }
 

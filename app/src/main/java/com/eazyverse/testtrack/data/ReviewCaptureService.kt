@@ -320,15 +320,7 @@ class ReviewCaptureService : Service() {
             // A crew member's Play feedback has its own taker, so a review page left open
             // behind it never takes the picture as its proof.
             if (forCrew) crewCaptured.value = file else captured.value = file
-            runCatching {
-                startActivity(
-                    Intent(this, MainActivity::class.java).addFlags(
-                        Intent.FLAG_ACTIVITY_NEW_TASK or
-                            Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or
-                            Intent.FLAG_ACTIVITY_SINGLE_TOP,
-                    ),
-                )
-            }
+            MainActivity.bringForward(this)
         }
         state.value = State.IDLE
         stopForeground(STOP_FOREGROUND_REMOVE)

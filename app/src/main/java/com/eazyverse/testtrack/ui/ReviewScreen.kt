@@ -79,6 +79,7 @@ fun ReviewScreen(
     var givingUp by remember { mutableStateOf(false) }
     var reporting by remember { mutableStateOf(false) }
     val capture = rememberReviewCapture(vm, post.packageName, post.isLive)
+    val dismissKeyboard = rememberDismissKeyboard()
 
     val activity = context.findActivity()
     val membership = rememberMembership()
@@ -93,7 +94,10 @@ fun ReviewScreen(
         replacing = vm.replacing,
         // The screenshot already got stays until a new one arrives, so a capture abandoned half
         // way does not cost the one there was.
-        onCapture = capture,
+        onCapture = {
+            dismissKeyboard()
+            capture()
+        },
         onPicked = { vm.keepPicked(context, it) },
         onRemoveProof = vm::removeProof,
         note = vm.note,
@@ -129,7 +133,12 @@ fun ReviewScreen(
         // Availability comes from the current review state.
         onGiveUp = { givingUp = true },
         onReport = { reporting = true },
-        onNoBox = { if (vm.markNoBox()) capture() },
+        onNoBox = {
+            if (vm.markNoBox()) {
+                dismissKeyboard()
+                capture()
+            }
+        },
         onReply = { text, picture -> vm.reply(activity, text, picture) },
         // What is sent is the screenshot kept at that moment (see ReviewViewModel.submit), not the address shown.
         onSend = { _, note ->

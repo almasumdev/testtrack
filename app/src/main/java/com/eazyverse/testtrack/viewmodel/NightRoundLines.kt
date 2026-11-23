@@ -1,7 +1,7 @@
 package com.eazyverse.testtrack.viewmodel
 
 import android.content.Context
-import android.content.Intent
+import com.eazyverse.testtrack.MainActivity
 import com.eazyverse.testtrack.data.RoundStore
 import com.eazyverse.testtrack.domain.RoundRules
 import com.eazyverse.testtrack.ui.Snack
@@ -50,14 +50,7 @@ internal fun newNightFor(
 ) = stop.privateTestId.isBlank() && isNewNight(startedAt)
 
 /** TestTrack to the front, on the Crew tab, once a floating round is over. */
-internal fun bringBack(context: Context) {
-    val intent =
-        context.packageManager.getLaunchIntentForPackage(context.packageName)?.apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
-            putExtra("openCrew", true)
-        } ?: return
-    runCatching { context.startActivity(intent) }
-}
+internal fun bringBack(context: Context) = MainActivity.bringForward(context, openCrew = true)
 
 /** Said when a round is found to have crossed midnight: its stops belong to the night it began. */
 internal const val NEW_NIGHT_LINE = "It's a new night. Open the round again."
