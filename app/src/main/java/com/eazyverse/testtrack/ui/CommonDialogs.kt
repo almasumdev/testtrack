@@ -160,9 +160,11 @@ private fun AskTitle(
     // In dp, so the mark stays 18 at any font size, with 7 after it.
     val density = LocalDensity.current
     val (width, height) = with(density) { (TitleIcon + TitleIconGap).toSp() to TitleIcon.toSp() }
+    // Compose throws on an empty alternate text, and TalkBack reads it before the title.
+    val alt = if (tone == Tone.WARN) "Warning: " else " "
     val text =
         buildAnnotatedString {
-            appendInlineContent(ICON_ID, "")
+            appendInlineContent(ICON_ID, alt)
             append(title)
         }
     val inline =

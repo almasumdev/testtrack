@@ -40,6 +40,8 @@ ANDROID_IMPORT = re.compile(r"^import (android|androidx)\.", re.M)
 COLOR_LITERAL = re.compile(
     r"\bColor\s*\(|\bColor\.(hsl|hsv|parseColor|rgb|argb|White|Black|Red|Green|Blue|Yellow|Cyan|Magenta|Gray|LightGray|DarkGray)\b"
 )
+#: Compose throws "alternateText can't be an empty string" the moment such text is composed.
+EMPTY_INLINE_ALT = re.compile(r'appendInlineContent\s*\([^()]*,\s*""\s*\)|alternateText\s*=\s*""')
 
 
 
@@ -75,6 +77,9 @@ def problems() -> list[str]:
         if path != SRC / "ui/theme/Tokens.kt" and COLOR_LITERAL.search(text):
             found.append(f"{rel}: colour literal outside ui/theme/Tokens.kt")
 
+        if EMPTY_INLINE_ALT.search(text):
+            found.append(f"{rel}: crash: inline content with empty alternate text")
+
     return found
 
 
@@ -106,7 +111,8 @@ def main() -> int:
 
     now = problems()
     # Colour rules cannot be waived through the legacy architecture baseline.
-    colour_errors = [p for p in now if "colour literal" in p]
+    # Neither can a known crash.
+    colour_errors = [p for p in now if "colour literal" in p or ": crash:" in p]
     if colour_errors:
         print("\n".join(colour_errors), file=sys.stderr)
         return 1
