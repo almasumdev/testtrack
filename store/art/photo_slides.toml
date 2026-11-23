@@ -116,6 +116,21 @@ below = true
 width = 1000
 
 [[slide]]
+id = "review"
+photo = "photo_review.png"
+shot = "review.png"
+phone_w = 200
+photo_x = 0.75
+squeeze = false
+title = "Guided feedback,|step by step"
+lift = [{ box = [24, 1200, 1056, 1530], width = 1000, radius = 40, dy = 0 }]
+[[slide.card]]
+kind = "gopill"
+title = "+40 tix for your review"
+below = true
+dy = 30
+
+[[slide]]
 id = "volunteer"
 photo = "photo_volunteer.png"
 shot = "volunteer.png"

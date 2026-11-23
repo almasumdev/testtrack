@@ -23,7 +23,7 @@ The words are kept in `HIM` and `SHIRT` in gen2.py. Every prompt also says the m
 - No text, logos or brand marks.
 - Colours: white, light oak, sky and denim blue, gold accents. Nothing green except the screen, so no plants.
 - Phones are bigger than in set 1. Each prompt gives the phone's pixel box and says "SIZE IS THE MOST IMPORTANT RULE" (arm stretched toward the lens).
-- Hands-only slides: free, feedback and volunteer (owner's request).
+- Hands-only slides: free, feedback and volunteer (owner's request). The second feedback slide (review) shows his face.
 
 ## Images
 | file | content |
@@ -34,6 +34,7 @@ The words are kept in `HIM` and `SHIRT` in gen2.py. Every prompt also says the m
 | photo_proof.png | At his dev desk with monitor, laptop, mug and keyboard. Phone held toward the lens, calm half smile, glasses |
 | photo_crew.png | Three men in a bright co-working space. He is in front with the green phone, a Black man (white tee) and a Sri Lankan man (sky-blue polo) behind him, their phones back to camera. This is try 1 of set 2 |
 | photo_dark.png | The same man in a navy tee, home office at dusk. Brass lamp lights his face warmly, monitor glow, blue dusk window |
+| photo_review.png | Added 2026-11-23 for the second feedback slide. The same man at his dev desk (monitor with code, laptop, keyboard, sky-blue mug) holds the phone up in his right hand and looks at it sideways, thinking, fingertips of his left hand on his chin. This is try 2 |
 | photo_free.png | Hands only: right hand holds the phone, denim cuff. Monitor and laptop with code, mug, shelf |
 | photo_feedback.png | Hands only: left hand holds the phone, right hand on the laptop keyboard, latte in a sky-blue mug, monitor with code |
 | photo_volunteer.png | Hands only: both hands cup the bottom of the phone. Blank notebook and pen, latte, monitor and laptop with code |
@@ -47,6 +48,7 @@ The portraits are 1024x1536. The builder scales them 1.25x to 1080x1920.
 | photo_proof | x214-513 y485-1169 | 29% | 2.29 | ~373 | ~606 |
 | photo_crew | x352-624 y739-1337 | 27% | 2.20 | ~340 | ~923 |
 | photo_dark | x186-498 y486-1192 | 30% | 2.26 | ~390 | ~607 |
+| photo_review | x174-477 y543-1213 | 30% | 2.21 | ~378 | ~678 |
 | photo_free | x297-726 y435-1368 | 42% | 2.17 | ~536 | ~543 |
 | photo_feedback | x330-683 y415-1189 | 34% | 2.19 | ~441 | ~518 |
 | photo_volunteer | x297-726 y433-1367 | 42% | 2.18 | ~536 | ~541 |
@@ -58,7 +60,8 @@ The portraits are 1024x1536. The builder scales them 1.25x to 1080x1920.
 - Try 2: added the pixel boxes and "SIZE IS THE MOST IMPORTANT RULE". Proof went to 29%, dark 30%, hero 15% and feature 16%.
 - Crew dropped to 21% in try 2 (`_old/set2_try2/photo_crew.png`), so crew try 1 is kept. Note that `_run/p_photo_crew.md` holds the try 2 prompt.
 - Hero try 2 put the phone at 36% of the width, under the title block. Its left wall was widened instead of running a third generation.
+- photo_review try 1 had a good face match but the screen was 28% wide (kept in `_old/review_try1/`). Try 2 asked for a 43% screen with the phone as the foreground subject and gave 30%, a lower phone and more empty wall for the title, so try 2 is used. The prompt in `_run/p_photo_review.md` is the try 2 prompt.
 
 ## Open
-- The face portraits are at 27 to 30% screen width, below the 35 to 45% target. The model keeps arm-held phones smaller than asked. A third try could ask for the phone as the foreground subject with his face smaller behind it.
+- The face portraits (review included) are at 27 to 30% screen width, below the 35 to 45% target. The model keeps arm-held phones smaller than asked. A third try could ask for the phone as the foreground subject with his face smaller behind it.
 - land_feature: the text column of the old feature comp runs to x596 and needs narrowing to about x450, or the photo needs a regeneration with the phone further right.
