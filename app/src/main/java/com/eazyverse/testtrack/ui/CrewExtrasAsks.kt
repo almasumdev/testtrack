@@ -85,6 +85,7 @@ internal fun withCrewExtras(
         onFindCrew = base.onFindCrew,
         privateLine = base.privateLine,
         onPrivateTesters = base.onPrivateTesters,
+        onWithdrawReport = base.onWithdrawReport,
     )
 }
 

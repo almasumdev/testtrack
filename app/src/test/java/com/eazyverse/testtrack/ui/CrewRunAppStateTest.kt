@@ -69,6 +69,18 @@ class CrewRunAppStateTest {
         assertTrue(written)
     }
 
+    @Test fun a_report_for_tonight_offers_withdraw_and_install_still_comes_first() {
+        var withdrawn = ""
+        val installed = CrewActions({}, {}, {}, {}, {}, {}, localVersion = { 1L }, onWithdrawReport = { withdrawn = it.id })
+        val reported = state(app.copy(reported = true), installed)
+        assertEquals("Reported for tonight", reported.text)
+        assertEquals("Withdraw", reported.action)
+        reported.run()
+        assertEquals("app", withdrawn)
+        val missing = CrewActions({}, {}, {}, {}, {}, {}, isInstalled = { false }, onWithdrawReport = { withdrawn = "no" })
+        assertEquals("Install", state(app.copy(reported = true), missing).action)
+    }
+
     @Test fun optional_apps_keep_open_when_feedback_is_late() {
         val status = crewRunAppState(app.copy(feedbackLate = true), seat, CrewRunAppKind.OPTIONAL, actions)
         assertEquals("Open", status.action)

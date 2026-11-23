@@ -53,17 +53,20 @@ internal fun crewRunAppState(
                 },
                 Lucide.Flag,
                 Tone.WARN,
+                // Opening a reported app counts for nothing tonight, so the way back to testing it
+                // is to take the report back. Install and Update still come first when they apply;
+                // the row's sheet offers Withdraw then.
                 action =
                     when {
                         !installed || notPlay -> "Install"
                         old -> "Update"
-                        else -> "Test again"
+                        else -> "Withdraw"
                     },
                 run = {
                     when {
                         !installed || notPlay -> actions.onInstall(seat)
                         old -> actions.onUpdateApp(app)
-                        else -> actions.onOpen(app)
+                        else -> actions.onWithdrawReport(seat)
                     }
                 },
             )

@@ -135,7 +135,9 @@ internal fun CrewRowSheet(
                             "Its owner has what you wrote. Tonight doesn't count against you."
                         },
                         Tone.WARN,
-                        null,
+                        action = "Withdraw",
+                        onAction = { then { actions.onWithdrawReport(seat) } },
+                        onClick = null,
                     )
                 else ->
                     SheetOption(
@@ -160,6 +162,9 @@ private fun SheetOption(
     title: String,
     line: String,
     tone: Tone,
+    /** A small button at the end of the title row, such as Withdraw on a report. */
+    action: String? = null,
+    onAction: () -> Unit = {},
     onClick: (() -> Unit)?,
 ) {
     Column(
@@ -175,10 +180,12 @@ private fun SheetOption(
             Icon(Lucide.Flag, null, Modifier.size(17.dp), tint = tone.ink())
             Text(
                 title,
+                Modifier.weight(1f),
                 style = MaterialTheme.typography.bodyLarge.copy(fontSize = 15.sp),
                 fontWeight = FontWeight.SemiBold,
                 color = tone.ink(),
             )
+            action?.let { InlineAction(it, onClick = onAction) }
         }
         Spacer(Modifier.height(3.dp))
         Text(line, style = MaterialTheme.typography.bodySmall, color = Tt.colors.text4)

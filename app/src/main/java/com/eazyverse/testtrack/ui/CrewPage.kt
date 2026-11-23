@@ -34,6 +34,7 @@ import com.eazyverse.testtrack.viewmodel.leaveVolunteer
 import com.eazyverse.testtrack.viewmodel.privateCountsLine
 import com.eazyverse.testtrack.viewmodel.report
 import com.eazyverse.testtrack.viewmodel.vote
+import com.eazyverse.testtrack.viewmodel.withdrawReport
 import kotlinx.coroutines.delay
 
 /** The short pause on a ticked-off app before the next confirm opens. */
@@ -284,6 +285,7 @@ internal fun crewActions(
             onFindCrew = onFindCrew,
             privateLine = privateLine,
             onPrivateTesters = onPrivateTesters,
+            onWithdrawReport = { seat -> vm.withdrawReport(context, seat.id) },
         ),
     )
 }

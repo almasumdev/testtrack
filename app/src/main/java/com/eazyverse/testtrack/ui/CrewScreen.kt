@@ -239,6 +239,8 @@ class CrewActions(
     /** The owner's private testers: the row's counts line, null where the row stays away, and its page. */
     val privateLine: (CrewSeat) -> String? = { null },
     val onPrivateTesters: (CrewSeat) -> Unit = {},
+    /** Take back the reader's report of this app, on the night it was sent. */
+    val onWithdrawReport: (CrewSeat) -> Unit = {},
 )
 
 /**

@@ -2,6 +2,8 @@ package com.eazyverse.testtrack.viewmodel
 
 import android.content.Context
 import com.eazyverse.testtrack.net.Api
+import com.eazyverse.testtrack.net.ReportWithdrawal
+import com.eazyverse.testtrack.net.withdrawReport
 import com.eazyverse.testtrack.ui.CrewRules
 import com.eazyverse.testtrack.ui.CrewSeat
 import com.eazyverse.testtrack.ui.CrewViewModel
@@ -10,8 +12,8 @@ import com.eazyverse.testtrack.ui.SnackTone
 
 /*
  * Answering for somebody else's app: a vote on one the Play check could not look at, or a report
- * on one already in; and giving your own seat up. Kept beside CrewViewModel rather than in it,
- * which is long enough already.
+ * on one already in, and taking that report back; and giving your own seat up. Kept beside
+ * CrewViewModel rather than in it, which is long enough already.
  */
 
 /** Answer for an app the Play check could not look at: did it install for you? */
@@ -57,6 +59,28 @@ fun CrewViewModel.report(
         },
     ) { Api.report(seatId, reason) }
 }
+
+/**
+ * Take back your report of an app, on the night you sent it.
+ *
+ * The night it excused is owed again, and an open of the app earlier that night counts after all.
+ * The reload after the call redraws the row. A refusal, or a server that has no withdraw yet, is
+ * one short snack; the reload still runs, since a refusal usually means the row was out of date.
+ */
+fun CrewViewModel.withdrawReport(
+    context: Context,
+    seatId: String,
+) = call(
+    context = context,
+    seat = seatId,
+    onDone = { answer: ReportWithdrawal ->
+        when (answer) {
+            is ReportWithdrawal.Done -> say("Report withdrawn.", SnackTone.DONE)
+            is ReportWithdrawal.Refused -> say(answer.line)
+            ReportWithdrawal.Unavailable -> say("Withdrawing a report isn't available yet.")
+        }
+    },
+) { Api.withdrawReport(seatId) }
 
 /**
  * Give your seat up before the crew starts.

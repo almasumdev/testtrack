@@ -94,6 +94,7 @@ class CrewUnifiedAppsFramesTest {
             sendingPicture = { it.id == "app5" },
             picturesStuck = "Offline",
             onRetryPictures = { did += "retry" },
+            onWithdrawReport = { did += "withdraw ${it.id}" },
         )
 
     private fun control(
@@ -151,7 +152,7 @@ class CrewUnifiedAppsFramesTest {
         control("app0", "Open").performScrollTo().performClick()
         control("app0", "Report").performScrollTo().performClick()
         control("app0", "Write").performScrollTo().performClick()
-        control("app2", "Test again").performScrollTo().performClick()
+        control("app2", "Withdraw").performScrollTo().performClick()
         control("app3", "Install").performScrollTo().performClick()
         control("app4", "Update").performScrollTo().performClick()
         control("app5", "Retry").performScrollTo().performClick()
@@ -161,7 +162,7 @@ class CrewUnifiedAppsFramesTest {
                 "open app0",
                 "report app0",
                 "feedback app0",
-                "open app2",
+                "withdraw app2",
                 "install app3",
                 "update app4",
                 "retry",
