@@ -304,12 +304,16 @@ class ReviewViewModel : ViewModel() {
      *
      * Called every time the screen resumes, which is what moves the stepper on when somebody comes
      * back from the app they are reviewing. Nothing drags them out of it and nothing has to be
-     * pressed to record the time.
+     * pressed to record the time. [waits] queues it behind a look already under way rather than
+     * dropping it: an install that lands during the resume look must still be looked at.
      */
-    fun refresh(context: Context) {
-        val current = job ?: return
-        if (current.settled) return
-        run {
+    fun refresh(
+        context: Context,
+        waits: Boolean = false,
+    ) {
+        if (job?.settled != false) return
+        run(waits = waits) {
+            val current = job?.takeUnless { it.settled } ?: return@run
             val next = look(context, current, settle = true)
             // A screenshot may have landed while this was looking; keep what it said.
             keep(next.copy(leftReview = next.leftReview || job?.leftReview == true))

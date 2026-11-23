@@ -314,6 +314,8 @@ internal fun CrewLifecycle(
             vm.stopLive()
         }
     }
+    // Play often finishes after the return: the row moves to Open when the app lands.
+    WatchInstalls { vm.refreshInstalled(context) }
 }
 
 /** The dialogs a crew's rows open, and the usage-access ask a first visit can raise. */

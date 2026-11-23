@@ -73,6 +73,8 @@ fun ReviewScreen(
         owner.lifecycle.addObserver(watcher)
         onDispose { owner.lifecycle.removeObserver(watcher) }
     }
+    // Play often finishes after the return, so the app landing is a measurement too.
+    WatchInstalls(post.packageName) { vm.refresh(context, waits = true) }
 
     var givingUp by remember { mutableStateOf(false) }
     var reporting by remember { mutableStateOf(false) }
