@@ -7,8 +7,12 @@ import okhttp3.RequestBody.Companion.toRequestBody
  * Volunteering in a running crew: the crews with spots, taking one, and leaving it.
  */
 
-/** Running crews with volunteer spots, and where the reader stands with each. */
-suspend fun Api.volunteerSpots(): ApiVolunteerSpots = get("/volunteers/spots")
+/**
+ * Every running crew that has begun, and where the reader stands with each. `all=1` asks for the
+ * full list with `state`; without it the server sends only joinable crews, for builds that ignore
+ * `state`.
+ */
+suspend fun Api.volunteerSpots(): ApiVolunteerSpots = get("/volunteers/spots?all=1")
 
 /** Take a volunteer spot. Answers with the crew as the new volunteer now sees it. */
 suspend fun Api.volunteer(body: VolunteerIn): ApiCrew = post("/volunteers", body)
