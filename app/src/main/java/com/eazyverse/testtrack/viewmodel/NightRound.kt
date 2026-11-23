@@ -1,6 +1,7 @@
 package com.eazyverse.testtrack.viewmodel
 
 import android.content.Context
+import android.os.SystemClock
 import android.provider.Settings
 import com.eazyverse.testtrack.data.InstalledApps
 import com.eazyverse.testtrack.data.RoundStore
@@ -88,6 +89,15 @@ object NightRound {
     /** Said on the Crew page the next time it is in front: the round's last word. */
     private var pendingSay: Snack? = null
 
+    /**
+     * When the app on screen was asked to open, on the clock since boot; 0 when no app was opened
+     * by this process. A resume of TestTrack just after it is TestTrack's own ([RoundRules.ownResume]).
+     */
+    private var beganAt = 0L
+
+    /** The recording that TestTrack coming to the front started, so a second resume call waits for it. */
+    private var settling: Job? = null
+
     fun canFloat(context: Context): Boolean = Settings.canDrawOverlays(context)
 
     /**
@@ -130,6 +140,7 @@ object NightRound {
         advancing = false
         shot = null
         shotFailed = false
+        beganAt = SystemClock.elapsedRealtime()
         window?.show()
         publish()
         // The clock runs without the control too: it is what says when the picture is due.
@@ -372,6 +383,11 @@ object NightRound {
             stopSay = say
             return
         }
+        // TestTrack's own resume, a moment after the round opened its app (Android hands over the
+        // screen-share yes just before it): nobody came back from the app, so the round goes on.
+        if (round != null && RoundRules.ownResume(beganAt, SystemClock.elapsedRealtime())) return
+        // A second call for the same resume (two pages listening): the first is recording already.
+        if (settling?.isActive == true) return
         // The process was closed mid-visit: the round is only on disk now.
         val restored = round == null
         val now =
@@ -399,42 +415,43 @@ object NightRound {
         val endsHere = window != null || stale
         window?.hide()
         ticker?.cancel()
-        scope.launch {
-            // Back in TestTrack, so a picture not taken yet can no longer be: what is in hand goes.
-            shooting?.cancel()
-            // A held app was already recorded when its time came in: not recorded a second time.
-            when (val result = recorded ?: record(app, stop, since, shot)) {
-                is Outcome.Short -> {
-                    end(app)
-                    say(shortLine(stop, result))
-                }
-                is Outcome.Failed -> {
-                    end(app)
-                    say(Snack(result.message, SnackTone.ERROR))
-                }
-                is Outcome.Refused, Outcome.Counted -> {
-                    val base = fresh(now)
-                    val moved = if (result is Outcome.Refused) base.copy(skipped = base.skipped + result.message) else base
-                    val left = moved.stops.size - moved.index - 1
-                    when {
-                        left == 0 || endsHere -> {
-                            end(app)
-                            say(endedLine(stop, moved, result))
-                        }
-                        // Past midnight: the next app is another night's, so it is not opened.
-                        newNightFor(moved.stops[moved.index + 1], moved.startedAt) -> {
-                            end(app)
-                            say(Snack(NEW_NIGHT_LINE))
-                        }
-                        else -> {
-                            round = moved.copy(index = moved.index + 1, recordedIndex = -1)
-                            say(null)
-                            begin(app)
+        settling =
+            scope.launch {
+                // Back in TestTrack, so a picture not taken yet can no longer be: what is in hand goes.
+                shooting?.cancel()
+                // A held app was already recorded when its time came in: not recorded a second time.
+                when (val result = recorded ?: record(app, stop, since, shot)) {
+                    is Outcome.Short -> {
+                        end(app)
+                        say(shortLine(stop, result))
+                    }
+                    is Outcome.Failed -> {
+                        end(app)
+                        say(Snack(result.message, SnackTone.ERROR))
+                    }
+                    is Outcome.Refused, Outcome.Counted -> {
+                        val base = fresh(now)
+                        val moved = if (result is Outcome.Refused) base.copy(skipped = base.skipped + result.message) else base
+                        val left = moved.stops.size - moved.index - 1
+                        when {
+                            left == 0 || endsHere -> {
+                                end(app)
+                                say(endedLine(stop, moved, result))
+                            }
+                            // Past midnight: the next app is another night's, so it is not opened.
+                            newNightFor(moved.stops[moved.index + 1], moved.startedAt) -> {
+                                end(app)
+                                say(Snack(NEW_NIGHT_LINE))
+                            }
+                            else -> {
+                                round = moved.copy(index = moved.index + 1, recordedIndex = -1)
+                                say(null)
+                                begin(app)
+                            }
                         }
                     }
                 }
             }
-        }
     }
 
     private fun end(
@@ -446,6 +463,7 @@ object NightRound {
         window?.hide()
         window = null
         stopSay = null
+        beganAt = 0L
         round = null
         RoundStore.save(context, null)
         // Off with the round, so Android's sharing chip goes with it.

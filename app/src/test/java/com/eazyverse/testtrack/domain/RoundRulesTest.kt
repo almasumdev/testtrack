@@ -41,4 +41,18 @@ class RoundRulesTest {
         assertEquals(today, RoundRules.measureFrom(today - 3_600_000, today))
         assertEquals(today + 60_000, RoundRules.measureFrom(today + 60_000, today))
     }
+
+    @Test
+    fun `a resume just after the round opened its app is TestTrack's own`() {
+        assertTrue(RoundRules.ownResume(beganAt = 50_000, now = 50_000))
+        assertTrue(RoundRules.ownResume(beganAt = 50_000, now = 50_000 + RoundRules.OWN_RESUME_MS - 1))
+    }
+
+    @Test
+    fun `a resume after that, or for a round found on disk, is a way back`() {
+        assertFalse(RoundRules.ownResume(beganAt = 50_000, now = 50_000 + RoundRules.OWN_RESUME_MS))
+        assertFalse(RoundRules.ownResume(beganAt = 50_000, now = 70_000))
+        assertFalse(RoundRules.ownResume(beganAt = 0, now = 500))
+        assertFalse(RoundRules.ownResume(beganAt = 50_000, now = 40_000))
+    }
 }

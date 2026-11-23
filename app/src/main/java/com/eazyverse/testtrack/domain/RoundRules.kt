@@ -36,6 +36,23 @@ object RoundRules {
         startOfToday: Long,
     ) = maxOf(since, startOfToday)
 
+    /**
+     * How soon after the round opens an app a resume of TestTrack is still TestTrack's own. Android
+     * hands over the screen-share yes just before TestTrack resumes, so the round starts first and
+     * that resume follows it; nobody comes back from an app this quickly.
+     */
+    const val OWN_RESUME_MS = 1_000L
+
+    /**
+     * Whether a resume at [now] is TestTrack's own, a moment after the app on screen was asked to
+     * open at [beganAt] (both on the clock since boot), rather than a way back from that app. A
+     * round found on disk has no start in hand ([beganAt] 0), so its resume always counts.
+     */
+    fun ownResume(
+        beganAt: Long,
+        now: Long,
+    ) = beganAt > 0 && now >= beganAt && now - beganAt < OWN_RESUME_MS
+
     /** The round's last line: tonight done, or how many were left out and why the first was. */
     fun lastWord(skipped: List<String>): String =
         if (skipped.isEmpty()) "That is tonight done." else "${skipped.size} left. ${skipped.first()}"

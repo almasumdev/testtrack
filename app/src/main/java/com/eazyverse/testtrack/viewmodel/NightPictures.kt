@@ -4,6 +4,8 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Handler
+import android.os.Looper
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -67,7 +69,11 @@ class NightPictures(
         waitingFor = null
     }
 
-    /** Android said yes: the camera goes on and the round starts. */
+    /**
+     * Android said yes: the camera goes on and the round starts. The yes comes just before
+     * TestTrack's own resume, so both wait for that resume to pass: a round already running then
+     * would read it as the tester back from the first app, and end.
+     */
     fun start(
         activity: Activity,
         code: Int,
@@ -75,8 +81,11 @@ class NightPictures(
     ) {
         val stops = waitingFor ?: return
         waitingFor = null
-        VisitCameraService.start(activity, code, data)
-        NightRound.start(activity, stops, float = float && NightRound.canFloat(activity), pictures = true)
+        val float = float
+        Handler(Looper.getMainLooper()).post {
+            VisitCameraService.start(activity, code, data)
+            NightRound.start(activity, stops, float = float && NightRound.canFloat(activity), pictures = true)
+        }
     }
 
     /** A picture picked from the phone for an app whose own picture failed. */
