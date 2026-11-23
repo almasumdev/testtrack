@@ -274,6 +274,7 @@ internal fun SeatHintRow(
 
 private const val LEAD = "lead"
 private const val TAIL = "tail"
+private const val WORD_JOINER = "⁠"
 
 /**
  * A line whose icon is its first glyph, so a wrapped line runs back to the left edge instead of
@@ -319,7 +320,11 @@ internal fun IconLine(
         buildAnnotatedString {
             appendInlineContent(LEAD, " ")
             append(text)
-            if (tail != null) appendInlineContent(TAIL, " ")
+            // The word joiner glues the (i) to the last word, so it never wraps onto a line of its own.
+            if (tail != null) {
+                append(WORD_JOINER)
+                appendInlineContent(TAIL, " ")
+            }
         },
         modifier,
         style = style,
