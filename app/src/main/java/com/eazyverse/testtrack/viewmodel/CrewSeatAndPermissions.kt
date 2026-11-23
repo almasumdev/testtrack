@@ -66,8 +66,7 @@ fun CrewViewModel.takeSeat(
             } else {
                 say("${seat.appName} is waiting. We couldn't reach Play just now and will check again shortly.")
             }
-            opened = null
-            tab = CrewPhase.LOBBY
+            showTab(CrewPhase.LOBBY)
             onDone()
             load(context)
             MyAppsChanged.tell()

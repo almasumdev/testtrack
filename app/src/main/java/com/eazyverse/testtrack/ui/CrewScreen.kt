@@ -2,6 +2,8 @@ package com.eazyverse.testtrack.ui
 
 import android.content.Context
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -11,13 +13,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -26,6 +32,7 @@ import com.eazyverse.testtrack.domain.ChatSignals
 import com.eazyverse.testtrack.viewmodel.PrivateState
 import com.eazyverse.testtrack.viewmodel.PrivateTestsViewModel
 import com.eazyverse.testtrack.viewmodel.VolunteerViewModel
+import java.util.UUID
 
 /**
  * Crew: one cohort, at whatever point it has reached.
@@ -60,6 +67,12 @@ fun CrewScreen(
     val context = LocalContext.current
     val dialogs = rememberCrewDialogs()
 
+    // A new visit opens on Open, and slides to Run once if tonight has apps owed. Back from a page
+    // opened over the tab is the same visit, which keeps its tab.
+    val visit = rememberSaveable { UUID.randomUUID().toString() }
+    remember(visit) { vm.arrive(visit) }
+    DisposableEffect(vm) { onDispose { vm.leave() } }
+
     // Reloaded on every arrival: a crew fills, an app is sent back and a fortnight starts while
     // somebody is on another screen.
     LaunchedEffect(Unit) { vm.load(context) }
@@ -74,6 +87,14 @@ fun CrewScreen(
     val invites = if (vm.signedOut) emptyList() else privates.mine.orEmpty().filter { it.state == PrivateState.INVITED }
 
     Scaffold(
+        // Any touch on the tab means somebody is reading it: the slide to Run does not come.
+        modifier =
+            Modifier.pointerInput(vm) {
+                awaitEachGesture {
+                    awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                    vm.holdTab()
+                }
+            },
         containerColor = Color.Transparent,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
@@ -87,9 +108,8 @@ fun CrewScreen(
             }
             // An invite waits over every tab until it is answered.
             PrivateInviteRows(invites, { privates.pick(it) }, Modifier.padding(start = Gutter, end = Gutter, top = 12.dp))
-            // Until the tab is known (first ever load, nothing kept) one plain placeholder under no tab,
-            // never the Open page about to be swapped. A tap fades through, as the main tabs do; the
-            // first answer settling the tab only cross-fades, the way a placeholder gives way anywhere.
+            // Until the tab is known one plain placeholder under no tab. A tap, and the slide to Run
+            // after arriving, fade through as the main tabs do; a placeholder giving way only cross-fades.
             val page =
                 when {
                     vm.offline && vm.crews.isEmpty() -> CrewPane.Offline

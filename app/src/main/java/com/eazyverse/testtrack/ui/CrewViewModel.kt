@@ -59,21 +59,19 @@ class CrewViewModel : ViewModel() {
         seatError = null
     }
 
-    /** Which tab is showing. */
-    var tab by mutableStateOf(CrewPhase.OPEN)
-        internal set
+    /** Which tab is showing, whether it is known yet, and whether it moved like a tap: see [CrewTabState]. */
+    private val tabs = CrewTabState(viewModelScope)
+    val tab: CrewPhase get() = tabs.tab
+    val tabKnown: Boolean get() = tabs.known
+    val tabByHand: Boolean get() = tabs.byHand
 
-    /**
-     * Whether [tab] is worth showing yet: chosen by hand, by the first answer, or guessed from the
-     * kept crews. Until then the screen shows one plain placeholder under no tab, so the first frame
-     * is never the Open tab's page about to be swapped for the Run tab's.
-     */
-    var tabKnown by mutableStateOf(false)
-        private set
+    /** A visit to the Crews tab: a new one opens on Open, and may slide to Run once. */
+    fun arrive(visit: String) = tabs.arrive(visit, fixed = previewing)
 
-    /** The last tab change was a tap (it fades through) rather than the first answer settling it (it does not). */
-    var tabByHand = false
-        private set
+    fun leave() = tabs.leave()
+
+    /** A touch on the tab: a slide to Run still waiting does not come. */
+    fun holdTab() = tabs.hold()
 
     /** Which crew's own page is showing, or null for the tab itself. */
     var opened by mutableStateOf<String?>(null)
@@ -135,8 +133,6 @@ class CrewViewModel : ViewModel() {
         UsageRepo.openSettings(activity)
     }
 
-    private var settledTab = false
-
     /** Say something once, in a snack, from an action defined beside this class. */
     internal fun say(
         text: String,
@@ -160,10 +156,7 @@ class CrewViewModel : ViewModel() {
     }
 
     fun showTab(phase: CrewPhase) {
-        settledTab = true
-        tabByHand = true
-        tabKnown = true
-        tab = phase
+        tabs.show(phase)
         opened = null
     }
 
@@ -217,8 +210,7 @@ class CrewViewModel : ViewModel() {
         this.blocked = blocked
         this.blockedCrew = blockedCrew
         this.signedOut = signedOut
-        this.tab = tab
-        tabKnown = true
+        tabs.preview(tab)
         opened = null
         loading = false
         offline = false
@@ -260,6 +252,8 @@ class CrewViewModel : ViewModel() {
                 if (e is java.io.IOException && crews.isEmpty() && open == null) seedFromPhone(afterFailure = true)
             } finally {
                 if (mine == loads) {
+                    // Answered or not, the first load after arriving has had its say on the tab.
+                    tabs.loaded()
                     loading = false
                     reloading = false
                 }
@@ -276,15 +270,8 @@ class CrewViewModel : ViewModel() {
         blockedCrew = answer.blockedCrew
         live.channels(crews.map { "crew:${it.id}" }.toSet())
 
-        // Opened on whichever has something owed rather than always the same one, and only the
-        // first time: moving somebody's tab under them after they have chosen is worse than
-        // opening on the wrong one.
-        if (!settledTab) {
-            settledTab = true
-            tabByHand = false
-            tabKnown = true
-            tab = firstTabOf(crews)
-        }
+        // Only the first answer after arriving may move the tab, and only from Open to Run.
+        tabs.answered(crews)
     }
 
     /**
@@ -431,22 +418,8 @@ class CrewViewModel : ViewModel() {
         }
     }
 
-    /**
-     * Online the kept crews are not shown, but they still say which tab the answer will most likely
-     * open on, so the first frame is that tab's placeholder rather than Open's. Only a guess: the
-     * first answer still settles the tab, in case a crew moved on since.
-     */
-    private fun guessTab() {
-        if (settledTab) return
-        Api.lastCrews(afterFailure = true)?.let {
-            tab = firstTabOf(crewsOf(it))
-            tabKnown = true
-        }
-    }
-
     init {
         seedFromPhone()
-        guessTab()
     }
 
     /** Redraw when anything in your crews changes while showing; a burst of events is one fetch. */
@@ -466,6 +439,7 @@ class CrewViewModel : ViewModel() {
             runCatching { Api.crews() }.onSuccess { if (mine == loads) apply(it) }
         } finally {
             if (mine == loads) {
+                tabs.loaded()
                 loading = false
                 reloading = false
             }
@@ -477,12 +451,3 @@ class CrewViewModel : ViewModel() {
 internal fun crewsOf(answer: com.eazyverse.testtrack.net.CrewList): List<Crew> =
     answer.mine.map { it.toCrew() } +
         answer.volunteering.map { it.toVolunteerCrew() }.filter { it.volunteer?.state != "left" }
-
-/** The tab Crew opens on: whichever has something owed, so a running crew (a volunteer's too) wins. */
-internal fun firstTabOf(crews: List<Crew>): CrewPhase =
-    when {
-        crews.any { it.phase == CrewPhase.RUN } -> CrewPhase.RUN
-        crews.any { it.phase == CrewPhase.LOBBY } -> CrewPhase.LOBBY
-        crews.any { it.phase == CrewPhase.RECORD } -> CrewPhase.RECORD
-        else -> CrewPhase.OPEN
-    }
