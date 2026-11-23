@@ -13,6 +13,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import com.composables.icons.lucide.CircleCheck
 import com.composables.icons.lucide.CloudUpload
 import com.composables.icons.lucide.Flag
 import com.composables.icons.lucide.Lucide
@@ -147,6 +148,7 @@ private fun FeedbackButton(
     when {
         upload == null -> InlineAction("Write", enabled = actions.busySeat != app.id) { actions.onFeedback(app) }
         upload.failed -> InlineAction("Retry") { actions.onRetryFeedback(app) }
+        upload.sent -> Unit
         else -> InlineAction("Write", busy = true) {}
     }
 }
@@ -159,10 +161,17 @@ private fun FeedbackLabel(
 ) {
     Row(modifier, verticalAlignment = Alignment.CenterVertically) {
         val failed = upload?.failed == true
-        val ink = if (app.feedbackLate || failed) Tt.colors.warn else Tt.colors.text2
+        val sent = upload?.sent == true
+        val ink =
+            when {
+                sent -> Tt.colors.ok
+                app.feedbackLate || failed -> Tt.colors.warn
+                else -> Tt.colors.text2
+            }
         val icon =
             when {
                 failed -> Lucide.TriangleAlert
+                sent -> Lucide.CircleCheck
                 upload != null -> Lucide.CloudUpload
                 else -> Lucide.MessageCircle
             }
@@ -172,6 +181,7 @@ private fun FeedbackLabel(
             buildAnnotatedString {
                 when {
                     failed -> append("Picture not sent")
+                    sent -> append("Feedback sent")
                     upload != null -> append("Uploading picture")
                     app.feedbackLate -> append("Private feedback overdue")
                     else -> {

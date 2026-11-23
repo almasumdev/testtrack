@@ -5,38 +5,24 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eazyverse.testtrack.data.InstalledApps
-import com.eazyverse.testtrack.data.ProofImages
+import com.eazyverse.testtrack.data.ProofStore
 import com.eazyverse.testtrack.data.ReviewCaptureService
-import com.eazyverse.testtrack.data.ServerUpload
 import com.eazyverse.testtrack.data.Session
 import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiError
-import com.eazyverse.testtrack.net.FeedbackIn
 import com.eazyverse.testtrack.net.VersionIn
 import com.eazyverse.testtrack.net.appeal
 import com.eazyverse.testtrack.net.markDown
-import com.eazyverse.testtrack.net.sendFeedback
 import com.eazyverse.testtrack.net.tellUpdate
 import com.eazyverse.testtrack.ui.Snacks
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.io.File
-
-/** A private feedback picture on its way to the server, shown on its app's tile until it lands. */
-data class FeedbackUpload(
-    val uri: Uri,
-    val label: String,
-    /** It could not be sent; the picture stays on the phone for another try. */
-    val failed: Boolean,
-)
 
 /**
  * The crew's own acts beyond opening apps, as docs/crew.md decides them.
@@ -74,8 +60,11 @@ class CrewExtrasViewModel : ViewModel() {
     /** The camera's own file behind [editing], gone once the edited copy is sent or given up. */
     private var raw: File? = null
 
-    /** Pictures being sent or waiting for another try, by seat. Sending never blocks other crew acts. */
-    val uploads = mutableStateMapOf<String, FeedbackUpload>()
+    /** Pictures being sent, waiting for another try or sent, by seat: [CrewFeedbackUploads] keeps them past this page. */
+    val uploads get() = CrewFeedbackUploads.uploads
+
+    /** Takes away the sent pictures whose seat [owes] says no longer owes feedback. */
+    fun clearSentUploads(owes: (String) -> Boolean) = CrewFeedbackUploads.clearSent(owes)
 
     /** "Don't show again" was ticked on the private feedback ask: Write goes straight to Android's own ask. */
     val askHidden get() = Session.feedbackTipHidden
@@ -235,34 +224,27 @@ class CrewExtrasViewModel : ViewModel() {
     }
 
     /**
-     * The checked picture is sent in the background: its tile says so, and other crew acts stay free.
-     * [reload] reads the crews again and runs its argument once that is over.
+     * The checked picture is sent in the background by [CrewFeedbackUploads]: its tile says so, other
+     * crew acts stay free, and leaving this page does not stop it. [reload] reads the crews again.
      */
     fun sendEdited(
         context: Context,
         uri: Uri,
-        reload: (() -> Unit) -> Unit,
+        reload: () -> Unit,
     ) {
         val job = feedbackFor ?: return
-        if (uploads.containsKey(job.seatId)) return
-        uploads[job.seatId] = FeedbackUpload(uri, job.label, failed = false)
+        if (!CrewFeedbackUploads.send(context, job.seatId, job.label, uri, reload)) return
         editing = null
         feedbackFor = null
-        raw?.delete()
-        raw = null
-        upload(context, job.seatId, reload)
+        dropRaw()
     }
 
     /** Another try at a picture that could not be sent, from the copy kept on the phone. */
     fun retryFeedback(
         context: Context,
         seatId: String,
-        reload: (() -> Unit) -> Unit,
-    ) {
-        val up = uploads[seatId]?.takeIf { it.failed } ?: return
-        uploads[seatId] = up.copy(failed = false)
-        upload(context, seatId, reload)
-    }
+        reload: () -> Unit,
+    ) = CrewFeedbackUploads.retry(context, seatId, reload)
 
     /**
      * The editor closed. After Send, [editing] is already empty and nothing is undone; closed with
@@ -272,36 +254,15 @@ class CrewExtrasViewModel : ViewModel() {
         if (editing == null) return
         editing = null
         feedbackFor = null
-        raw?.delete()
-        raw = null
+        dropRaw()
     }
 
-    private fun upload(
-        context: Context,
-        seatId: String,
-        reload: (() -> Unit) -> Unit,
-    ) {
-        val up = uploads[seatId] ?: return
-        val app = context.applicationContext
-        viewModelScope.launch {
-            try {
-                val id =
-                    ServerUpload.send(ServerUpload.newId(), ServerUpload.CREW_FEEDBACK, "image/jpeg", seatId = seatId) {
-                        ProofImages.bytes(app, up.uri, ProofImages.CREW_MAX_BYTES)
-                    }
-                Api.sendFeedback(seatId, FeedbackIn(id))
-                withContext(Dispatchers.IO) { ProofEditing.discard(app, up.uri) }
-                Snacks.done("Feedback for ${up.label} sent. Thank you.")
-                // The tile keeps saying "uploading" until the crews are read again, so it never
-                // flashes back to Write for an app whose feedback has just landed.
-                reload { uploads.remove(seatId) }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (_: Exception) {
-                uploads[seatId] = up.copy(failed = true)
-                Snacks.error("Feedback picture not sent.")
-            }
+    private fun dropRaw() {
+        raw?.let {
+            it.delete()
+            ProofStore.release(it)
         }
+        raw = null
     }
 
     private fun act(

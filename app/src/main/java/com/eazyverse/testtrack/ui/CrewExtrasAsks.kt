@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -82,7 +83,7 @@ internal fun withCrewExtras(
             }
         },
         feedbackUpload = { id -> extras.uploads[id] },
-        onRetryFeedback = { app -> extras.retryFeedback(context, app.id) { done -> vm.load(context, settled = done) } },
+        onRetryFeedback = { app -> extras.retryFeedback(context, app.id) { vm.load(context.applicationContext) } },
         onPickFeedback = { app ->
             extras.askFeedback(app.id, app.label, app.packageName, asking = false)
             pickPicture()
@@ -126,6 +127,14 @@ internal fun CrewExtrasAsks(vm: CrewViewModel) {
         onDispose { owner.lifecycle.removeObserver(watcher) }
     }
 
+    // A sent picture's tile stays as sent until the crews read that the seat no longer owes feedback.
+    LaunchedEffect(vm.crews) {
+        if (vm.crews.isEmpty()) return@LaunchedEffect
+        val seats = vm.crews.flatMap { it.apps + it.optional + it.left }
+        val owing = seats.filter { !it.feedbackSent }.mapTo(HashSet()) { it.id }
+        extras.clearSentUploads { it in owing }
+    }
+
     val askCapture =
         rememberCaptureConsent(
             onGranted = { code, data -> extras.startCapture(activity, code, data) },
@@ -165,7 +174,7 @@ internal fun CrewExtrasAsks(vm: CrewViewModel) {
     extras.editing?.let { picture ->
         ProofPictureEditor(
             picture,
-            onKeep = { edited -> extras.sendEdited(context, edited) { done -> vm.load(context, settled = done) } },
+            onKeep = { edited -> extras.sendEdited(context, edited) { vm.load(context.applicationContext) } },
             onClose = { extras.closeEditor() },
             title = "Check your picture",
             copy = "Only the TestTrack team sees it. Hide anything personal first.",

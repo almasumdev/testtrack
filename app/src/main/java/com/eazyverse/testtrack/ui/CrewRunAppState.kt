@@ -152,6 +152,7 @@ private fun lateFeedbackState(
                 feedbackAction = true,
                 explanation = "Give private feedback on Google Play before testing can count.",
             )
+        upload.sent -> CrewRunAppState("Feedback sent", Lucide.CircleCheck, Tone.OK, feedbackAction = true)
         upload.failed ->
             CrewRunAppState(
                 "Picture not sent",
