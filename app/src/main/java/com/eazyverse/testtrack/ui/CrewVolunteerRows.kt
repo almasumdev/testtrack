@@ -25,6 +25,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
@@ -134,10 +135,14 @@ internal fun VolunteerSpotRow(
                     SpotState.TOO_LATE -> "No nights left to join"
                     SpotState.UNAVAILABLE -> "Can't join right now"
                 },
-                Modifier.weight(1f),
+                // The note sits at the right end; a gap keeps it off the Volunteer pill or arrow.
+                Modifier.weight(1f).padding(
+                    end = if (spot.state == SpotState.OPEN || spot.state == SpotState.VOLUNTEERING) 8.dp else 0.dp,
+                ),
                 style = TextStyles.NoteLine,
                 color = Tt.colors.text3,
-                maxLines = 2,
+                textAlign = TextAlign.End,
+                maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
             when (spot.state) {
