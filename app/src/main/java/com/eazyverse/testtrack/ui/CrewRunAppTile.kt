@@ -97,7 +97,7 @@ internal fun CrewRunAppTile(
             actions =
                 if (band.action != null || band.alternate != null) {
                     {
-                        band.action?.let { InlineAction(it, enabled = !busy, onClick = band.run) }
+                        band.action?.let { InlineAction(it, busy = busy, onClick = band.run) }
                         band.alternate?.let { InlineAction(it, enabled = !busy, onClick = band.runAlternate) }
                     }
                 } else {

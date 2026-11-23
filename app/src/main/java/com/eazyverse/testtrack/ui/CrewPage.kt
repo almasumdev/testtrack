@@ -356,16 +356,13 @@ internal fun CrewDialogsHost(
     }
 
     dialogs.withdrawing?.let { seat ->
-        // Asked once, then held open with its spinner until the row has changed.
-        var sent by remember(seat.id) { mutableStateOf(false) }
-        LaunchedEffect(sent, vm.acting) { if (sent && vm.acting != seat.id) dialogs.withdrawing = null }
+        // Only the question: the row shows its spinner while the withdrawal goes through.
         Ask(
             title = "Withdraw your report?",
             body = "${seat.appName} goes back on your list to test tonight.",
             confirm = "Withdraw",
-            busy = sent,
             onConfirm = {
-                sent = true
+                dialogs.withdrawing = null
                 vm.withdrawReport(context, seat.id)
             },
             onDismiss = { dialogs.withdrawing = null },
