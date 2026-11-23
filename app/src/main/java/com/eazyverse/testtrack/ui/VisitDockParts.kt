@@ -39,7 +39,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Check
-import com.composables.icons.lucide.ChevronLeft
 import com.composables.icons.lucide.Copy
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Pause
@@ -225,13 +224,11 @@ internal fun BigPlayPause(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         val ink = Tt.colors.inkOn(if (ui.counted) Status.posted else Tt.colors.accent)
-        val icon =
-            when {
-                ui.single && ui.counted -> Lucide.ChevronLeft
-                ui.counted || ui.paused -> Lucide.Play
-                else -> Lucide.Pause
-            }
-        Icon(icon, null, Modifier.size(16.dp), tint = ink)
+        if (ui.single && ui.counted) {
+            Icon(painterResource(R.drawable.ic_arrow_back_ios_new), null, Modifier.size(16.dp), tint = ink)
+        } else {
+            Icon(if (ui.counted || ui.paused) Lucide.Play else Lucide.Pause, null, Modifier.size(16.dp), tint = ink)
+        }
         Spacer(Modifier.width(6.dp))
         Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = ink)
     }
