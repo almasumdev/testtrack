@@ -1,6 +1,7 @@
 package com.eazyverse.testtrack.viewmodel
 
 import android.content.Context
+import android.os.PowerManager
 import android.os.SystemClock
 import android.provider.Settings
 import com.eazyverse.testtrack.data.InstalledApps
@@ -98,6 +99,12 @@ object NightRound {
     /** The recording that TestTrack coming to the front started, so a second resume call waits for it. */
     private var settling: Job? = null
 
+    /**
+     * Without the control there is no window over the app to keep the screen on, so the round holds
+     * the screen itself, a visit at a time, and lets go when it ends.
+     */
+    private var awake: PowerManager.WakeLock? = null
+
     fun canFloat(context: Context): Boolean = Settings.canDrawOverlays(context)
 
     /**
@@ -142,6 +149,7 @@ object NightRound {
         shotFailed = false
         beganAt = SystemClock.elapsedRealtime()
         window?.show()
+        if (window == null) keepAwake(context)
         publish()
         // The clock runs without the control too: it is what says when the picture is due.
         tick(context)
@@ -464,10 +472,28 @@ object NightRound {
         window = null
         stopSay = null
         beganAt = 0L
+        awake?.takeIf { it.isHeld }?.release()
         round = null
         RoundStore.save(context, null)
         // Off with the round, so Android's sharing chip goes with it.
         if (camera && pictures) VisitCameraService.stop(context)
         if (camera) pictures = false
     }
+
+    /**
+     * Holds the screen on for one visit and a little over, timed, so a round that never ends
+     * properly cannot keep it on for good. Each visit takes it again.
+     */
+    @Suppress("DEPRECATION") // The screen-on locks are deprecated for windows, and this round has none.
+    private fun keepAwake(context: Context) {
+        val lock =
+            awake ?: (context.applicationContext.getSystemService(Context.POWER_SERVICE) as PowerManager)
+                .newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK, "TestTrack:round")
+                .apply { setReferenceCounted(false) }
+                .also { awake = it }
+        lock.acquire(VISIT_MS + AWAKE_SLACK_MS)
+    }
+
+    /** Past a visit's twenty seconds: the recording and the next app's opening. */
+    private const val AWAKE_SLACK_MS = 15_000L
 }

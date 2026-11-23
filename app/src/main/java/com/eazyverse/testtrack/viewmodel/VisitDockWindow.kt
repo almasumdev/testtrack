@@ -77,11 +77,13 @@ class VisitDockWindow(
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
                 // Screen coordinates, status bar included, so the edges are the screen's own. No
-                // limits: the shadow room around the card may reach past the screen edge.
+                // limits: the shadow room around the card may reach past the screen edge. The
+                // screen stays on while the control's clock shows.
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                     WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
                     WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
-                    WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+                    WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
+                    WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON,
                 PixelFormat.TRANSLUCENT,
             ).apply { gravity = Gravity.TOP or Gravity.START }
 

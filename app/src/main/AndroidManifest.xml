@@ -59,6 +59,8 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- A crew round without the testing control keeps the screen on through each app's visit. -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
 
 
