@@ -11,8 +11,10 @@ import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiAuth
 import com.eazyverse.testtrack.net.ApiError
 import com.eazyverse.testtrack.net.ApiProfile
+import com.eazyverse.testtrack.net.ApiSession
 import com.eazyverse.testtrack.net.BoardRow
 import com.eazyverse.testtrack.net.MeIn
+import com.eazyverse.testtrack.net.ProfileCache
 import com.eazyverse.testtrack.viewmodel.LiveReload
 import com.eazyverse.testtrack.viewmodel.ProfileUpload
 import kotlinx.coroutines.launch
@@ -185,8 +187,14 @@ class MeViewModel : ViewModel() {
         message = null
         viewModelScope.launch {
             try {
+                val generation = ApiSession.generation
                 val ref = if (photo == null) profile?.photoUrl.orEmpty() else ProfileUpload.photo(photo)
-                Api.updateMe(MeIn(displayName = name.trim(), photoRef = ref))
+                val me = Api.updateMe(MeIn(displayName = name.trim(), photoRef = ref))
+                // The page and the kept copy take the change now; the reload below fills in the rest.
+                profile?.copy(displayName = me.displayName, photoUrl = me.photoUrl)?.let {
+                    profile = it
+                    ProfileCache.keep(it, generation)
+                }
                 load(context)
                 onDone()
             } catch (e: ApiError) {
@@ -199,9 +207,10 @@ class MeViewModel : ViewModel() {
         }
     }
 
-    // The kept profile, only without a connection; online it shimmers until the server answers.
-    private fun seedFromPhone(afterFailure: Boolean = false) {
-        Api.lastProfile(afterFailure)?.let {
+    // The kept profile, shown at once whether online or not, and replaced quietly when the server
+    // answers. Only with nothing kept (the first sign-in) does the page shimmer. See [ProfileCache].
+    private fun seedFromPhone() {
+        ProfileCache.read()?.let {
             profile = it
             loading = false
         }
@@ -215,18 +224,30 @@ class MeViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 if (!ApiAuth.ensure(context)) {
+                    // Nothing of the last account stays in memory for the next one to see.
                     signedOut = true
+                    profile = null
                     return@launch
                 }
                 signedOut = false
-                profile = Api.profile()
+                // Signed in on this page just now: whatever is kept for the account shows first.
+                if (profile == null) seedFromPhone()
+                val generation = ApiSession.generation
+                val fresh = Api.profile()
+                // Signed out or switched while it was on its way: it is not this account's.
+                if (generation != ApiSession.generation) return@launch
+                profile = fresh
                 offline = false
             } catch (e: ApiError) {
-                if (e.isAuth) signedOut = true else offline = true
-            } catch (e: Exception) {
+                if (e.isAuth) {
+                    signedOut = true
+                    profile = null
+                } else {
+                    offline = true
+                }
+            } catch (_: Exception) {
+                // The kept profile, if any, is already showing. Nothing kept: the offline robot.
                 offline = true
-                // No connection and nothing shown yet: the kept profile stands in. Not for a server fault.
-                if (e is java.io.IOException && profile == null) seedFromPhone(afterFailure = true)
             } finally {
                 loading = false
             }

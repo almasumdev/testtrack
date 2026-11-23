@@ -344,6 +344,7 @@ object Api {
     // offline: online a screen shimmers until the server answers. [afterFailure] reads it anyway,
     // for a request that has just failed for want of a connection. See [ApiCache]. Plain reads, not
     // suspending, so a view model's first frame can already hold it; the files are a few kilobytes.
+    // The profile is the exception, shown online too: see [ProfileCache].
     fun lastPosts(afterFailure: Boolean = false): PostPage? = last(POSTS, afterFailure)
 
     fun lastMyPosts(afterFailure: Boolean = false): List<ApiMyPost>? = last(MY_POSTS, afterFailure)
@@ -358,8 +359,6 @@ object Api {
 
     fun lastBoard(afterFailure: Boolean = false): ApiBoard? = last(BOARD, afterFailure)
 
-    fun lastProfile(afterFailure: Boolean = false): ApiProfile? = last(PROFILE, afterFailure)
-
     fun lastApps(afterFailure: Boolean = false): AppsOut? = last(APPS, afterFailure)
 
     private const val POSTS = "/feed/posts"
@@ -369,7 +368,7 @@ object Api {
     private const val DISPUTES = "/disputes"
     private const val CREWS = "/crews"
     private const val BOARD = "/board"
-    private const val PROFILE = "/me/profile"
+    internal const val PROFILE = "/me/profile"
     private const val APPS = "/apps"
 
     /** A GET whose answer is also kept on the phone, for [last] to hand back next time. */

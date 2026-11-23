@@ -7,10 +7,10 @@ import java.io.File
 /**
  * The last answer to each of the screens' main questions, kept on the phone.
  *
- * It is the offline backup, and nothing more. While the phone has a connection a screen shimmers
+ * It is the offline backup. While the phone has a connection a screen shimmers
  * until the server answers, so it never shows an old list as if it were current. Without a
  * connection, or when the request fails for want of one, the screen falls back to what it showed
- * last time. See [online].
+ * last time. See [online]. The profile is the one exception, shown online too: see [ProfileCache].
  *
  * Kept as the server's own JSON, one file per path, so there is no second format to keep in step:
  * an answer this build cannot read any more is simply not used. Written only by requests that
@@ -49,7 +49,7 @@ object ApiCache {
         generation: Long,
     ) {
         if (generation != ApiSession.generation) return
-        runCatching { file(path)?.writeText(text) }
+        runCatching { file(path)?.apply { parentFile?.mkdirs() }?.writeText(text) }
     }
 
     /** Forget every answer, for a sign-out. */
