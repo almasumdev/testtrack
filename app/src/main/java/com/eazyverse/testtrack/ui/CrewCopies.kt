@@ -1,5 +1,7 @@
 package com.eazyverse.testtrack.ui
 
+import com.eazyverse.testtrack.domain.AppNight
+
 /*
  * The copy of an app on this phone, against what the crew has: an update out, and when the old
  * copy stops counting.
@@ -86,3 +88,18 @@ fun openAllOf(
         val here = copy(app.packageName)
         !app.done && !app.reported && !app.feedbackLate && here.installed && !refusedHere(app, here) && !sendingTonight(app)
     }
+
+/**
+ * [crews] with every app whose picture has reached the server since the answer was read marked
+ * opened: its visit was counted already, and the picture was the only thing it waited for. The
+ * next read says the same, so this only closes the gap before it.
+ */
+internal fun withLandedPictures(
+    crews: List<Crew>,
+    landed: Set<AppNight>,
+): List<Crew> {
+    if (landed.isEmpty()) return crews
+    fun marked(apps: List<CrewApp>) =
+        apps.map { if (!it.done && AppNight(it.id, it.day) in landed) it.copy(done = true, pictureDue = false) else it }
+    return crews.map { it.copy(apps = marked(it.apps), optional = marked(it.optional), strip = marked(it.strip)) }
+}

@@ -38,6 +38,9 @@ class NightPictures(
     /** The pictures still on the phone, so a row can say "sending" rather than "missing". */
     val waiting get() = VisitPictures.waiting
 
+    /** The nights whose picture has reached the server since the app started. */
+    val landed get() = VisitPictures.landed
+
     /** Why the last try to send them stopped; null while they are going, or once they went. */
     val stuck get() = VisitPictures.stuck
 

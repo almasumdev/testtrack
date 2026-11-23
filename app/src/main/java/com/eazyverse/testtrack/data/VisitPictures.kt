@@ -3,6 +3,7 @@ package com.eazyverse.testtrack.data
 import android.content.Context
 import android.net.Uri
 import androidx.core.content.edit
+import com.eazyverse.testtrack.domain.AppNight
 import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiError
 import com.eazyverse.testtrack.net.PictureIn
@@ -10,6 +11,7 @@ import com.eazyverse.testtrack.net.visitPicture
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -64,6 +66,14 @@ object VisitPictures {
 
     /** The pictures not yet on their visits, for the page to say "sending" rather than "missing". */
     val waiting: StateFlow<List<Waiting>> = queue
+
+    private val went = MutableStateFlow<Set<AppNight>>(emptySet())
+
+    /**
+     * The nights whose picture the server has taken since the app started, so a row can say
+     * "opened" before the crews are read again. Memory only: the server's answer is the truth.
+     */
+    val landed: StateFlow<Set<AppNight>> = went
 
     private val failure = MutableStateFlow<String?>(null)
 
@@ -159,6 +169,8 @@ object VisitPictures {
                     ) { redrawn ?: file.readBytes() }
                 val night = item.day.takeIf { it > 0 }
                 Api.visitPicture(item.seatId, PictureIn(id, item.byHand, day = night))
+                // Marked before it leaves the queue, so a row never falls between "uploading" and "needed".
+                if (item.day > 0) went.update { it + AppNight(item.seatId, item.day) }
                 drop(context, item)
                 PictureQueue.Step.Gone
             } catch (e: ApiError) {
