@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
@@ -13,6 +14,7 @@ import com.eazyverse.testtrack.data.InstalledApps
 import com.eazyverse.testtrack.data.ProofImages
 import com.eazyverse.testtrack.data.ReviewCaptureService
 import com.eazyverse.testtrack.data.ServerUpload
+import com.eazyverse.testtrack.data.Session
 import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiError
 import com.eazyverse.testtrack.net.FeedbackIn
@@ -23,7 +25,18 @@ import com.eazyverse.testtrack.net.sendFeedback
 import com.eazyverse.testtrack.net.tellUpdate
 import com.eazyverse.testtrack.ui.Snacks
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
+
+/** A private feedback picture on its way to the server, shown on its app's tile until it lands. */
+data class FeedbackUpload(
+    val uri: Uri,
+    val label: String,
+    /** It could not be sent; the picture stays on the phone for another try. */
+    val failed: Boolean,
+)
 
 /**
  * The crew's own acts beyond opening apps, as docs/crew.md decides them.
@@ -53,6 +66,21 @@ class CrewExtrasViewModel : ViewModel() {
     /** The app a member is sending Play feedback for, from its first ask to its picture landing. */
     var feedbackFor by mutableStateOf<FeedbackJob?>(null)
         private set
+
+    /** The picture open in the editor, before it is sent. */
+    var editing by mutableStateOf<Uri?>(null)
+        private set
+
+    /** The camera's own file behind [editing], gone once the edited copy is sent or given up. */
+    private var raw: File? = null
+
+    /** Pictures being sent or waiting for another try, by seat. Sending never blocks other crew acts. */
+    val uploads = mutableStateMapOf<String, FeedbackUpload>()
+
+    /** "Don't show again" was ticked on the private feedback ask: Write goes straight to Android's own ask. */
+    val askHidden get() = Session.feedbackTipHidden
+
+    fun hideAsk() = Session.hideFeedbackTip()
 
     data class FeedbackJob(
         val seatId: String,
@@ -181,7 +209,7 @@ class CrewExtrasViewModel : ViewModel() {
     }
 
     /**
-     * Back in TestTrack: the camera's picture, if it took one, goes to TestTrack and onto the feedback.
+     * Back in TestTrack: the camera's picture, if it took one, opens in the editor to be checked.
      * Back without one, the camera and Android's sharing chip go, as the review page does it, so a
      * later tap cannot send whatever is on screen then as this app's feedback.
      */
@@ -196,26 +224,84 @@ class CrewExtrasViewModel : ViewModel() {
             return
         }
         ReviewCaptureService.takeCrewProof()
-        send(job) { file.readBytes() }
+        raw = file
+        editing = Uri.fromFile(file)
     }
 
-    /** A picture of the feedback picked from the phone instead. */
-    fun pick(
-        activity: Activity,
+    /** A picture of the feedback picked from the phone instead: it opens in the editor too. */
+    fun pick(uri: Uri) {
+        if (feedbackFor == null) return
+        editing = uri
+    }
+
+    /**
+     * The checked picture is sent in the background: its tile says so, and other crew acts stay free.
+     * [reload] reads the crews again and runs its argument once that is over.
+     */
+    fun sendEdited(
+        context: Context,
         uri: Uri,
+        reload: (() -> Unit) -> Unit,
     ) {
         val job = feedbackFor ?: return
-        send(job) { ProofImages.bytes(activity, uri, ProofImages.CREW_MAX_BYTES) }
+        if (uploads.containsKey(job.seatId)) return
+        uploads[job.seatId] = FeedbackUpload(uri, job.label, failed = false)
+        editing = null
+        feedbackFor = null
+        raw?.delete()
+        raw = null
+        upload(context, job.seatId, reload)
     }
 
-    private fun send(
-        job: FeedbackJob,
-        bytes: () -> ByteArray,
-    ) = act({}) {
-        val id = ServerUpload.send(ServerUpload.newId(), ServerUpload.CREW_FEEDBACK, "image/jpeg", seatId = job.seatId, bytes = bytes)
-        Api.sendFeedback(job.seatId, FeedbackIn(id))
+    /** Another try at a picture that could not be sent, from the copy kept on the phone. */
+    fun retryFeedback(
+        context: Context,
+        seatId: String,
+        reload: (() -> Unit) -> Unit,
+    ) {
+        val up = uploads[seatId]?.takeIf { it.failed } ?: return
+        uploads[seatId] = up.copy(failed = false)
+        upload(context, seatId, reload)
+    }
+
+    /**
+     * The editor closed. After Send, [editing] is already empty and nothing is undone; closed with
+     * the picture still open, the feedback is given up and the raw capture dropped.
+     */
+    fun closeEditor() {
+        if (editing == null) return
+        editing = null
         feedbackFor = null
-        "Feedback for ${job.label} sent. Thank you."
+        raw?.delete()
+        raw = null
+    }
+
+    private fun upload(
+        context: Context,
+        seatId: String,
+        reload: (() -> Unit) -> Unit,
+    ) {
+        val up = uploads[seatId] ?: return
+        val app = context.applicationContext
+        viewModelScope.launch {
+            try {
+                val id =
+                    ServerUpload.send(ServerUpload.newId(), ServerUpload.CREW_FEEDBACK, "image/jpeg", seatId = seatId) {
+                        ProofImages.bytes(app, up.uri, ProofImages.CREW_MAX_BYTES)
+                    }
+                Api.sendFeedback(seatId, FeedbackIn(id))
+                withContext(Dispatchers.IO) { ProofEditing.discard(app, up.uri) }
+                Snacks.done("Feedback for ${up.label} sent. Thank you.")
+                // The tile keeps saying "uploading" until the crews are read again, so it never
+                // flashes back to Write for an app whose feedback has just landed.
+                reload { uploads.remove(seatId) }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                uploads[seatId] = up.copy(failed = true)
+                Snacks.error("Feedback picture not sent.")
+            }
+        }
     }
 
     private fun act(

@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -42,8 +43,14 @@ internal fun withCrewExtras(
     val extras: CrewExtrasViewModel = viewModel()
     val pickPicture =
         rememberImagePicker { uri ->
-            if (uri != null) extras.pick(context.findActivity(), uri) else extras.cancelFeedback()
+            if (uri != null) extras.pick(uri) else extras.cancelFeedback()
         }
+    // Hidden ask: Write goes straight to Android's own, from the tap itself, never from a state change.
+    val askCapture =
+        rememberCaptureConsent(
+            onGranted = { code, data -> extras.startCapture(context.findActivity(), code, data) },
+            onRefused = { extras.cancelFeedback() },
+        )
     return CrewActions(
         onOpen = base.onOpen,
         onOpenAll = base.onOpenAll,
@@ -54,7 +61,7 @@ internal fun withCrewExtras(
         onVote = base.onVote,
         isInstalled = base.isInstalled,
         onMembers = base.onMembers,
-        busySeat = base.busySeat ?: (if (extras.busy) extras.feedbackFor?.seatId else null),
+        busySeat = base.busySeat,
         onPickPicture = base.onPickPicture,
         sendingPicture = base.sendingPicture,
         waitingPicture = base.waitingPicture,
@@ -64,7 +71,18 @@ internal fun withCrewExtras(
         localVersion = { pkg -> vm.copyOf(context, pkg).takeIf { it.installed }?.versionCode },
         fromPlay = { pkg -> vm.copyOf(context, pkg).let { !it.installed || it.fromPlay } },
         onUpdateApp = { app -> membership.require { openOnPlay(context, app.packageName) } },
-        onFeedback = { app -> membership.require { extras.askFeedback(app.id, app.label, app.packageName) } },
+        onFeedback = { app ->
+            membership.require {
+                if (extras.askHidden) {
+                    extras.askFeedback(app.id, app.label, app.packageName, asking = false)
+                    askCapture()
+                } else {
+                    extras.askFeedback(app.id, app.label, app.packageName)
+                }
+            }
+        },
+        feedbackUpload = { id -> extras.uploads[id] },
+        onRetryFeedback = { app -> extras.retryFeedback(context, app.id) { done -> vm.load(context, settled = done) } },
         onPickFeedback = { app ->
             extras.askFeedback(app.id, app.label, app.packageName, asking = false)
             pickPicture()
@@ -97,10 +115,10 @@ internal fun CrewExtrasAsks(vm: CrewViewModel) {
     val extras: CrewExtrasViewModel = viewModel()
     val pickPicture =
         rememberImagePicker { uri ->
-            if (uri != null) extras.pick(activity, uri) else extras.cancelFeedback()
+            if (uri != null) extras.pick(uri) else extras.cancelFeedback()
         }
 
-    // Back from Play with the camera's picture: it goes to TestTrack and onto the feedback.
+    // Back from Play with the camera's picture: it opens in the editor to be checked, then goes up.
     val owner = LocalLifecycleOwner.current
     DisposableEffect(owner) {
         val watcher = LifecycleEventObserver { _, event -> if (event == Lifecycle.Event.ON_RESUME) extras.takeCaptured(activity) }
@@ -115,13 +133,17 @@ internal fun CrewExtrasAsks(vm: CrewViewModel) {
         )
 
     extras.feedbackFor?.takeIf { !it.capturing && it.asking }?.let { job ->
+        var hide by remember { mutableStateOf(false) }
         Ask(
             title = "Private feedback",
             icon = Lucide.MessageSquareText,
             note = "Once a run per app. Only our team sees the picture.",
             confirm = "Start",
             dismiss = "Not now",
-            onConfirm = { askCapture() },
+            onConfirm = {
+                if (hide) extras.hideAsk()
+                askCapture()
+            },
             onDismiss = { extras.cancelFeedback() },
             alt = "Use saved",
             onAlt = {
@@ -136,7 +158,20 @@ internal fun CrewExtrasAsks(vm: CrewViewModel) {
                     "Before sending, tap the round camera button.",
                 ).map { AnnotatedString(it) },
             )
+            AskCheck("Don't show again", hide) { hide = it }
         }
+    }
+
+    extras.editing?.let { picture ->
+        ProofPictureEditor(
+            picture,
+            onKeep = { edited -> extras.sendEdited(context, edited) { done -> vm.load(context, settled = done) } },
+            onClose = { extras.closeEditor() },
+            title = "Check your picture",
+            copy = "Only the TestTrack team sees it. Hide anything personal first.",
+            primaryLabel = "Send",
+            failText = "The edited picture could not be saved. Try again.",
+        )
     }
 
     extras.explain?.let { why ->

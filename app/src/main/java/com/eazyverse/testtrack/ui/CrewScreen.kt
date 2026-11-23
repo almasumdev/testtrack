@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eazyverse.testtrack.domain.ChatSignals
+import com.eazyverse.testtrack.viewmodel.FeedbackUpload
 import com.eazyverse.testtrack.viewmodel.PrivateState
 import com.eazyverse.testtrack.viewmodel.PrivateTestsViewModel
 import com.eazyverse.testtrack.viewmodel.VolunteerViewModel
@@ -263,6 +264,9 @@ class CrewActions(
     /** Private feedback on Play for an app, with its picture: by camera, or picked from the phone. */
     val onFeedback: (CrewApp) -> Unit = {},
     val onPickFeedback: (CrewApp) -> Unit = {},
+    /** A feedback picture on its way for this seat, or waiting for another try; null when none. */
+    val feedbackUpload: (String) -> FeedbackUpload? = { null },
+    val onRetryFeedback: (CrewApp) -> Unit = {},
     /** The owner's own seat: tell the crew about an update, or mark it down tonight. */
     val onTellUpdate: (CrewSeat) -> Unit = {},
     val onMarkDown: (CrewSeat) -> Unit = {},

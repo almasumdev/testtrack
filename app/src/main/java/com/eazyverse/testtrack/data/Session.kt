@@ -22,6 +22,7 @@ object Session {
         prefs = context.applicationContext.getSharedPreferences("testtrack", Context.MODE_PRIVATE)
         onboardingDone = prefs.getBoolean(KEY_ONBOARDED, false)
         pictureTipHidden = prefs.getBoolean(KEY_PICTURE_TIP_HIDDEN, false)
+        feedbackTipHidden = prefs.getBoolean(KEY_FEEDBACK_TIP_HIDDEN, false)
         email = prefs.getString(KEY_EMAIL, null)
         DebugOverrides.init(context)
         memberCached = prefs.getBoolean(KEY_MEMBER, false)
@@ -45,6 +46,15 @@ object Session {
     fun hidePictureTip() {
         prefs.edit().putBoolean(KEY_PICTURE_TIP_HIDDEN, true).apply()
         pictureTipHidden = true
+    }
+
+    /** "Don't show again" ticked on the private feedback ask: Write goes straight to Android's own ask. */
+    var feedbackTipHidden by mutableStateOf(false)
+        private set
+
+    fun hideFeedbackTip() {
+        prefs.edit().putBoolean(KEY_FEEDBACK_TIP_HIDDEN, true).apply()
+        feedbackTipHidden = true
     }
 
     var email by mutableStateOf<String?>(null)
@@ -161,7 +171,7 @@ object Session {
 
     /**
      * Clears everything except onboarding, nobody wants to watch the intro twice, the hidden
-     * picture explainer, which is this phone's own choice, and except the
+     * picture explainer and feedback ask, which are this phone's own choice, and except the
      * cached update policy, which is about this copy of the app rather than about whoever is signed
      * into it.
      */
@@ -171,6 +181,7 @@ object Session {
             .clear()
             .putBoolean(KEY_ONBOARDED, true)
             .putBoolean(KEY_PICTURE_TIP_HIDDEN, pictureTipHidden)
+            .putBoolean(KEY_FEEDBACK_TIP_HIDDEN, feedbackTipHidden)
             .putInt(KEY_UPDATE_CACHE_AVAILABLE, cachedUpdateAvailableBuild)
             .putInt(KEY_UPDATE_CACHE_STALENESS, cachedUpdateStalenessDays)
             .putInt(KEY_UPDATE_CACHE_LATEST, cachedUpdateLatestBuild)
@@ -185,6 +196,7 @@ object Session {
 
     private const val KEY_ONBOARDED = "onboarding_done"
     private const val KEY_PICTURE_TIP_HIDDEN = "picture_tip_hidden"
+    private const val KEY_FEEDBACK_TIP_HIDDEN = "feedback_tip_hidden"
     private const val KEY_EMAIL = "email"
     private const val KEY_MEMBER = "is_member"
     private const val KEY_UPDATE_CACHE_AVAILABLE = "update_cache_available_build"

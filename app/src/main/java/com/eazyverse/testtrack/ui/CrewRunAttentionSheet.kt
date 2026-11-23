@@ -48,7 +48,10 @@ internal fun CrewRunAttentionSheet(
                     title = app.label,
                     note = AnnotatedString(state.text),
                     onClick = act,
-                    trailing = { RowPill(state.action ?: "View crew", PillKind.SOFT, busy = actions.busySeat == app.id, onClick = act) },
+                    trailing = {
+                        val busy = actions.busySeat == app.id || state.busy
+                        RowPill(state.action ?: "View crew", PillKind.SOFT, busy = busy, onClick = act)
+                    },
                 )
             }
         }

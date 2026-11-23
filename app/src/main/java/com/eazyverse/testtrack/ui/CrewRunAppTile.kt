@@ -13,10 +13,13 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import com.composables.icons.lucide.CloudUpload
 import com.composables.icons.lucide.Flag
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.MessageCircle
+import com.composables.icons.lucide.TriangleAlert
 import com.eazyverse.testtrack.ui.theme.Tt
+import com.eazyverse.testtrack.viewmodel.FeedbackUpload
 
 internal enum class CrewRunAppKind { REQUIRED, OPTIONAL, LEFT }
 
@@ -87,7 +90,7 @@ internal fun CrewRunAppTile(
         }
         Spacer(Modifier.height(10.dp))
         val band = if (status.action == "Add screenshot") status.copy(run = { screenshotChoice = true }) else status
-        val busy = actions.busySeat == app.id
+        val busy = actions.busySeat == app.id || status.busy
         StatusLine(
             band.icon,
             band.text,
@@ -118,37 +121,63 @@ private fun FeedbackAction(
     app: CrewApp,
     actions: CrewActions,
 ) {
+    val upload = actions.feedbackUpload(app.id)
     if (LocalDensity.current.fontScale > 1.3f) {
         Column(Modifier.fillMaxWidth()) {
-            FeedbackLabel(app, Modifier.fillMaxWidth())
+            FeedbackLabel(app, upload, Modifier.fillMaxWidth())
             Row(Modifier.align(Alignment.End), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                InlineAction("Write", enabled = actions.busySeat != app.id) { actions.onFeedback(app) }
+                FeedbackButton(app, upload, actions)
             }
         }
         return
     }
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        FeedbackLabel(app, Modifier.weight(1f))
-        InlineAction("Write", enabled = actions.busySeat != app.id) { actions.onFeedback(app) }
+        FeedbackLabel(app, upload, Modifier.weight(1f))
+        FeedbackButton(app, upload, actions)
+    }
+}
+
+/** Write, busy while the picture goes up (nothing to tap), or Retry when it did not go. */
+@Composable
+private fun FeedbackButton(
+    app: CrewApp,
+    upload: FeedbackUpload?,
+    actions: CrewActions,
+) {
+    when {
+        upload == null -> InlineAction("Write", enabled = actions.busySeat != app.id) { actions.onFeedback(app) }
+        upload.failed -> InlineAction("Retry") { actions.onRetryFeedback(app) }
+        else -> InlineAction("Write", busy = true) {}
     }
 }
 
 @Composable
 private fun FeedbackLabel(
     app: CrewApp,
+    upload: FeedbackUpload?,
     modifier: Modifier,
 ) {
     Row(modifier, verticalAlignment = Alignment.CenterVertically) {
-        val ink = if (app.feedbackLate) Tt.colors.warn else Tt.colors.text2
-        Icon(Lucide.MessageCircle, null, Modifier.size(14.dp), tint = ink)
+        val failed = upload?.failed == true
+        val ink = if (app.feedbackLate || failed) Tt.colors.warn else Tt.colors.text2
+        val icon =
+            when {
+                failed -> Lucide.TriangleAlert
+                upload != null -> Lucide.CloudUpload
+                else -> Lucide.MessageCircle
+            }
+        Icon(icon, null, Modifier.size(14.dp), tint = ink)
         Spacer(Modifier.width(7.dp))
         Text(
             buildAnnotatedString {
-                if (app.feedbackLate) {
-                    append("Private feedback overdue")
-                } else {
-                    append("Private feedback ")
-                    withStyle(SpanStyle(color = Tt.colors.text3)) { append("by night ${app.feedbackDueDay}") }
+                when {
+                    failed -> append("Picture not sent")
+                    upload != null -> append("Uploading picture")
+                    app.feedbackLate -> append("Private feedback overdue")
+                    else -> {
+                        append("Private feedback ")
+                        withStyle(SpanStyle(color = Tt.colors.text3)) { append("by night ${app.feedbackDueDay}") }
+                    }
                 }
             },
             style = TextStyles.SmallNote,

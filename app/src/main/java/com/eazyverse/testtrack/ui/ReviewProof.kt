@@ -98,24 +98,28 @@ private val ProofTools = setOf(PictureTool.CROP, PictureTool.HIDE)
  * The screenshot in the picture editor before it is used: crop it and hide anything personal. The
  * edited picture is written by [ProofEditing.save] and its file goes to [onKeep], which returns once
  * it is kept (the editor waits for that) and throws when it could not be. Closing without using it
- * keeps the picture as it was.
+ * keeps the picture as it was. The words default to a review screenshot's; another use passes its own.
  */
 @Composable
 internal fun ProofPictureEditor(
     uri: Uri,
     onKeep: suspend (Uri) -> Unit,
     onClose: () -> Unit,
+    title: String = "Check your screenshot",
+    copy: String =
+        "The app's owner sees this picture. If they dispute it, a few reviewers and the TestTrack team see it too. " +
+            "Hide anything personal first.",
+    primaryLabel: String = "Use screenshot",
+    failText: String = "The edited screenshot could not be saved. Try again.",
 ) {
     val context = LocalContext.current
     PictureEditor(
         source = uri,
         tools = ProofTools,
-        title = "Check your screenshot",
-        copy =
-            "The app's owner sees this picture. If they dispute it, a few reviewers and the TestTrack team see it too. " +
-                "Hide anything personal first.",
-        primaryLabel = "Use screenshot",
-        failText = "The edited screenshot could not be saved. Try again.",
+        title = title,
+        copy = copy,
+        primaryLabel = primaryLabel,
+        failText = failText,
         unreadable = "That image could not be opened. Choose another screenshot.",
         write = { ProofEditing.save(context, it) },
         onDone = onKeep,

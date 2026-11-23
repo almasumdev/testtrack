@@ -11,6 +11,8 @@ import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.MessageCircle
 import com.composables.icons.lucide.Moon
 import com.composables.icons.lucide.RefreshCw
+import com.composables.icons.lucide.TriangleAlert
+import com.eazyverse.testtrack.viewmodel.FeedbackUpload
 
 internal data class CrewRunAppState(
     val text: String,
@@ -22,6 +24,8 @@ internal data class CrewRunAppState(
     val explanation: String? = null,
     val alternate: String? = null,
     val runAlternate: () -> Unit = {},
+    /** The action is busy with something already under way, such as a picture going up. */
+    val busy: Boolean = false,
 )
 
 /** Installation and upload facts stay on the phone; obligations still come from the server. */
@@ -125,7 +129,20 @@ internal fun crewRunAppState(
                 explanation = "Your app time is saved. Add an app screenshot to count this test.",
             )
         app.done -> CrewRunAppState("Opened tonight", Lucide.CircleCheck, Tone.OK)
-        app.feedbackLate && kind == CrewRunAppKind.REQUIRED ->
+        app.feedbackLate && kind == CrewRunAppKind.REQUIRED -> lateFeedbackState(app, actions.feedbackUpload(app.id), actions)
+        kind == CrewRunAppKind.OPTIONAL -> CrewRunAppState("Optional tonight", Lucide.Moon, action = "Open", run = { actions.onOpen(app) })
+        else -> CrewRunAppState("Ready to test", Lucide.Moon, action = "Open", run = { actions.onOpen(app) })
+    }
+}
+
+/** The overdue private feedback's band: Write, or the picture going up, or Retry when it did not go. */
+private fun lateFeedbackState(
+    app: CrewApp,
+    upload: FeedbackUpload?,
+    actions: CrewActions,
+): CrewRunAppState =
+    when {
+        upload == null ->
             CrewRunAppState(
                 "Feedback overdue",
                 Lucide.MessageCircle,
@@ -135,7 +152,22 @@ internal fun crewRunAppState(
                 feedbackAction = true,
                 explanation = "Give private feedback on Google Play before testing can count.",
             )
-        kind == CrewRunAppKind.OPTIONAL -> CrewRunAppState("Optional tonight", Lucide.Moon, action = "Open", run = { actions.onOpen(app) })
-        else -> CrewRunAppState("Ready to test", Lucide.Moon, action = "Open", run = { actions.onOpen(app) })
+        upload.failed ->
+            CrewRunAppState(
+                "Picture not sent",
+                Lucide.TriangleAlert,
+                Tone.WARN,
+                "Retry",
+                { actions.onRetryFeedback(app) },
+                feedbackAction = true,
+                explanation = "Your feedback picture is saved on this phone. Retry to send it.",
+            )
+        else ->
+            CrewRunAppState(
+                "Uploading picture",
+                Lucide.CloudUpload,
+                action = "Write",
+                feedbackAction = true,
+                busy = true,
+            )
     }
-}
