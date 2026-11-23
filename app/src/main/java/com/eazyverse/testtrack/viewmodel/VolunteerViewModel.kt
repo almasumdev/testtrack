@@ -69,6 +69,10 @@ enum class SpotState {
     }
 }
 
+/** The refusal of a second volunteer crew, from a server that allows only one at a time. */
+internal val ApiError.isAlreadyVolunteering: Boolean
+    get() = status == 409 && (code == "already_volunteering" || details["reason"] == "already_volunteering")
+
 /** The order the list shows: spots to take first, then the reader's own, then the rest. */
 private val SPOT_ORDER = listOf(SpotState.OPEN, SpotState.VOLUNTEERING, SpotState.FULL, SpotState.MEMBER)
 
@@ -182,7 +186,12 @@ class VolunteerViewModel : ViewModel() {
             } catch (e: CancellationException) {
                 throw e
             } catch (e: ApiError) {
-                Snacks.error(e.message)
+                // A server from before several crews at once refuses a second one. Not a fault.
+                if (e.isAlreadyVolunteering) {
+                    Snacks.info("You can volunteer in one crew at a time for now.")
+                } else {
+                    Snacks.error(e.message)
+                }
                 load()
             } catch (_: Exception) {
                 Snacks.error("Couldn't reach TestTrack. Check your connection.") { join(app, spot, onDone) }

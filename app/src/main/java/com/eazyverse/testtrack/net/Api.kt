@@ -41,6 +41,7 @@ object Api {
             .readTimeout(60, TimeUnit.SECONDS)
             .callTimeout(90, TimeUnit.SECONDS)
             .addInterceptor(EmulatorGate.stopWhileBlocked)
+            .addInterceptor(ApiFeatures.header)
             .build()
 
     /**
