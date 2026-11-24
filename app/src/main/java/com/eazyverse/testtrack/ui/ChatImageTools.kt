@@ -249,7 +249,9 @@ internal fun CropBar(
 /**
  * A chip on a photo: the crop bar's shapes, or [PartSize.SMALL] laid over a picture's corner. A dark
  * see-through fill with the photo's light ink, or when [selected] the light fill with dark ink.
- * Regular is 34dp with 14sp bold words; small is 30dp with 12.5sp. An optional [icon] leads them.
+ * Regular is 34dp with 14sp bold words; small is 30dp with 12.5sp. An optional [icon] leads them, or
+ * a [leading] mark of its own in its place. [showLabel] false leaves only the icon, with the label
+ * kept for screen readers; [clickLabel] is what a tap is announced as.
  */
 @Composable
 internal fun PhotoChip(
@@ -258,31 +260,49 @@ internal fun PhotoChip(
     icon: ImageVector? = null,
     selected: Boolean = false,
     size: PartSize = PartSize.REGULAR,
+    leading: (@Composable () -> Unit)? = null,
+    showLabel: Boolean = true,
+    clickLabel: String? = null,
     onClick: () -> Unit,
 ) {
     val t = Tt.colors
     val small = size == PartSize.SMALL
     val ink = if (selected) t.photo else t.onPhoto
+    val iconOnly = !showLabel && icon != null && leading == null
     Row(
         modifier
             .heightIn(min = if (small) 30.dp else 34.dp)
             .clip(RoundedCornerShape(percent = 50))
             .background(if (selected) t.onPhoto else t.photoScrim)
-            .clickable(role = Role.Button, onClick = onClick)
-            .padding(horizontal = if (small) 12.dp else 14.dp),
+            .clickable(role = Role.Button, onClickLabel = clickLabel, onClick = onClick)
+            .padding(
+                horizontal =
+                    if (iconOnly) {
+                        9.dp
+                    } else if (small) {
+                        12.dp
+                    } else {
+                        14.dp
+                    },
+            ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (icon != null) {
-            Icon(icon, null, Modifier.size(if (small) 14.dp else 15.dp), tint = ink)
+        if (leading != null) {
+            leading()
             Spacer(Modifier.width(6.dp))
+        } else if (icon != null) {
+            Icon(icon, if (iconOnly) label else null, Modifier.size(if (small) 14.dp else 15.dp), tint = ink)
+            if (!iconOnly) Spacer(Modifier.width(6.dp))
         }
-        Text(
-            label,
-            style = if (small) TextStyles.PhotoChipSmall else MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.Bold,
-            color = ink,
-            maxLines = 1,
-        )
+        if (!iconOnly) {
+            Text(
+                label,
+                style = if (small) TextStyles.PhotoChipSmall else MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                color = ink,
+                maxLines = 1,
+            )
+        }
     }
 }
 

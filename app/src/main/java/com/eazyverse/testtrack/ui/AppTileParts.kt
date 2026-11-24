@@ -120,7 +120,7 @@ internal fun SourceMark(
 // The Play logo as four facets on a 24 grid: blue on the left, green above, red below and the
 // yellow tip between them. Colours come from the brand constants in Tokens.kt.
 @Composable
-private fun rememberPlayLogo(): ImageVector =
+internal fun rememberPlayLogo(): ImageVector =
     remember {
         ImageVector
             .Builder("PlayLogo", 12.dp, 12.dp, 24f, 24f)

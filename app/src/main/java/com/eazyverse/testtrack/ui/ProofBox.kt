@@ -1,6 +1,7 @@
 package com.eazyverse.testtrack.ui
 
 import android.net.Uri
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -13,12 +14,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -32,7 +35,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil.compose.SubcomposeAsyncImage
 import com.composables.icons.lucide.Camera
 import com.composables.icons.lucide.EyeOff
@@ -42,9 +49,9 @@ import com.composables.icons.lucide.X
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /*
- * The Send page's picture box, across the page. Empty, it is a dashed frame that says what goes in
- * it and offers the two ways to get one; a tap anywhere on it captures. Filled, the picture fills
- * it, with the ways to change it laid over the picture's corners.
+ * The Send page's picture box, across the page. Empty, it is a filled frame with one main action,
+ * taking the picture on Play, and a gallery row under it when the page allows one. Filled, the
+ * picture fills it, with the ways to change it laid over the picture's corners.
  */
 
 private val BoxHeight = 160.dp
@@ -53,7 +60,7 @@ private val BoxShape = RoundedCornerShape(14.dp)
 /**
  * The screenshot to send, or the place for it. [onGallery] null leaves only Capture, where the
  * picture must be taken now on Play. Filled: [onRemove] is the ×, [onHideDetails] the chip that
- * covers anything personal, [onRetake] captures again, and [onOpen] a tap on the picture itself.
+ * covers anything personal, [onRetake] captures again on Play, [onGallery] (when not null) replaces it from the gallery, and [onOpen] a tap on the picture itself.
  */
 @Composable
 internal fun ProofBox(
@@ -75,7 +82,7 @@ internal fun ProofBox(
     if (picture == null && working == null) {
         EmptyProofBox(onCapture, onGallery, modifier)
     } else {
-        FilledProofBox(picture, onRemove, onHideDetails, onRetake, onOpen, alignment, working, dimOnly, modifier)
+        FilledProofBox(picture, onRemove, onHideDetails, onRetake, onGallery, onOpen, alignment, working, dimOnly, modifier)
     }
 }
 
@@ -90,33 +97,75 @@ private fun EmptyProofBox(
         modifier
             .fillMaxWidth()
             .height(BoxHeight)
-            .dashed(t.glassBorderStrong, 14.dp, width = 1.5.dp)
             .clip(BoxShape)
-            .clickable(role = Role.Button, onClickLabel = "Capture on Play", onClick = onCapture),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
+            .background(t.glass2)
+            .border(1.dp, t.glassBorder, BoxShape),
     ) {
-        Box(Modifier.semantics { contentDescription = "No screenshot yet" }) {
-            IconTile(Lucide.Camera, 40.dp, glyph = 20.dp)
-        }
-        Spacer(Modifier.height(12.dp))
-        Row(Modifier.padding(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            RowPill(
-                "Capture on Play",
-                PillKind.SOFT,
-                leading = Lucide.Camera,
-                size = PillSize.SMALL,
-                touchTarget = false,
-                onClick = onCapture,
+        Column(
+            Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .clickable(role = Role.Button, onClickLabel = "Capture on Play", onClick = onCapture)
+                .padding(horizontal = 12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            Box(Modifier.semantics { contentDescription = "No screenshot yet" }) {
+                Box(Modifier.size(48.dp).background(t.accent, CircleShape), contentAlignment = Alignment.Center) {
+                    Icon(Lucide.Camera, null, Modifier.size(22.dp), tint = t.onAccent)
+                }
+                Box(
+                    Modifier
+                        .align(Alignment.BottomEnd)
+                        .offset(4.dp, 4.dp)
+                        .size(20.dp)
+                        .background(t.sheet, CircleShape)
+                        .border(2.dp, t.glass2, CircleShape),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Image(rememberPlayLogo(), null, Modifier.size(11.dp))
+                }
+            }
+            Spacer(Modifier.height(8.dp))
+            Text(
+                "Take it on Google Play",
+                style = MaterialTheme.typography.titleSmall,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = t.text,
+                maxLines = 1,
             )
-            if (onGallery != null) {
-                RowPill(
-                    "Gallery",
-                    PillKind.GHOST,
-                    leading = Lucide.Image,
-                    size = PillSize.SMALL,
-                    touchTarget = false,
-                    onClick = onGallery,
+            Spacer(Modifier.height(2.dp))
+            Text(
+                "Play opens with a camera button on top",
+                style = MaterialTheme.typography.bodySmall,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                color = t.text3,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        if (onGallery != null) {
+            HorizontalDivider(thickness = 1.dp, color = t.glassBorder)
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .height(44.dp)
+                    .clickable(role = Role.Button, onClick = onGallery),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(Lucide.Image, null, Modifier.size(16.dp), tint = t.accentInk)
+                Spacer(Modifier.width(7.dp))
+                Text(
+                    "Pick from gallery",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = t.accentInk,
+                    maxLines = 1,
                 )
             }
         }
@@ -129,6 +178,7 @@ private fun FilledProofBox(
     onRemove: () -> Unit,
     onHideDetails: () -> Unit,
     onRetake: () -> Unit,
+    onGallery: (() -> Unit)?,
     onOpen: (() -> Unit)?,
     alignment: Alignment,
     working: String?,
@@ -176,13 +226,34 @@ private fun FilledProofBox(
                 size = PartSize.SMALL,
                 onClick = onHideDetails,
             )
-            PhotoChip(
-                "Retake",
+            // Hide details keeps the left. With a gallery too, the two on the right get short so all three
+            // fit a narrow phone: the gallery chip is only its icon and Retake drops "on Play" from its words.
+            Row(
                 Modifier.align(Alignment.BottomEnd).padding(8.dp),
-                icon = Lucide.Camera,
-                size = PartSize.SMALL,
-                onClick = onRetake,
-            )
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                if (onGallery != null) {
+                    PhotoChip(
+                        "Gallery",
+                        icon = Lucide.Image,
+                        size = PartSize.SMALL,
+                        showLabel = false,
+                        clickLabel = "Replace from the gallery",
+                        onClick = onGallery,
+                    )
+                }
+                PhotoChip(
+                    if (onGallery != null) "Retake" else "Retake on Play",
+                    size = PartSize.SMALL,
+                    leading = {
+                        Box(Modifier.size(16.dp).background(t.onPhoto, CircleShape), contentAlignment = Alignment.Center) {
+                            Image(rememberPlayLogo(), null, Modifier.size(10.dp))
+                        }
+                    },
+                    clickLabel = "Retake on Play",
+                    onClick = onRetake,
+                )
+            }
         }
         if (working != null) WorkingOver(working, dimOnly)
     }
