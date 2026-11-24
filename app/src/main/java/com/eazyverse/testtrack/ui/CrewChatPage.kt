@@ -53,6 +53,7 @@ import com.eazyverse.testtrack.viewmodel.CrewChatViewModel
 import com.eazyverse.testtrack.viewmodel.delete
 import com.eazyverse.testtrack.viewmodel.retry
 import com.eazyverse.testtrack.viewmodel.send
+import com.eazyverse.testtrack.viewmodel.unblock
 
 /**
  * A crew's chat on its own page: the wiring. The poll runs while it is on screen; leaving reads
@@ -81,6 +82,7 @@ fun CrewChatScreen(
     var deleting by remember { mutableStateOf<List<ChatLine>>(emptyList()) }
     var profile by remember { mutableStateOf<CrewTester?>(null) }
     var picture by remember { mutableStateOf<ChatLine?>(null) }
+    var safety by remember { mutableStateOf<ChatSafetyAsk?>(null) }
     var timeShown by remember { mutableStateOf<String?>(null) }
     var jump by remember { mutableStateOf<ChatJump?>(null) }
     val hour24 = DateFormat.is24HourFormat(context)
@@ -168,6 +170,15 @@ fun CrewChatScreen(
                     lines.forEach(vm::delete)
                 }
             },
+            onReportPicked = {
+                ChatSelect.lines(picked, vm.lines, writable).singleOrNull()?.takeIf(ChatSelect::canReport)?.let { line ->
+                    line.authorId?.takeIf { it.isNotBlank() }?.let {
+                        safety =
+                            ChatSafetyAsk(ChatSafetyAsk.Kind.REPORT, it, view.authorName(line), line)
+                    }
+                }
+                picked = emptySet()
+            },
             onFace = { seat -> profile = chatProfileOf(seat, vm.people[seat], crew) },
             onRetryLine = { vm.retry(it, context) },
             onPicture = { picture = it },
@@ -199,7 +210,29 @@ fun CrewChatScreen(
             onDismiss = { deleting = emptyList() },
         )
     }
-    profile?.let { CrewMemberProfile(it) { profile = null } }
+    profile?.let { who ->
+        // Only other people: their account comes with the chat's people, so there is nothing to act on without it.
+        val userId = vm.people[who.id]?.userId?.takeIf { it.isNotBlank() && !who.mine }
+        val blocked = userId != null && userId in vm.blocked
+
+        fun ask(kind: ChatSafetyAsk.Kind) {
+            profile = null
+            safety = userId?.let { ChatSafetyAsk(kind, it, who.name) }
+        }
+        CrewMemberProfile(
+            who,
+            onReport = userId?.let { { ask(ChatSafetyAsk.Kind.REPORT) } },
+            onBlock = userId?.takeIf { !blocked }?.let { { ask(ChatSafetyAsk.Kind.BLOCK) } },
+            onUnblock =
+                userId?.takeIf { blocked }?.let {
+                    {
+                        profile = null
+                        vm.unblock(it)
+                    }
+                },
+        ) { profile = null }
+    }
+    ChatSafetyAsks(vm, safety) { safety = null }
     picture?.let { line ->
         val shown = line.picture ?: return@let
         val who = if (line.mine) "You" else view.authorName(line)

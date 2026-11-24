@@ -130,6 +130,8 @@ internal class ChatActions(
     val onReplyPicked: () -> Unit = {},
     val onCopyPicked: () -> Unit = {},
     val onDeletePicked: () -> Unit = {},
+    /** Report the one picked message. */
+    val onReportPicked: () -> Unit = {},
     val onFace: (String) -> Unit = {},
     val onRetryLine: (ChatLine) -> Unit = {},
     val onPicture: (ChatLine) -> Unit = {},

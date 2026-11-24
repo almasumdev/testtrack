@@ -161,7 +161,7 @@ internal fun OverlayHost(
                 onConfirm = close,
                 onDismiss = close,
             )
-        is Overlay.Profile -> CrewMemberProfile(chatProfileOf(overlay.seat, s.people[overlay.seat], s.run(0)), close)
+        is Overlay.Profile -> CrewMemberProfile(chatProfileOf(overlay.seat, s.people[overlay.seat], s.run(0)), onDismiss = close)
         is Overlay.Viewer -> {
             val line = overlay.line
             val shown = line.picture ?: return

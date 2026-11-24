@@ -31,6 +31,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
@@ -41,8 +42,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.BadgeCheck
 import com.composables.icons.lucide.Ban
+import com.composables.icons.lucide.Clock
 import com.composables.icons.lucide.HandHeart
 import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.UserX
 import com.eazyverse.testtrack.domain.ChatKind
 import com.eazyverse.testtrack.domain.ChatLine
 import com.eazyverse.testtrack.domain.ChatRow
@@ -238,7 +241,10 @@ internal fun ChatMessage(
                         ),
                 ) {
                     when {
-                        line.deleted -> DeletedStub(line, first, last)
+                        line.deleted -> NoteStub(line, first, last, Lucide.Ban, "Message deleted")
+                        line.blocked -> NoteStub(line, first, last, Lucide.UserX, "You blocked this member.")
+                        // Its author still reads their own words; everyone else gets the stub.
+                        line.held && !line.mine -> NoteStub(line, first, last, Lucide.Clock, "Held for the team to check.")
                         picture != null -> ChatPictureBubble(line, picture, first, last, view, quoteTap)
                         else -> TextBubble(line, first, last, view, quoteTap, team)
                     }
@@ -329,14 +335,17 @@ private fun TextBubble(
 }
 
 /**
- * A message taken back: its outline and a word. Sized like a normal one-line bubble of the same
- * author, with the same padding and corners, so it neither shrinks nor crowds the next message.
+ * A message that shows no words (taken back, from a blocked member, or held for the team): its
+ * outline, a mark and a line. Sized like a normal one-line bubble of the same author, with the
+ * same padding and corners, so it neither shrinks nor crowds the next message.
  */
 @Composable
-private fun DeletedStub(
+private fun NoteStub(
     line: ChatLine,
     first: Boolean,
     last: Boolean,
+    icon: ImageVector,
+    text: String,
 ) {
     val t = Tt.colors
     val shape = bubbleShape(line.mine, first, last)
@@ -347,8 +356,8 @@ private fun DeletedStub(
             .padding(horizontal = BubblePadX, vertical = BubblePadY),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(Lucide.Ban, null, Modifier.size(14.dp), tint = t.text4)
+        Icon(icon, null, Modifier.size(14.dp), tint = t.text4)
         Spacer(Modifier.width(6.dp))
-        Text("Message deleted", style = chatStyle(15f, 20f), fontStyle = FontStyle.Italic, color = t.text4)
+        Text(text, style = chatStyle(15f, 20f), fontStyle = FontStyle.Italic, color = t.text4)
     }
 }

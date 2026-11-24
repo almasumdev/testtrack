@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,10 +26,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.composables.icons.lucide.Ban
 import com.composables.icons.lucide.Calendar
 import com.composables.icons.lucide.CircleCheck
 import com.composables.icons.lucide.CircleX
 import com.composables.icons.lucide.Clock
+import com.composables.icons.lucide.Flag
 import com.composables.icons.lucide.HandHeart
 import com.composables.icons.lucide.LogOut
 import com.composables.icons.lucide.Lucide
@@ -40,11 +43,16 @@ import com.eazyverse.testtrack.ui.theme.tabular
  * Who a tester is, from a tap on their face in the grid or on their tile: their face and name,
  * their email when the server shares it (selectable, to copy), the app they run in this crew, and
  * where their run is, as a few fact chips. The dialog's lead is the person, so it has no title,
- * and only Close. A tester whose app was taken out is drawn faded, face and app.
+ * and only Close. A tester whose app was taken out is drawn faded, face and app. Where the page
+ * can report or block (the chat's, for other people), [onReport] and [onBlock] or [onUnblock]
+ * sit as quiet actions under the facts.
  */
 @Composable
 internal fun CrewMemberProfile(
     member: CrewTester,
+    onReport: (() -> Unit)? = null,
+    onBlock: (() -> Unit)? = null,
+    onUnblock: (() -> Unit)? = null,
     onDismiss: () -> Unit,
 ) {
     val faded = if (member.out) Modifier.alpha(OUT_ALPHA) else Modifier
@@ -59,6 +67,25 @@ internal fun CrewMemberProfile(
             Spacer(Modifier.height(12.dp))
         }
         ProfileFacts(member)
+        if (onReport != null || onBlock != null || onUnblock != null) {
+            Spacer(Modifier.height(4.dp))
+            ProfileSafety(onReport, onBlock, onUnblock)
+        }
+    }
+}
+
+/** Report and Block (or Unblock) in the quiet ink, their padding going out into the dialog's margin. */
+@Composable
+private fun ProfileSafety(
+    onReport: (() -> Unit)?,
+    onBlock: (() -> Unit)?,
+    onUnblock: (() -> Unit)?,
+) {
+    val quiet = Tt.colors.text3
+    Row(Modifier.offset(x = (-8).dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        onReport?.let { InlineAction("Report", leading = Lucide.Flag, color = quiet, onClick = it) }
+        onBlock?.let { InlineAction("Block", leading = Lucide.Ban, color = quiet, onClick = it) }
+        onUnblock?.let { InlineAction("Unblock", leading = Lucide.Ban, color = quiet, onClick = it) }
     }
 }
 

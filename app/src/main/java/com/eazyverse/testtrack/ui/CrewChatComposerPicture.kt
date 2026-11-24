@@ -3,8 +3,10 @@ package com.eazyverse.testtrack.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -42,6 +44,11 @@ internal fun PictureButton(
     ring: Color,
 ) {
     val t = Tt.colors
+    // Pictures are off in this chat: no button, and the pill keeps the same margin it has at its end.
+    if (view.limits.picturesPerDay <= 0) {
+        Spacer(Modifier.width(16.dp))
+        return
+    }
     val canAttach = ChatAllowance.canAttach(view.messagesLeft, view.picturesLeft, view.canPost)
     var tip by remember { mutableStateOf(false) }
     Box {
@@ -65,7 +72,6 @@ internal fun PictureButton(
 private fun pictureTip(view: ChatView): String =
     when {
         view.messagesLeft <= 0 -> "No messages left today. More after midnight."
-        view.limits.picturesPerDay <= 0 -> "Pictures are off in this chat."
         else -> "No pictures left today. You get ${view.limits.picturesPerDay} more after midnight."
     }
 

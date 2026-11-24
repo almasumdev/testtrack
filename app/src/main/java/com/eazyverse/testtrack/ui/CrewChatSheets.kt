@@ -34,6 +34,7 @@ import com.composables.icons.lucide.Bell
 import com.composables.icons.lucide.BellOff
 import com.composables.icons.lucide.Copy
 import com.composables.icons.lucide.EllipsisVertical
+import com.composables.icons.lucide.Flag
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Reply
 import com.composables.icons.lucide.Trash2
@@ -112,7 +113,7 @@ private fun MenuRow(
 
 /**
  * The bar while messages are picked, in place of the page's own: an X to let them go, how many are
- * picked, and what can be done with them. Reply is for one message; Copy and Delete work on
+ * picked, and what can be done with them. Reply and Report are for one message; Copy and Delete work on
  * many (Delete only when every one is yours, and "Remove" when none of them ever sent).
  */
 @Composable
@@ -124,6 +125,7 @@ internal fun PickBar(
     PageBar("${picks.count} selected", actions.onClearSelection, close = true) {
         if (picks.reply) PickButton(Lucide.Reply, "Reply", t.text2, actions.onReplyPicked)
         if (picks.copy) PickButton(Lucide.Copy, "Copy", t.text2, actions.onCopyPicked)
+        if (picks.report) PickButton(Lucide.Flag, "Report", t.text2, actions.onReportPicked)
         if (picks.delete) PickButton(Lucide.Trash2, if (picks.removeOnly) "Remove" else "Delete", t.bad, actions.onDeletePicked)
     }
 }
