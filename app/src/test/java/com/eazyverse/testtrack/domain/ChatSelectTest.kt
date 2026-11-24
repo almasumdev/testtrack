@@ -117,8 +117,9 @@ class ChatSelectTest {
         assertFalse(ChatSelect.canReport(theirs.copy(kind = ChatKind.BOT)))
         assertFalse(ChatSelect.canReport(theirs.copy(kind = ChatKind.TEAM)))
         assertFalse(ChatSelect.canReport(theirs.copy(blocked = true)))
-        // A held stub is still someone's message the team may want to hear about.
-        assertTrue(ChatSelect.canReport(theirs.copy(held = true)))
+        // Someone else's held stub has no words for the reader: nothing to report from here.
+        assertFalse(ChatSelect.canReport(theirs.copy(held = true)))
+        assertTrue(ChatSelect.canReport(theirs.copy(text = "", held = false)))
     }
 
     @Test
@@ -139,6 +140,11 @@ class ChatSelectTest {
         assertFalse(ChatSelect.canReply(blocked, writable = true))
         assertFalse(ChatSelect.canReply(held, writable = true))
         assertFalse(ChatSelect.canPick(blocked, writable = true))
-        assertTrue(ChatSelect.canPick(held, writable = true))
+        assertFalse(ChatSelect.canPick(held, writable = true))
+        assertFalse(ChatSelect.canCopy(blocked.copy(text = "words")))
+        assertFalse(ChatSelect.canCopy(held.copy(text = "words")))
+        assertFalse(ChatSelect.canReport(held))
+        // Your own held message is still readable to you.
+        assertTrue(ChatSelect.canCopy(mine.copy(held = true)))
     }
 }

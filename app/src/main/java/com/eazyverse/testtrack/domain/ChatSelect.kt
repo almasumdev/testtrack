@@ -29,14 +29,17 @@ object ChatSelect {
         writable: Boolean,
     ): Boolean = writable && !line.deleted && !line.blocked && !line.held && line.send == SendState.SENT
 
-    fun canCopy(line: ChatLine): Boolean = !line.deleted && line.text.isNotBlank()
+    /** A stub has no words for the reader: one from a blocked member, or someone else's held for the team. */
+    fun isStub(line: ChatLine): Boolean = line.blocked || (line.held && !line.mine)
+
+    fun canCopy(line: ChatLine): Boolean = !line.deleted && !isStub(line) && line.text.isNotBlank()
 
     /**
      * Someone else's message that reached the server: not a bot or team line, not deleted, not one
      * from a member the reader blocked. Reading is enough, so a closed chat can report too.
      */
     fun canReport(line: ChatLine): Boolean =
-        !line.mine && line.kind == ChatKind.USER && !line.deleted && !line.blocked && line.send == SendState.SENT
+        !line.mine && line.kind == ChatKind.USER && !line.deleted && !isStub(line) && line.send == SendState.SENT
 
     /** Your own, not still on its way: a message that is sending can't be called back yet. */
     fun canDelete(line: ChatLine): Boolean = line.mine && !line.deleted && line.send != SendState.SENDING

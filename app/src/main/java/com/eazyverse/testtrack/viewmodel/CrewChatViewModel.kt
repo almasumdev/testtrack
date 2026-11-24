@@ -114,6 +114,9 @@ class CrewChatViewModel : ViewModel() {
     var blocked by mutableStateOf<Set<String>>(emptySet())
         internal set
 
+    /** Counts block and unblock made here, so an older read of the list does not overwrite a newer change. */
+    internal var blockedChanges = 0
+
     /** The reader has not agreed to the chat rules yet. A send then asks first. */
     var rulesNeeded by mutableStateOf(false)
         internal set
@@ -167,6 +170,7 @@ class CrewChatViewModel : ViewModel() {
         draft = ChatDraft()
         replyTo = null
         blocked = emptySet()
+        blockedChanges++
         rulesAsk = false
         afterRules = null
         rulesDeclined = null
@@ -186,6 +190,8 @@ class CrewChatViewModel : ViewModel() {
         ChatSignals.openCrew = crewId
         ChatNotifications.cancel(context.applicationContext, crewId)
         if (poller?.isActive == true) return
+        // Back on screen: Settings may have unblocked someone since. The first read does its own.
+        if (loaded) loadBlocked()
         poller = viewModelScope.launch { loop() }
     }
 

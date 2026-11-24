@@ -177,7 +177,7 @@ internal fun ChatMessage(
     val swipe = remember { ReplySwipe() }
     val swipeable = !picking && line.kind != ChatKind.BOT && ChatSelect.canReply(line, view.writable)
     val picture = line.picture
-    val opens = picture != null && !line.deleted && !picture.expired && line.send == SendState.SENT
+    val opens = picture != null && !line.deleted && !ChatSelect.isStub(line) && !picture.expired && line.send == SendState.SENT
     Box(
         Modifier
             .fillMaxWidth()

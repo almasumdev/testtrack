@@ -430,7 +430,7 @@ class ReviewViewModel : ViewModel() {
     internal fun run(
         /** Something the reviewer asked for, which waits for a refresh under way rather than being dropped. */
         waits: Boolean = false,
-        /** A background look: a refusal goes to [notice], a failure on this side only to the log. */
+        /** A background look: a refusal or a failure on this side goes to [notice]; a lost connection stays quiet. */
         quiet: Boolean = false,
         onOffline: () -> Unit = {},
         block: suspend () -> Unit,
@@ -459,7 +459,8 @@ class ReviewViewModel : ViewModel() {
                 val said = "Something went wrong. Try again in a moment."
                 when {
                     job == null -> failure = said
-                    !quiet -> Snacks.error(said)
+                    quiet -> notice = "Couldn't refresh this review. Open it again to try once more."
+                    else -> Snacks.error(said)
                 }
             } finally {
                 busy = false

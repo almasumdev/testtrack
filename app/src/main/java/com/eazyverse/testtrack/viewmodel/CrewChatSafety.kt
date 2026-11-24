@@ -31,11 +31,14 @@ private const val REPORTED_NOT_BLOCKED = "We got your report. Blocking them didn
 /** What a line waiting for the rules says if they are not agreed to. */
 internal const val RULES_DECLINED_LINE = "Agree to the chat rules to send."
 
-/** Who this reader blocked, read when the chat opens. Quiet: the stubs themselves come with the chat. */
+/** Who this reader blocked, read when the chat opens and each time it comes back on screen. Quiet: the stubs themselves come with the chat. */
 internal fun CrewChatViewModel.loadBlocked() {
+    val seen = blockedChanges
     viewModelScope.launch {
         try {
-            blocked = Api.blocks().mapTo(LinkedHashSet()) { it.userId }
+            val list = Api.blocks().mapTo(LinkedHashSet()) { it.userId }
+            // A block or unblock made meanwhile is newer than this list: it stands.
+            if (seen == blockedChanges) blocked = list
         } catch (e: CancellationException) {
             throw e
         } catch (_: Exception) {
@@ -128,6 +131,7 @@ fun CrewChatViewModel.block(userId: String) {
             return@launch
         }
         blocked = blocked + userId
+        blockedChanges++
         reloaded(changed = true)
     }
 }
@@ -145,6 +149,7 @@ fun CrewChatViewModel.unblock(userId: String) {
             return@launch
         }
         blocked = blocked - userId
+        blockedChanges++
         reloaded(changed = true)
     }
 }
@@ -154,6 +159,7 @@ private suspend fun CrewChatViewModel.tryBlock(userId: String): Boolean =
     try {
         Api.block(userId)
         blocked = blocked + userId
+        blockedChanges++
         true
     } catch (e: CancellationException) {
         throw e
@@ -198,6 +204,9 @@ fun CrewChatViewModel.acceptRules(then: (() -> Unit)? = null) {
                 Snacks.error(e.message)
                 declineRules()
             } else {
+                // The line that was waiting is marked not sent, so it never hangs as sending. The
+                // snack's retry still takes the ask on from here; so does a retry of the line.
+                rulesDeclined?.invoke()
                 Snacks.offline { acceptRules(then) }
             }
             return@launch
