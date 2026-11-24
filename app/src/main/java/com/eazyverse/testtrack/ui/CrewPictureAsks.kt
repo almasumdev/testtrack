@@ -25,10 +25,7 @@ internal fun CrewPictureAsks(vm: CrewViewModel) {
     val askCapture =
         rememberCaptureConsent(
             onGranted = { code, data -> pictures.start(activity, code, data) },
-            onRefused = {
-                pictures.skip()
-                Snacks.info("Tonight needs a picture of each app. Tap Open all when you're ready.")
-            },
+            onRefused = { pictures.skip() },
         )
 
     // A round that arrives with the explainer already hidden goes straight to Android's own ask.

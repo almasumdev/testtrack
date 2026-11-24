@@ -11,6 +11,7 @@ import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiError
 import com.eazyverse.testtrack.net.PrivateVisitIn
 import com.eazyverse.testtrack.net.privateVisit
+import com.eazyverse.testtrack.ui.Snacks
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -96,7 +97,7 @@ private suspend fun NightRound.recordVisit(
     } catch (e: ApiError) {
         if (RoundRules.refusedOpen(e.status, e.isAuth)) Outcome.Refused(e.message) else Outcome.Failed(e.message)
     } catch (_: Exception) {
-        Outcome.Failed("We could not reach TestTrack. Check your connection.")
+        Outcome.Failed(Snacks.OFFLINE_LINE)
     }
 }
 

@@ -42,9 +42,11 @@ object RoundRules {
      */
     const val OWN_RESUME_MS = 1_000L
 
-    /** The round's last line: tonight done, or how many were left out and why the first was. */
-    fun lastWord(skipped: List<String>): String =
-        if (skipped.isEmpty()) "That is tonight done." else "${skipped.size} left. ${skipped.first()}"
+    /** How many apps a round left out. */
+    fun skippedLead(count: Int) = if (count == 1) "1 app skipped." else "$count apps skipped."
+
+    /** The round's last line when apps were left out: how many, and why the first was. */
+    fun lastWord(skipped: List<String>): String = if (skipped.isEmpty()) "" else "${skippedLead(skipped.size)} ${skipped.first()}"
 }
 
 /**

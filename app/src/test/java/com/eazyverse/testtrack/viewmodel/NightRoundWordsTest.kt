@@ -4,6 +4,7 @@ import com.eazyverse.testtrack.data.RoundStore
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.LocalDateTime
@@ -38,20 +39,21 @@ class NightRoundWordsTest {
     }
 
     @Test
-    fun last_word_is_plain_when_every_picture_is_in() {
-        assertEquals("That is tonight done.", roundLastWord(emptyList(), 0))
+    fun nothing_is_said_when_every_app_counted_with_its_picture() {
+        val stop = RoundStore.Stop("s1", "com.a", "A")
+        assertNull(lastSnack(RoundStore.Round(listOf(stop), 0, 5L)))
     }
 
     @Test
     fun last_word_names_missing_pictures_instead_of_done() {
-        assertEquals("Counted, but 1 picture is missing. Add it from the Crew page.", roundLastWord(emptyList(), 1))
-        assertEquals("Counted, but 3 pictures are missing. Add them from the Crew page.", roundLastWord(emptyList(), 3))
+        assertEquals("Counted, but 1 picture is missing. Add it from its row.", roundLastWord(emptyList(), 1))
+        assertEquals("Counted, but 3 pictures are missing. Add them from their rows.", roundLastWord(emptyList(), 3))
     }
 
     @Test
     fun last_word_keeps_the_skipped_line_and_adds_missing_pictures() {
         assertEquals(
-            "1 left. Update it first. 2 pictures are missing. Add them from the Crew page.",
+            "1 app skipped. Update it first. 2 pictures are missing. Add them from their rows.",
             roundLastWord(listOf("Update it first."), 2),
         )
     }

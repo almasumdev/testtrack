@@ -151,7 +151,7 @@ object NightRound {
         tick(context)
         if (pictures) shoot(context, stop, round?.since ?: return)
         if (!InstalledApps.launch(context, stop.packageName)) {
-            pendingSay = Snack("${stop.label} is not on this phone. Install it from its row first.")
+            pendingSay = Snack("${stop.label} is not on this phone. Install it from its row first.", SnackTone.ERROR)
             end(context)
             bringBack(context)
         }

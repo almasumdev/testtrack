@@ -96,7 +96,7 @@ class OpenAllTest {
 
     @Test
     fun `the round's last line says how many were left`() {
-        assertEquals("That is tonight done.", RoundRules.lastWord(emptyList()))
-        assertEquals("1 left. Update Steps first.", RoundRules.lastWord(listOf("Update Steps first.")))
+        assertEquals("1 app skipped. Update Steps first.", RoundRules.lastWord(listOf("Update Steps first.")))
+        assertEquals("2 apps skipped. Update Steps first.", RoundRules.lastWord(listOf("Update Steps first.", "Other.")))
     }
 }

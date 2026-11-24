@@ -112,7 +112,7 @@ class NightPictures(
     ) {
         scope.launch {
             if (!VisitPictures.addPicked(activity, seatId, label, uri, day)) {
-                Snacks.error("Couldn't read that picture. Choose another.")
+                Snacks.error(Snacks.PICTURE_UNREADABLE)
                 return@launch
             }
             send(activity)
