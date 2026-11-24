@@ -59,7 +59,19 @@ suspend fun CrewChatViewModel.sendPicture(
 ): Boolean {
     val captionProblem = ChatAllowance.problem(caption, limits, packages)
     if (!ChatAllowance.canPickPicture(captionProblem, messagesLeft, picturesLeft, canPost)) {
-        if (picturesLeft <= 0) Snacks.info("No pictures left today.") else Snacks.error("That can't be sent right now.")
+        when {
+            !canPost ->
+                Snacks.info(
+                    when (whyNot) {
+                        "out" -> "Your app is out of this run, so you can't post."
+                        "paused" -> "The team has paused your messages in this chat."
+                        else -> "You can't post in this chat right now."
+                    },
+                )
+            picturesLeft <= 0 -> Snacks.info("No pictures left today.")
+            messagesLeft <= 0 -> Snacks.info("No messages left today.")
+            else -> Snacks.error("Fix the caption first.")
+        }
         return false
     }
     val app = context.applicationContext
@@ -131,7 +143,7 @@ fun CrewChatViewModel.delete(line: ChatLine) {
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            if (e is ApiError) Snacks.error(e.message) else Snacks.error("Couldn't delete it.") { delete(line) }
+            if (e is ApiError) Snacks.error(e.message) else Snacks.offline { delete(line) }
         }
     }
 }

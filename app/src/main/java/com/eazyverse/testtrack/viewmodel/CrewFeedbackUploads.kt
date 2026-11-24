@@ -9,7 +9,6 @@ import com.eazyverse.testtrack.data.Session
 import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.FeedbackIn
 import com.eazyverse.testtrack.net.sendFeedback
-import com.eazyverse.testtrack.ui.Snacks
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -134,12 +133,11 @@ object CrewFeedbackUploads {
                     Api.sendFeedback(seatId, FeedbackIn(up.pictureId))
                     change(seatId) { it.copy(state = UploadState.SENT, sentAt = System.currentTimeMillis()) } ?: return@launch
                     withContext(Dispatchers.IO) { ProofEditing.discard(app, up.uri) }
-                    Snacks.done("Feedback for ${up.label} sent. Thank you.")
                     ticks.tryEmit(Unit)
                 } catch (e: CancellationException) {
                     throw e
                 } catch (_: Exception) {
-                    if (change(seatId) { it.copy(state = UploadState.FAILED) } != null) Snacks.error("Feedback picture not sent.")
+                    change(seatId) { it.copy(state = UploadState.FAILED) }
                 }
             }
     }

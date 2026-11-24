@@ -51,7 +51,7 @@ internal fun ChatPictureEditor(
         source = uri,
         tools = ChatTools,
         onClose = onClose,
-        onUnreadable = { Snacks.error("Couldn't open that picture. Try another.") },
+        onUnreadable = { Snacks.error(Snacks.PICTURE_UNREADABLE) },
     ) { footer ->
         val problem = ChatAllowance.problem(caption, vm.limits, vm.packages)
         val canSend = !footer.busy && problem == DraftProblem.NONE && ChatAllowance.canAttach(vm.messagesLeft, vm.picturesLeft, vm.canPost)

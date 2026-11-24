@@ -140,7 +140,7 @@ class CrewExtrasViewModel : ViewModel() {
         reload: () -> Unit,
     ) = act(reload) {
         Api.markDown(seatId)
-        "Marked down. Nobody owes it tonight."
+        null
     }
 
     fun askAppeal(
@@ -169,7 +169,7 @@ class CrewExtrasViewModel : ViewModel() {
         appealError = null
         Api.appeal(seatId, text)
         sent()
-        "Sent. The team usually answers within a day."
+        null
     }
 
     /** Ask about the feedback, then the camera and Play once they have read how it goes. */
@@ -238,7 +238,7 @@ class CrewExtrasViewModel : ViewModel() {
         uri: Uri,
     ) {
         val job = feedbackFor ?: return
-        if (!CrewFeedbackUploads.send(context, job.seatId, job.label, uri)) return
+        if (!CrewFeedbackUploads.send(context, job.seatId, job.label, uri)) Snacks.info("This app already has a feedback picture.")
         editing = null
         feedbackFor = null
         dropRaw()
@@ -273,13 +273,13 @@ class CrewExtrasViewModel : ViewModel() {
         reload: () -> Unit,
         /** Where a failure is said instead of a snack, such as inside the sheet that asked. */
         failed: ((String) -> Unit)? = null,
-        block: suspend () -> String,
+        block: suspend () -> String?,
     ) {
         if (busy) return
         busy = true
         viewModelScope.launch {
             try {
-                Snacks.done(block())
+                block()?.let { Snacks.done(it) }
                 reload()
             } catch (e: CancellationException) {
                 throw e
@@ -287,9 +287,9 @@ class CrewExtrasViewModel : ViewModel() {
                 (failed ?: { Snacks.error(it) })(e.message)
             } catch (_: Exception) {
                 if (failed != null) {
-                    failed("We could not reach TestTrack. Check your connection.")
+                    failed(Snacks.OFFLINE_LINE)
                 } else {
-                    Snacks.error("Couldn't reach TestTrack. Check your connection.") { act(reload, null, block) }
+                    Snacks.offline { act(reload, null, block) }
                 }
             } finally {
                 busy = false

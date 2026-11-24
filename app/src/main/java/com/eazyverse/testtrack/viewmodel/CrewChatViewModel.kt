@@ -337,7 +337,7 @@ class CrewChatViewModel : ViewModel() {
                     } catch (e: CancellationException) {
                         throw e
                     } catch (_: Exception) {
-                        Snacks.error("Couldn't load older messages.") { seek(quote, onFound) }
+                        Snacks.offline { seek(quote, onFound) }
                     } finally {
                         seeking = false
                         loadingOlder = false
@@ -351,7 +351,6 @@ class CrewChatViewModel : ViewModel() {
     fun toggleMute() {
         val want = !muted
         muted = want
-        Snacks.done(if (want) "Chat muted. You still hear when someone mentions you." else "Chat unmuted.")
         viewModelScope.launch {
             try {
                 val done = Api.muteChat(crewId, want)
@@ -361,7 +360,7 @@ class CrewChatViewModel : ViewModel() {
                 throw e
             } catch (e: Exception) {
                 muted = !want
-                if (e is ApiError) Snacks.error(e.message) else Snacks.error("Couldn't change that.", ::toggleMute)
+                if (e is ApiError) Snacks.error(e.message) else Snacks.offline(::toggleMute)
             }
         }
     }
