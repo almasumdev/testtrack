@@ -6,8 +6,9 @@ release builds. `datasafety.csv` is generated from the declaration in `../mkit.t
 | Declared type | Evidence and purpose |
 | --- | --- |
 | Name, email and user IDs | Google/Firebase sign-in, API accounts, public names and legacy cohort identity/member rows. Account management and functionality; account/device comparisons prevent duplicate testing. |
-| Photos | Optional. Proof pictures (a review's screenshot, a night's picture of each crew app, a crew feedback screenshot, a picture added to a refusal or a reply) are sent to the backend (`PUT /uploads/{id}`) and stored on TestTrack's servers, which redraw them and keep only their own copy. The owner of the app can open a picture of it; a disputed review's picture can also be opened by eligible jurors and the TestTrack team. A chosen profile photo is cropped on the phone and sent to the backend (`PUT /me/photo`), which redraws it as a 400 px JPEG and serves it publicly by its hash. Pictures sent by older builds stay in the sender's own Google Drive behind the public link they already had; the app no longer asks for Drive access and gives the old grant back. |
+| Photos | Optional. Proof pictures (a review's screenshot, a night's picture of each crew app, a crew feedback screenshot, a picture added to a refusal or a reply, a picture sent in a crew chat) are sent to the backend (`PUT /uploads/{id}`) and stored on TestTrack's servers, which redraw them and keep only their own copy. The owner of the app can open a picture of it; a disputed review's picture can also be opened by eligible jurors and the TestTrack team. A chosen profile photo is cropped on the phone and sent to the backend (`PUT /me/photo`), which redraws it as a 400 px JPEG and serves it publicly by its hash. Pictures sent by older builds stay in the sender's own Google Drive behind the public link they already had; the app no longer asks for Drive access and gives the old grant back. |
 | Other user-generated content | Written feedback, rejection reasons, crew entry notes and disputes, displayed to the people handling that work. |
+| Other in-app messages | Optional. Crew chat messages, and the pictures sent in a crew chat (declared under Photos), are sent to the backend and stored on TestTrack's servers. Other members of the same crew can read them, which is the app's chat function. Members can report a message and block a member. The TestTrack team can read every chat message, including deleted ones, to handle reports. Using chat is the member's choice. |
 | Installed apps | Named package install/source/version checks through `InstalledApps`, review milestones and legacy version/proof records. The whole installed-package inventory is not uploaded. |
 | In-app search history | `AskViewModel` sends lookup queries to `/apps/lookup`; the lookup service does not persist them. Optional, ephemeral collection. |
 | App interactions | Target-app foreground time, visits, testing records and Firebase Analytics events. Testing results are visible to other members and app owners. |
@@ -25,8 +26,8 @@ are included. Firebase and hosting are service providers. Transfers to them
 are collection, not a separate advertising or resale purpose. No purchase or
 advertising flow exists in TestTrack.
 
-Configured network endpoints use HTTPS. Chosen photos, written content and
-lookup queries are optional. SDK diagnostics/identifiers are not marked
+Configured network endpoints use HTTPS. Chosen photos, written content, crew chat
+messages and lookup queries are optional. SDK diagnostics/identifiers are not marked
 optional because release collection has no in-app opt-out control.
 
 The deletion URLs point at the existing request forms. `deletion = "yes"`

@@ -64,6 +64,8 @@ optional = true
 
 [datasafety.collected.other_in_app_messages]
 purposes = ["app_functionality"]
+shared = ["app_functionality"]
+optional = true
 
 [datasafety.collected.installed_apps]
 purposes = ["app_functionality", "fraud_prevention"]
