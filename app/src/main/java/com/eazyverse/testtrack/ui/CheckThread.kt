@@ -55,6 +55,8 @@ internal fun ReviewThread(
     val sent = review.sentAt?.let(Instant::ofEpochMilli)
     val asked = review.askedAt?.let(Instant::ofEpochMilli)
     val again = review.recheckedRef.isNotBlank()
+    val updated = review.firstProofRef.isNotBlank()
+    val updatedAt = review.updatedAt?.let(Instant::ofEpochMilli)
     Thread {
         sent?.let { ThreadDay(ChatThread.dayLabel(it.atZone(zone).toLocalDate(), today)) }
         if (review.needsChars > 0) {
@@ -64,13 +66,30 @@ internal fun ReviewThread(
         val sentTime = ChatThread.clock(sent, hour24 = hour24)
         ThreadGroup(
             listOfNotNull(
-                review.proofRef.takeIf { it.isNotBlank() }?.let { ThreadPart.Picture(it) },
+                review.firstProofRef
+                    .ifBlank { review.proofRef }
+                    .takeIf { it.isNotBlank() }
+                    ?.let { ThreadPart.Picture(it) },
                 reviewWords(review.written, review.needsChars, review.textUse),
             ),
             who = name,
-            time = if (again) listOf("First screenshot", sentTime).filter { it.isNotBlank() }.joinToString(", ") else sentTime,
+            time = if (again || updated) listOf("First screenshot", sentTime).filter { it.isNotBlank() }.joinToString(", ") else sentTime,
             picture = proof,
         )
+        if (updated) {
+            if (updatedAt != null && sent != null && !sameDay(updatedAt, sent, zone)) {
+                ThreadDay(ChatThread.dayLabel(updatedAt.atZone(zone).toLocalDate(), today))
+            }
+            ThreadGroup(
+                listOfNotNull(
+                    review.proofRef.takeIf { it.isNotBlank() }?.let { ThreadPart.Picture(it) },
+                    review.updateNote.takeIf { it.isNotBlank() }?.let { ThreadPart.Words(it) },
+                ),
+                who = name,
+                time = listOf("Updated", ChatThread.clock(updatedAt, hour24 = hour24)).filter { it.isNotBlank() }.joinToString(", "),
+                picture = proof,
+            )
+        }
         if (review.noBox) {
             val back = review.reward - review.pays
             ThreadNote(

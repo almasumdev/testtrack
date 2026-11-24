@@ -5,9 +5,11 @@ import com.eazyverse.testtrack.domain.Evidence
 import com.eazyverse.testtrack.domain.InstallReport
 import com.eazyverse.testtrack.domain.Request
 import com.eazyverse.testtrack.domain.RequestReview
+import com.eazyverse.testtrack.domain.Waiting
 import com.eazyverse.testtrack.domain.instantOf
 import com.eazyverse.testtrack.net.ApiDispute
 import com.eazyverse.testtrack.net.ApiMyPost
+import com.eazyverse.testtrack.net.ApiReview
 
 /*
  * Circle's cases and the reader's own requests, from the server's words into the domain's.
@@ -75,6 +77,9 @@ fun requestOf(it: ApiMyPost) =
                     noBox = r.noBox,
                     recheckedRef = r.recheckedRef,
                     checked = r.checkedAt != null,
+                    firstProofRef = r.firstProofRef,
+                    updateNote = r.updateNote,
+                    updatedAt = millis(r.proofUpdatedAt),
                     evidence = Evidence(r.ownerProofRef, r.reply, r.replyProofRef),
                 )
             },
@@ -82,3 +87,7 @@ fun requestOf(it: ApiMyPost) =
 
 /** An ISO time from the server as epoch milliseconds, or null when absent or unreadable. */
 fun millis(iso: String?): Long? = instantOf(iso)?.toEpochMilli()
+
+/** A waiting review with the reviewer's swapped screenshot, when they swapped it. */
+fun Waiting.withUpdate(it: ApiReview) =
+    copy(firstProofRef = it.firstProofRef, updateNote = it.updateNote, updatedAt = millis(it.proofUpdatedAt))

@@ -52,6 +52,12 @@ data class Waiting(
     val sentAt: Long? = null,
     /** When the owner asked for a new screenshot, in epoch milliseconds; null when they have not. */
     val askedAt: Long? = null,
+    /** The first screenshot, when it was swapped for a new one (then [proofRef] is the new one); blank otherwise. */
+    val firstProofRef: String = "",
+    /** The reviewer's note with the swapped screenshot; blank for none. */
+    val updateNote: String = "",
+    /** When the screenshot was swapped, in epoch milliseconds; null when it was not. */
+    val updatedAt: Long? = null,
 )
 
 /** Who sent it, by their first name, as the line after accepting says it. */

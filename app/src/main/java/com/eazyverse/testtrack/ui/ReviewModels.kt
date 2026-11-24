@@ -70,6 +70,8 @@ data class ReviewJob(
     val noBox: Boolean = review.noBox,
     /** A fresh phone check failed. Blocks the local flow without changing the server's review state. */
     val requiresPlayInstall: Boolean = false,
+    /** A new screenshot is being sent for a review already sent. */
+    val updating: Boolean = false,
 ) {
     /** The first day of use: the phone's own record where it has one, else what the server heard. */
     private val firstUse: java.time.Instant?
@@ -80,7 +82,7 @@ data class ReviewJob(
         get() {
             val asked = maxOf(post.needsChars, review.needsChars, FeedRules.Feedback.of(post.feedback).chars)
             return when {
-                rechecking -> 0
+                rechecking || updating -> 0
                 noBox -> maxOf(FeedRules.NO_BOX_MIN_CHARS, asked)
                 else -> asked
             }
@@ -91,6 +93,9 @@ data class ReviewJob(
 
     /** The owner could not find it on Play and is waiting for a new screenshot. */
     val rechecking: Boolean get() = review.state == "checking"
+
+    /** The reviewer may swap the screenshot once, until the owner answers. */
+    val canUpdate: Boolean get() = review.canUpdate && review.state == "submitted"
 
     /** By when that new screenshot has to come. */
     val checkBy: java.time.Instant? get() = instantOf(review.checkBy)

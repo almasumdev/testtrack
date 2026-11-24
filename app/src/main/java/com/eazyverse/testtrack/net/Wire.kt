@@ -167,6 +167,9 @@ data class ApiOwnerReview(
     @SerialName("owner_proof_ref") val ownerProofRef: String = "",
     val reply: String = "",
     @SerialName("reply_proof_ref") val replyProofRef: String = "",
+    @SerialName("first_proof_ref") val firstProofRef: String = "",
+    @SerialName("proof_updated_at") val proofUpdatedAt: String? = null,
+    @SerialName("update_note") val updateNote: String = "",
 )
 
 /** One of the reader's own requests, with every review it has had. */
@@ -335,6 +338,11 @@ data class ApiReview(
     val reply: String = "",
     @SerialName("reply_proof_ref") val replyProofRef: String = "",
     @SerialName("replied_at") val repliedAt: String? = null,
+    // A reviewer's one swapped screenshot: the first one, when, and the note; can_update is theirs to use.
+    @SerialName("first_proof_ref") val firstProofRef: String = "",
+    @SerialName("proof_updated_at") val proofUpdatedAt: String? = null,
+    @SerialName("update_note") val updateNote: String = "",
+    @SerialName("can_update") val canUpdate: Boolean = false,
     /** What the request asks for (stars, written or detailed) and the characters of text that takes. */
     val feedback: String = "stars",
     @SerialName("needs_chars") val needsChars: Int = 0,

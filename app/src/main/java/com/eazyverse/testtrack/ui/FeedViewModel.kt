@@ -26,6 +26,7 @@ import com.eazyverse.testtrack.viewmodel.caseOf
 import com.eazyverse.testtrack.viewmodel.millis
 import com.eazyverse.testtrack.viewmodel.rejectWithPicture
 import com.eazyverse.testtrack.viewmodel.requestOf
+import com.eazyverse.testtrack.viewmodel.withUpdate
 import kotlinx.coroutines.launch
 
 /** Circle's server-backed lists and actions. Reviews, verdicts and tix stay server-authoritative. */
@@ -383,9 +384,8 @@ class FeedViewModel : ViewModel() {
             reviewFrom = it.reviewFrom,
         )
 
-    // Mapped here, not drawn raw: a post id means nothing on a card, nor should a screen know the database's names.
+    // Mapped here, not drawn raw: a post id means nothing on a card. An older server leaves blanks the feed's post fills.
     private fun waitingOf(it: ApiReview): Waiting {
-        // From an older server these come blank; the post, when it is on the feed, has them too.
         val post = posts.firstOrNull { p -> p.id == it.postId }
         return Waiting(
             id = it.id,
@@ -407,7 +407,7 @@ class FeedViewModel : ViewModel() {
             checked = it.checkedAt != null,
             sentAt = millis(it.submittedAt),
             askedAt = millis(it.checkedAt),
-        )
+        ).withUpdate(it)
     }
 
     /** Accept a review of your app. The reviewer is paid and the post is one closer to done. */

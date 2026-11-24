@@ -59,6 +59,12 @@ data class RequestReview(
     val recheckedRef: String = "",
     /** The owner asked for a new screenshot (once); with the state rejected, none came. */
     val checked: Boolean = false,
+    /** The first screenshot, when it was swapped for a new one (then [proofRef] is the new one); blank otherwise. */
+    val firstProofRef: String = "",
+    /** The reviewer's note with the swapped screenshot; blank for none. */
+    val updateNote: String = "",
+    /** When the screenshot was swapped, in epoch milliseconds; null when it was not. */
+    val updatedAt: Long? = null,
     /** What each side showed in the dispute. */
     val evidence: Evidence = Evidence(),
 ) {

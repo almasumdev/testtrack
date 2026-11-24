@@ -36,6 +36,8 @@ internal fun ReviewWaitThread(job: ReviewJob) {
     val sent = instantOf(review.submittedAt)
     val asked = instantOf(review.checkedAt)
     val again = review.recheckedRef.isNotBlank()
+    val updated = review.firstProofRef.isNotBlank()
+    val updatedAt = instantOf(review.proofUpdatedAt)
     // Not found on Play, and no new screenshot came in time: refused without a dispute.
     val unproven = review.state == "rejected" && asked != null && !again
     val refused = !unproven && (review.reason.isNotBlank() || review.ownerProofRef.isNotBlank())
@@ -46,7 +48,7 @@ internal fun ReviewWaitThread(job: ReviewJob) {
         first?.let { ThreadDay(day(it)) }
         val mine =
             listOfNotNull(
-                review.proofRef.takeIf { it.isNotBlank() }?.let {
+                review.firstProofRef.ifBlank { review.proofRef }.takeIf { it.isNotBlank() }?.let {
                     if (again || unproven) ThreadPart.Picture(it, 110.dp, 150.dp) else ThreadPart.Picture(it, 120.dp, 165.dp)
                 },
                 review.written.takeIf { it.isNotBlank() }?.let { ThreadPart.Words(it) },
@@ -60,7 +62,21 @@ internal fun ReviewWaitThread(job: ReviewJob) {
                 time = ChatThread.clock(asked, hour24 = hour24),
             )
         } else {
-            ThreadGroup(mine, side = ThreadSide.RIGHT, sent = true, time = sentAt(sent, hour24))
+            val firstTime = sentAt(sent, hour24)
+            val label = if (updated) "First screenshot, " + firstTime.replaceFirstChar { it.lowercase() } else firstTime
+            ThreadGroup(mine, side = ThreadSide.RIGHT, sent = true, time = label)
+        }
+        if (updated) {
+            if (updatedAt != null && sent != null && !sameDay(sent, updatedAt, zone)) ThreadDay(day(updatedAt))
+            ThreadGroup(
+                listOfNotNull(
+                    review.proofRef.takeIf { it.isNotBlank() }?.let { ThreadPart.Picture(it, 120.dp, 165.dp) },
+                    review.updateNote.takeIf { it.isNotBlank() }?.let { ThreadPart.Words(it) },
+                ),
+                side = ThreadSide.RIGHT,
+                sent = true,
+                time = "Updated, " + sentAt(updatedAt, hour24).replaceFirstChar { it.lowercase() },
+            )
         }
         if (again) {
             if (sent != null && first != null && !sameDay(first, sent, zone)) ThreadDay(day(sent))

@@ -1,5 +1,6 @@
 package com.eazyverse.testtrack.ui
 
+import android.text.format.DateFormat
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -28,11 +29,13 @@ import com.composables.icons.lucide.ChevronRight
 import com.composables.icons.lucide.ChevronUp
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Text
+import com.eazyverse.testtrack.domain.ChatThread
 import com.eazyverse.testtrack.domain.Request
 import com.eazyverse.testtrack.domain.RequestReview
 import com.eazyverse.testtrack.domain.pluralOf
 import com.eazyverse.testtrack.domain.requestReviewStatus
 import com.eazyverse.testtrack.ui.theme.Tt
+import java.time.Instant
 
 /*
  * One of your own requests for feedback, after the asking.
@@ -234,17 +237,34 @@ private fun SentThread(
 ) {
     val who = review.reviewerName.trim().ifBlank { "Reviewer" }
     val again = review.recheckedRef.isNotBlank()
+    val updated = review.firstProofRef.isNotBlank()
     val evidence = review.evidence
     Thread {
         ThreadGroup(
             listOfNotNull(
-                review.proofRef.takeIf { it.isNotBlank() }?.let { ThreadPart.Picture(it) },
+                review.firstProofRef
+                    .ifBlank { review.proofRef }
+                    .takeIf { it.isNotBlank() }
+                    ?.let { ThreadPart.Picture(it) },
                 reviewWords(review.written, needs, review.textUse),
             ),
             who = who,
-            time = if (again) "First screenshot" else "",
+            time = if (again || updated) "First screenshot" else "",
             picture = proof,
         )
+        if (updated) {
+            val at = review.updatedAt?.let(Instant::ofEpochMilli)
+            val hour24 = DateFormat.is24HourFormat(LocalContext.current)
+            ThreadGroup(
+                listOfNotNull(
+                    review.proofRef.takeIf { it.isNotBlank() }?.let { ThreadPart.Picture(it) },
+                    review.updateNote.takeIf { it.isNotBlank() }?.let { ThreadPart.Words(it) },
+                ),
+                who = who,
+                time = listOf("Updated", ChatThread.clock(at, hour24 = hour24)).filter { it.isNotBlank() }.joinToString(", "),
+                picture = proof,
+            )
+        }
         if (again) {
             ThreadGroup(
                 listOf(ThreadPart.Picture(review.recheckedRef)),
