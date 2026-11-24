@@ -117,6 +117,9 @@ class CrewChatViewModel : ViewModel() {
     /** Counts block and unblock made here, so an older read of the list does not overwrite a newer change. */
     internal var blockedChanges = 0
 
+    /** A changed blocked list is held but the chat was not read again yet: tried on each resume and poll. */
+    internal var rereadPending = false
+
     /** Counts reads of the blocked list, so only the latest one is applied. */
     internal var blockedReads = 0
 
@@ -177,6 +180,7 @@ class CrewChatViewModel : ViewModel() {
         replyTo = null
         blocked = emptySet()
         blockedChanges++
+        rereadPending = false
         rulesAsk = false
         afterRules = null
         rulesDeclined = null
@@ -261,6 +265,7 @@ class CrewChatViewModel : ViewModel() {
                 Snacks.show(Snack("Back online.", SnackTone.DONE, key = OFFLINE, icon = Lucide.Wifi))
             }
             failures = 0
+            rereadPendingChat()
             emptyPolls = if (brought || page.moreAfter) 0 else emptyPolls + 1
             if (page.moreAfter) wake.trySend(Unit)
             if (page.messages.any { !it.mine && it.kind != "bot" }) markRead(page)

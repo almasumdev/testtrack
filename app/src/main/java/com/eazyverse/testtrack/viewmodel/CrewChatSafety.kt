@@ -44,13 +44,28 @@ internal fun CrewChatViewModel.loadBlocked(rereadIfChanged: Boolean = false) {
             val list = Api.blocks().mapTo(LinkedHashSet()) { it.userId }
             // A block or unblock made meanwhile is newer than this list, and so is a later read: they stand.
             if (seen != blockedChanges || mine != blockedReads) return@launch
-            val differs = list != blocked
+            if (list != blocked && rereadIfChanged) rereadPending = true
             blocked = list
-            if (differs && rereadIfChanged) reloaded(changed = false)
         } catch (e: CancellationException) {
             throw e
         } catch (_: Exception) {
         }
+        rereadPendingChat()
+    }
+}
+
+/**
+ * Reads the chat again while [CrewChatViewModel.rereadPending] says a changed blocked list has not
+ * reached the stubs yet. The flag stays up until a read succeeds, so the next resume or poll tries again.
+ */
+internal suspend fun CrewChatViewModel.rereadPendingChat() {
+    if (!rereadPending) return
+    try {
+        reload()
+        rereadPending = false
+    } catch (e: CancellationException) {
+        throw e
+    } catch (_: Exception) {
     }
 }
 
@@ -184,8 +199,10 @@ fun CrewChatViewModel.askRules(
     then: () -> Unit,
     declined: () -> Unit = {},
 ) {
-    val before = afterRules.takeIf { rulesAsk }
-    val beforeNo = rulesDeclined.takeIf { rulesAsk }
+    // Whatever is still waiting stays: a failed accept leaves callbacks behind, and every line
+    // waiting on the rules goes (or is marked not sent) with the answer to this ask.
+    val before = afterRules
+    val beforeNo = rulesDeclined
     afterRules = {
         before?.invoke()
         then()

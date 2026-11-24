@@ -255,7 +255,10 @@ private fun CrewChatViewModel.rulesRefused(
     askRules(
         then = { resumeAfterRules(id, context) },
         declined = {
-            lines = lines.map { if (it.id == id) it.copy(send = SendState.FAILED, error = RULES_DECLINED_LINE) else it }
+            // A line that has since been tried again on its own is on its way: leave it be.
+            if (id !in posting && pending[id] != null) {
+                lines = lines.map { if (it.id == id) it.copy(send = SendState.FAILED, error = RULES_DECLINED_LINE) else it }
+            }
         },
     )
 }
