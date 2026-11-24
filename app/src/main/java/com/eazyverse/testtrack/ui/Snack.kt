@@ -100,6 +100,9 @@ object Snacks {
         retry: (() -> Unit)? = null,
     ) = show(Snack(t, SnackTone.ERROR, retry?.let { SnackAction(TRY_AGAIN, it) }))
 
+    /** The one line for a call that never reached the server, with Try again when [retry] is given. */
+    fun offline(retry: (() -> Unit)? = null) = error(OFFLINE_LINE, retry)
+
     /** Takes away whatever was posted under [key], showing or standing. */
     fun dismiss(key: String) {
         if (current?.snack?.key == key) current = null
@@ -122,6 +125,8 @@ object Snacks {
     }
 
     const val TRY_AGAIN = "Try again"
+    const val OFFLINE_LINE = "Couldn't reach TestTrack. Check your connection."
+    const val PICTURE_UNREADABLE = "Couldn't open that picture. Try another."
 }
 
 /**
