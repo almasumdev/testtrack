@@ -56,7 +56,11 @@ internal fun CrewRunAppTile(
     val largeText = LocalDensity.current.fontScale > 1.3f
     val status = crewRunAppState(app, seat, kind, actions)
     var screenshotChoice by remember(app.id) { mutableStateOf(false) }
-    CrewCard(modifier = Modifier.testTag("crew-run-app-${app.id}"), padding = PaddingValues(14.dp)) {
+    val feedbackLine = !volunteer && !app.feedbackSent && !app.reported && kind == CrewRunAppKind.REQUIRED && !status.feedbackAction
+    // The feedback line's button keeps its 48dp touch target, which already leaves about 15dp under the
+    // words, so the card adds no bottom padding of its own there: the gap stays the tile's usual 14dp.
+    val padding = PaddingValues(start = 14.dp, top = 14.dp, end = 14.dp, bottom = if (feedbackLine) 0.dp else 14.dp)
+    CrewCard(modifier = Modifier.testTag("crew-run-app-${app.id}"), padding = padding) {
         AppHead(
             app.packageName,
             app.label,
@@ -108,9 +112,7 @@ internal fun CrewRunAppTile(
                     null
                 },
         )
-        if (!volunteer && !app.feedbackSent && !app.reported && kind == CrewRunAppKind.REQUIRED && !status.feedbackAction) {
-            FeedbackAction(app, actions)
-        }
+        if (feedbackLine) FeedbackAction(app, actions)
     }
     if (screenshotChoice) {
         CrewScreenshotChoice(app, actions) { screenshotChoice = false }
@@ -138,7 +140,7 @@ private fun FeedbackAction(
     }
 }
 
-/** Write, busy while the picture goes up (nothing to tap), or Retry when it did not go. */
+/** Write, busy while the picture goes up (nothing to tap), Retry when it did not go, or nothing once sent. */
 @Composable
 private fun FeedbackButton(
     app: CrewApp,
@@ -148,7 +150,8 @@ private fun FeedbackButton(
     when {
         upload == null -> InlineAction("Write", enabled = actions.busySeat != app.id) { actions.onFeedback(app) }
         upload.failed -> InlineAction("Retry") { actions.onRetryFeedback(app) }
-        upload.sent -> Unit
+        // Nothing to tap, but the line keeps the height the button gave it, so the tile never jumps.
+        upload.sent -> Spacer(Modifier.height(48.dp))
         else -> InlineAction("Write", busy = true) {}
     }
 }
