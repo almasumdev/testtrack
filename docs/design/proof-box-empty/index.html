@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Empty screenshot box</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  @font-face { font-family: "BarlowApp"; font-weight: 400; src: url("../../../app/src/main/res/font/barlow_regular.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 500; src: url("../../../app/src/main/res/font/barlow_medium.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 600; src: url("../../../app/src/main/res/font/barlow_semibold.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 700; src: url("../../../app/src/main/res/font/barlow_bold.ttf"); }
+
+  /* OceanLight / OceanDark, ui/theme/Tokens.kt */
+  .light {
+    --bg:#F7FCFF; --text:#142F43; --text2:#203A4E; --text3:#223D50; --text4:#59758A;
+    --glass:#F2F9FD; --glass2:#DFEDF6; --glassBorder:#B7D1E2; --glassBorderStrong:#789AAF;
+    --accent:#3A5B73; --onAccent:#FFFFFF; --accentInk:#22394B;
+    --tile:#DCE6EE; --tileInk:#3A5B73; --leafSoft:rgba(74,114,144,.16);
+    --cardLine:#E1ECF3; --sheet:#FFFFFF; --ring:rgba(20,47,67,.14); --track:#E4EEF4;
+    --primary:var(--accent); --onPrimary:var(--onAccent);
+  }
+  .dark {
+    --bg:#0F1011; --text:#ECEEF0; --text2:#BCC1C6; --text3:#9DA3A9; --text4:#757C82;
+    --glass:#1C1E20; --glass2:#292C2F; --glassBorder:#383C41; --glassBorderStrong:#666D74;
+    --accent:#4A7290; --onAccent:#FFFFFF; --accentInk:#93B3CA;
+    --tile:#2A2D31; --tileInk:#A2BED2; --leafSoft:#2A2D31;
+    --cardLine:#2D3034; --sheet:#1C1E20; --ring:rgba(255,255,255,.16); --track:#2D3034;
+    --primary:var(--accentInk); --onPrimary:var(--bg);
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #D9E0E5; font-family: "BarlowApp", "Barlow", system-ui, sans-serif; color: #1B2B36; }
+  .top { position: sticky; top: 0; z-index: 9; display: flex; align-items: center; gap: 10px; padding: 12px 28px; background: #D9E0E5; border-bottom: 1px solid #C3CDD4; }
+  .top h1 { margin: 0 14px 0 0; font-size: 20px; font-weight: 700; }
+  .top button { font: 600 15px/20px "BarlowApp", "Barlow", sans-serif; padding: 8px 18px; border-radius: 20px; border: 1px solid #B3C0C9; background: #F4F7F9; color: #2D4A5F; cursor: pointer; }
+  .top button.on { background: #2D4A5F; color: #fff; border-color: #2D4A5F; }
+  .doc { padding: 6px 28px 80px; }
+  .opt { display: flex; align-items: center; gap: 10px; margin: 34px 0 14px 4px; }
+  .opt .k { font-size: 17px; font-weight: 700; color: #fff; background: #2D4A5F; padding: 6px 16px; border-radius: 99px; }
+  .opt .k.now { background: #7D8A94; }
+  .opt .n { font-size: 18px; font-weight: 700; }
+  .opt .pick { font-size: 14px; font-weight: 700; color: #fff; background: #246B59; padding: 4px 12px; border-radius: 99px; }
+  .opt.rec .k { background: #246B59; }
+  .row { display: flex; gap: 22px; align-items: flex-start; overflow-x: auto; padding-bottom: 10px; }
+  .state { display: flex; flex-direction: column; gap: 8px; flex: none; }
+  .lbl { font-size: 15px; font-weight: 700; margin-left: 4px; white-space: nowrap; }
+
+  /* phone, 360 wide */
+  .phone { width: 360px; height: 720px; background: var(--bg); color: var(--text); border-radius: 26px; overflow: hidden; border: 1px solid #B9C5CE; position: relative; display: flex; flex-direction: column; }
+  .rec-ph .phone { box-shadow: 0 0 0 3px #246B59; }
+  .dark.phone { border-color: #3A4046; }
+  .sbar { height: 24px; flex: none; }
+  .pbar { height: 64px; flex: none; display: flex; align-items: center; }
+  .pbar .back { width: 48px; height: 48px; display: grid; place-items: center; margin-left: 4px; color: var(--text); flex: none; }
+  .pbar .ttl { margin-left: 4px; font-size: 22px; line-height: 28px; font-weight: 700; flex: 1; white-space: nowrap; }
+  .pbar .tixp { margin-right: 22px; height: 32px; padding: 0 13px; border-radius: 16px; background: var(--tile); color: var(--tileInk); display: inline-flex; align-items: center; font-size: 14.5px; font-weight: 700; white-space: nowrap; }
+  .scroll { flex: 1; overflow: hidden; padding: 8px 16px 12px; }
+  .foot { flex: none; padding: 8px 16px 4px; }
+  .gest { height: 22px; flex: none; display: grid; place-items: center; }
+  .gest i { width: 108px; height: 4px; border-radius: 2px; background: var(--text4); opacity: .55; }
+
+  svg.ic { display: block; flex: none; }
+  .inl { display: inline-block; vertical-align: -2px; margin-right: 6px; }
+  .ai { display: grid; place-items: center; flex: none; overflow: hidden; box-shadow: inset 0 0 0 1px var(--ring); }
+  .ah { display: flex; align-items: center; gap: 12px; }
+  .aic { position: relative; width: 52px; height: 52px; flex: none; }
+  .src { position: absolute; right: -5px; bottom: -5px; width: 20px; height: 20px; border-radius: 50%; background: var(--sheet); box-shadow: 0 0 0 2px var(--bg); display: grid; place-items: center; }
+  .ah .col { flex: 1; min-width: 0; }
+  .an { font-size: 16px; line-height: 19px; font-weight: 600; }
+  .ad { margin-top: 2px; font-size: 12.5px; line-height: 15px; font-weight: 500; color: var(--text3); }
+  .sec { font-size: 12px; font-weight: 700; color: var(--text3); margin: 18px 0 8px; display: flex; align-items: center; gap: 4px; }
+  .ii { display: inline-grid; place-items: center; width: 22px; height: 18px; color: var(--text3); }
+  .sent { display: flex; justify-content: flex-end; }
+  .sent .bub { padding: 4px; border-radius: 18px; background: var(--accent); }
+
+  .fld { position: relative; border: 1px solid var(--glassBorderStrong); border-radius: 10px; padding: 13px 14px; font-size: 15px; line-height: 20px; font-weight: 500; color: var(--text); background: var(--bg); min-height: 66px; }
+  .fld .lab { position: absolute; top: -9px; left: 10px; padding: 0 4px; background: var(--bg); font-size: 12px; line-height: 16px; font-weight: 600; color: var(--text3); white-space: nowrap; }
+  .fld .ph { color: var(--text4); font-weight: 400; }
+  .fcount { text-align: right; margin-top: 4px; font-size: 11.5px; color: var(--text4); font-feature-settings: "tnum"; }
+  .il { font-size: 13px; line-height: 18px; color: var(--text2); display: flex; align-items: center; }
+  .il .inl { color: var(--text3); }
+  .pbtn { height: 52px; border-radius: 26px; background: var(--primary); color: var(--onPrimary); display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; }
+  .pbtn.off { background: color-mix(in srgb, var(--text) 12%, transparent); color: color-mix(in srgb, var(--text) 38%, transparent); }
+  .ta { display: flex; justify-content: center; align-items: center; min-height: 44px; font-size: 14px; font-weight: 700; color: var(--accentInk); }
+  .spin { width: 26px; height: 26px; border-radius: 50%; border: 2.5px solid rgba(255,255,255,.28); border-top-color: #fff; animation: s .8s linear infinite; }
+  @keyframes s { to { transform: rotate(360deg); } }
+
+  /* Play screenshot (the filled state) */
+  .shw { position: relative; overflow: hidden; flex: none; background: #fff; }
+  .ps { width: 180px; background: #fff; color: #202124; font-family: Roboto, "Segoe UI", system-ui, sans-serif; overflow: hidden; }
+  .ps .q0 { display: flex; justify-content: space-between; padding: 6px 10px 0; font-size: 7px; font-weight: 600; color: #3C4043; }
+  .ps .qa { display: flex; gap: 8px; align-items: center; padding: 11px 10px 0; }
+  .ps .qa i { width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; color: #fff; font: 700 14px system-ui; font-style: normal; flex: none; }
+  .ps .qa b { display: block; font-size: 10px; line-height: 12px; }
+  .ps .qa span { font-size: 7px; color: #01875F; font-weight: 600; }
+  .ps .qo { margin: 9px 10px 0; height: 18px; border-radius: 9px; border: 1px solid #DADCE0; display: grid; place-items: center; font-size: 7.5px; font-weight: 600; color: #01875F; }
+  .ps .qh { padding: 11px 10px 0; font-size: 8.5px; font-weight: 700; }
+  .ps .qs { padding: 3px 10px 0; color: #01875F; font-size: 12px; letter-spacing: 2px; line-height: 14px; }
+  .ps .qb { margin: 5px 10px 0; border: 1px solid #01875F; border-radius: 6px; padding: 6px; font-size: 6.6px; line-height: 9px; color: #3C4043; min-height: 46px; }
+  .ps .qg { font-size: 6.5px; color: #5F6368; padding: 3px 10px 0; line-height: 9px; }
+  .ps .ql { margin: 5px 10px 0; height: 4px; border-radius: 2px; background: #E1E3E6; }
+
+  /* the box: every version is 160 tall, like the filled one */
+  .pbox { position: relative; width: 100%; height: 160px; border-radius: 14px; }
+  /* now */
+  .now { border: 1.5px dashed var(--glassBorderStrong); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
+  .now .cam { width: 40px; height: 40px; border-radius: 12px; background: var(--tile); color: var(--tileInk); display: grid; place-items: center; }
+  .pbs { display: flex; gap: 8px; }
+  .pill { height: 32px; padding: 0 14px; border-radius: 16px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-size: 13.5px; font-weight: 700; white-space: nowrap; }
+  .pill.soft { background: var(--tile); color: var(--accentInk); }
+  .pill.ghost { background: var(--bg); color: var(--accentInk); box-shadow: inset 0 0 0 1.5px var(--glassBorderStrong); }
+  .pill.solid { background: var(--accent); color: var(--onAccent); }
+  .pill.big { height: 40px; border-radius: 20px; font-size: 14.5px; }
+  .full { overflow: hidden; box-shadow: inset 0 0 0 1px var(--cardLine); }
+  .full .shw { border-radius: 14px; }
+  .rm { position: absolute; top: 8px; right: 8px; width: 28px; height: 28px; border-radius: 50%; background: rgba(0,0,0,.5); color: #fff; display: grid; place-items: center; }
+  .ov { position: absolute; bottom: 8px; height: 30px; padding: 0 12px; border-radius: 15px; background: rgba(0,0,0,.5); color: #fff; display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 700; }
+  .ov.l { left: 8px; } .ov.r { right: 8px; }
+  .dim { position: absolute; inset: 0; display: grid; place-items: center; }
+  .dim .ring { width: 48px; height: 48px; border-radius: 50%; background: rgba(0,0,0,.5); display: grid; place-items: center; }
+  .wpill { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,.5); color: #fff; border-radius: 99px; padding: 4px 12px; font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+
+  /* A: one main action */
+  .oa { background: var(--glass2); box-shadow: inset 0 0 0 1px var(--glassBorder); overflow: hidden; display: flex; flex-direction: column; }
+  .oa .main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+  .oa .disc { position: relative; width: 48px; height: 48px; border-radius: 50%; background: var(--accent); color: var(--onAccent); display: grid; place-items: center; margin-bottom: 8px; }
+  .badge { position: absolute; right: -4px; bottom: -4px; width: 20px; height: 20px; border-radius: 50%; background: var(--sheet); box-shadow: 0 0 0 2px var(--glass2); display: grid; place-items: center; }
+  .oa .t { font-size: 16px; line-height: 20px; font-weight: 700; color: var(--text); }
+  .oa .s { font-size: 13px; line-height: 17px; font-weight: 500; color: var(--text3); }
+  .oa .gal { height: 44px; flex: none; border-top: 1px solid var(--glassBorder); display: flex; align-items: center; justify-content: center; gap: 7px; font-size: 14px; font-weight: 700; color: var(--accentInk); }
+
+  /* B: ghost picture */
+  .ob { background: var(--glass); box-shadow: inset 0 0 0 1px var(--cardLine); overflow: hidden; }
+  .gh { position: absolute; inset: 0; padding: 14px 16px; opacity: .9; }
+  .gh .r { display: flex; gap: 10px; align-items: center; }
+  .gh .sq { width: 38px; height: 38px; border-radius: 10px; background: var(--track); flex: none; }
+  .gh .ln { height: 7px; border-radius: 4px; background: var(--track); }
+  .gh .st { margin-top: 14px; display: flex; gap: 5px; color: var(--glassBorder); }
+  .gh .bx { margin-top: 10px; height: 46px; border-radius: 8px; border: 1.5px dashed var(--glassBorder); }
+  .ob .fade { position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 20%, var(--glass) 92%); }
+  .gh .st { display: none; }
+  .ob .say { position: absolute; left: 0; right: 0; top: 66px; text-align: center; font-size: 13.5px; font-weight: 600; color: var(--text3); }
+  .ob .pill { position: absolute; bottom: 10px; height: 34px; border-radius: 17px; }
+  .ob .pill.l { left: 10px; } .ob .pill.r { right: 10px; }
+
+  /* C: two tiles */
+  .oc { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .oc.one { grid-template-columns: 1fr; }
+  .tl { border-radius: 14px; background: var(--glass2); box-shadow: inset 0 0 0 1px var(--glassBorder); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; text-align: center; }
+  .tl .it { position: relative; width: 44px; height: 44px; border-radius: 13px; background: var(--tile); color: var(--tileInk); display: grid; place-items: center; margin-bottom: 8px; }
+  .tl.main .it { background: var(--accent); color: var(--onAccent); }
+  .tl .t { font-size: 15.5px; line-height: 19px; font-weight: 700; color: var(--text); }
+  .tl .s { font-size: 12.5px; line-height: 16px; font-weight: 500; color: var(--text3); }
+  .tl .badge { box-shadow: 0 0 0 2px var(--glass2); }
+
+  /* D: phone slot + buttons */
+  .od { background: var(--glass); box-shadow: inset 0 0 0 1px var(--cardLine); display: flex; align-items: center; gap: 14px; padding: 12px 14px 12px 12px; }
+  .slot { width: 66px; height: 136px; flex: none; border-radius: 12px; border: 1.5px dashed var(--glassBorderStrong); padding: 12px 8px 0; display: flex; flex-direction: column; gap: 5px; position: relative; }
+  .slot .sq { width: 18px; height: 18px; border-radius: 5px; background: var(--track); }
+  .slot .ln { height: 4px; border-radius: 2px; background: var(--track); }
+  .slot .st { display: flex; gap: 2px; color: var(--glassBorderStrong); margin-top: 4px; }
+  .slot .bx { height: 26px; border-radius: 4px; border: 1px solid var(--glassBorder); }
+  .od .col { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .od .t { font-size: 15.5px; line-height: 19px; font-weight: 700; color: var(--text); }
+  .od .s { font-size: 12.5px; line-height: 16px; font-weight: 500; color: var(--text3); margin-top: 1px; }
+  .od .pill.big { margin-top: 12px; width: 100%; }
+  .od .lk { margin-top: 4px; height: 34px; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 13.5px; font-weight: 700; color: var(--accentInk); }
+  /* retake flow */
+  .tap { position: absolute; width: 40px; height: 40px; border-radius: 50%; background: rgba(224,69,58,.22); border: 2.5px solid #E0453A; pointer-events: none; z-index: 5; }
+  .ov.r.tapme { outline: 2.5px solid #E0453A; outline-offset: 3px; }
+  .ov .pb { width: 16px; height: 16px; border-radius: 50%; background: #fff; display: grid; place-items: center; margin-left: -2px; }
+  .snack { position: absolute; left: 16px; right: 16px; bottom: 138px; z-index: 8; display: flex; align-items: flex-start; gap: 10px; padding: 14px 16px 14px 14px; border-radius: 14px; background: var(--inverse); color: var(--onInverse); box-shadow: 0 6px 18px rgba(16,47,70,.28); font-size: 14px; line-height: 19px; font-weight: 500; }
+  .snack .si { color: var(--inverseAccent); margin-top: 1px; }
+  .light { --inverse:#172F42; --onInverse:#EFF7FC; --inverseAccent:#A9C3D6; }
+  .dark { --inverse:#E8EBEE; --onInverse:#15181A; --inverseAccent:#3F6681; }
+  .playph { background: #fff; }
+  .playph .shw { background: #fff; }
+  .fcam { position: absolute; right: 2px; width: 64px; height: 64px; }
+  .scrimall { position: absolute; inset: 0; background: rgba(0,0,0,.42); z-index: 6; }
+  .sysdlg { position: absolute; left: 24px; right: 24px; top: 210px; z-index: 7; border-radius: 28px; padding: 24px; font-family: Roboto, "Segoe UI", system-ui, sans-serif; text-align: center; }
+  .light .sysdlg { background: #F3F1F6; color: #1B1B1F; } .dark .sysdlg { background: #2B2A2F; color: #E5E1E6; }
+  .sysdlg .di { width: 24px; height: 24px; margin: 0 auto 14px; color: #3F5F90; }
+  .dark .sysdlg .di { color: #A9C7FF; }
+  .sysdlg h3 { margin: 0 0 14px; font-size: 22px; line-height: 28px; font-weight: 400; }
+  .sysdlg p { margin: 0; font-size: 14px; line-height: 20px; text-align: left; opacity: .8; }
+  .sysdlg .bt { display: flex; justify-content: flex-end; gap: 8px; margin-top: 22px; }
+  .sysdlg .bt span { height: 40px; padding: 0 20px; border-radius: 20px; display: inline-flex; align-items: center; font-size: 14px; font-weight: 500; }
+  .light .sysdlg .bt .s { background: #3F5F90; color: #fff; } .dark .sysdlg .bt .s { background: #A9C7FF; color: #0A305F; }
+  .light .sysdlg .bt .c { color: #3F5F90; } .dark .sysdlg .bt .c { color: #A9C7FF; }
+  .vs { font-size: 13px; font-weight: 600; color: #51606B; margin: -4px 0 0 4px; white-space: nowrap; }
+</style>
+</head>
+<body>
+<div class="top"><h1>Empty screenshot box</h1><button id="bl" class="on" onclick="setTheme('light')">Light</button><button id="bd" onclick="setTheme('dark')">Dark</button></div>
+<div class="doc" id="doc"></div>
+<script>
+const L = {
+  x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+  eyeOff: '<path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/>',
+  image: '<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>',
+  imageUp: '<path d="M10.3 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10l-3.1-3.1a2 2 0 0 0-2.814.014L6 21"/><path d="m14 19.5 3-3 3 3"/><path d="M17 22v-5.5"/><circle cx="9" cy="9" r="2"/>',
+  phone: '<rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/>',
+  camera: '<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>',
+  star: '<path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"/>',
+};
+const ic = (n, s = 16, w = 2) => `<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${L[n]}</svg>`;
+const inl = (n, s = 14, w = 2.2) => `<span class="inl">${ic(n, s, w)}</span>`;
+const BACK = `<svg width="22" height="22" viewBox="0 0 24 24" style="fill:currentColor"><path d="M17.77 3.77 16 2 6 12l10 10 1.77-1.77L9.54 12z"/></svg>`;
+const PLAY = (s = 12) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24"><path d="M3.6 1.8 13.4 12 3.6 22.2c-.4-.2-.6-.6-.6-1.1V2.9c0-.5.2-.9.6-1.1Z" fill="#00A0FF"/><path d="M16.8 8.6 13.4 12 3.6 1.8c.3-.2.8-.2 1.2 0Z" fill="#00F076"/><path d="M16.8 15.4 4.8 22.2c-.4.2-.9.2-1.2 0L13.4 12Z" fill="#FF3A44"/><path d="m16.8 8.6 3.6 2a1.6 1.6 0 0 1 0 2.8l-3.6 2L13.4 12Z" fill="#FFCE00"/></svg>`;
+const sp = (h) => `<div style="height:${h}px"></div>`;
+const ii = () => `<span class="ii">${ic('info', 14)}</span>`;
+const stars = (n, s) => Array.from({ length: n }, () => ic('star', s, 2)).join('');
+
+const APP = { n: 'Wave Weather', p: 'com.seedstudio.waveweather', c: '#5B6CF0', dev: 'Seed Studio' };
+const TXT = 'Clear hourly chart and the rain alert came on time. The radar is slow to load on mobile data.';
+function art(s) {
+  const g = Math.round(s * 0.6);
+  return `<span class="ai" style="width:${s}px;height:${s}px;border-radius:${Math.round(s * 0.3)}px;background:linear-gradient(150deg,#6A7BFF,#4B55E0)"><svg width="${g}" height="${g}" viewBox="0 0 24 24"><path d="M13 2 5 14h6l-1 8 8-12h-6z" style="fill:#fff"/></svg></span>`;
+}
+const appRow = () => `<div class="ah"><span class="aic">${art(52)}<span class="src">${PLAY()}</span></span><div class="col"><div class="an">${APP.n}</div><div class="ad">${APP.p}</div></div></div>`;
+function play(k) {
+  let b = `<div class="q0"><span>14:18</span><span>5G 64%</span></div>
+    <div class="qa"><i style="background:${APP.c}">W</i><div><b>${APP.n}</b><span>${APP.dev}</span></div></div>
+    <div class="qo">Uninstall          Open</div>`;
+  if (k === 'empty') b += `<div class="qh">Rate this app</div><div class="qs" style="color:#9AA0A6">☆☆☆☆☆</div>`;
+  else b += `<div class="qh">Your review</div><div class="qs">★★★★☆</div><div class="qb">${TXT}</div><div class="qg">Posted publicly. Today</div>`;
+  b += `<div class="qh">About this app</div><div class="ql"></div><div class="ql" style="width:70%"></div><div class="ql" style="width:84%"></div>`;
+  return `<div class="ps">${b}</div>`;
+}
+function shot(k, w, h, y = 0) {
+  const z = w / 180;
+  return `<div class="shw" style="width:${w}px;height:${h}px"><div style="zoom:${z};height:${h / z}px;overflow:hidden"><div style="margin-top:-${y}px">${play(k)}</div></div></div>`;
+}
+
+/* ===== the empty boxes ===== */
+const BOX = {
+  now(g) {
+    return `<div class="pbox now"><span class="cam">${ic('camera', 20)}</span><div class="pbs"><span class="pill soft">${ic('camera', 15, 2.3)}Capture on Play</span>${g ? `<span class="pill ghost">${ic('image', 15, 2.3)}Gallery</span>` : ''}</div></div>`;
+  },
+  filled(o = {}) {
+    const k = o.k || 'review';
+    const label = o.label || 'Retake';
+    const pb = o.play ? `<span class="pb">${PLAY(10)}</span>` : '';
+    return `<div class="pbox full">${shot(k, 328, 160, 58)}<span class="rm">${ic('x', 14, 2.6)}</span><span class="ov l">${ic('eyeOff', 14, 2.4)}Hide details</span><span class="ov r${o.tap ? ' tapme' : ''}">${o.play ? pb : ic('camera', 14, 2.4)}${label}</span></div>`;
+  },
+  saving(k = 'review') {
+    return `<div class="pbox full">${shot(k, 328, 160, 58)}<div class="dim"><span class="ring"><span class="spin"></span></span></div><span class="wpill">Saving picture</span></div>`;
+  },
+  a(g) {
+    return `<div class="pbox oa"><div class="main"><span class="disc">${ic('camera', 22, 2.1)}<span class="badge">${PLAY(11)}</span></span><span class="t">Take it on Google Play</span><span class="s">Play opens with a camera button on top</span></div>${g ? `<div class="gal">${ic('image', 16, 2.3)}Pick from gallery</div>` : ''}</div>`;
+  },
+  b(g) {
+    const ghost = `<div class="gh"><div class="r"><span class="sq"></span><div style="flex:1"><div class="ln" style="width:52%"></div><div class="ln" style="width:34%;margin-top:6px"></div></div></div><div class="st">${stars(5, 15)}</div><div class="bx"></div></div>`;
+    return `<div class="pbox ob">${ghost}<div class="fade"></div><div class="say">Your review on Play goes here</div>${g ? `<span class="pill soft l">${ic('image', 15, 2.3)}Gallery</span>` : ''}<span class="pill solid r">${ic('camera', 15, 2.3)}Capture on Play</span></div>`;
+  },
+  c(g) {
+    const play = `<div class="tl main"><span class="it">${ic('camera', 22, 2.1)}<span class="badge">${PLAY(11)}</span></span><span class="t">On Google Play</span><span class="s">Take it now</span></div>`;
+    const gal = `<div class="tl"><span class="it">${ic('image', 22, 2.1)}</span><span class="t">From gallery</span><span class="s">Pick a saved one</span></div>`;
+    return `<div class="pbox oc ${g ? '' : 'one'}">${play}${g ? gal : ''}</div>`;
+  },
+  d(g) {
+    const slot = `<div class="slot"><span class="sq"></span><span class="ln" style="width:80%"></span><span class="ln" style="width:55%"></span><span class="st">${stars(5, 8)}</span><span class="bx"></span><span class="ln" style="width:70%;margin-top:3px"></span></div>`;
+    return `<div class="pbox od">${slot}<div class="col"><span class="t">Your review on Play</span><span class="s">Stars and text in view</span><span class="pill solid big">${ic('camera', 16, 2.3)}Capture on Play</span>${g ? `<span class="lk">${ic('image', 15, 2.3)}Pick from gallery</span>` : sp(6)}</div></div>`;
+  },
+};
+
+/* the update page around it */
+function page(box, o = {}) {
+  let b = appRow();
+  b += `<div class="sec">What you sent</div><div class="sent"><div class="bub">${shot('empty', 60, 82)}</div></div>`;
+  b += `<div class="sec">Your new screenshot${ii()}</div>`;
+  b += box + sp(18);
+  b += `<div class="fld"><span class="lab">Note for the developer (optional)</span><span class="ph">My review shows on Play now.</span></div>`;
+  b += `<div class="fcount">0/280</div>`;
+  b += sp(4) + `<div class="il">${inl('eyeOff')}The developer sees this picture. Hide anything personal.${ii()}</div>`;
+  const on = o.send != null ? o.send : box.includes('pbox full');
+  const foot = `<div class="pbtn ${on ? '' : 'off'}">Send update</div><div class="ta">Keep what I sent</div>`;
+  return `<div class="phone ${TH}"><div class="sbar"></div><div class="pbar"><span class="back">${BACK}</span><span class="ttl">Review</span><span class="tixp">+35 tix</span></div>
+    <div class="scroll">${b}</div><div class="foot">${foot}</div><div class="gest"><i></i></div>${o.over || ''}</div>`;
+}
+
+/* Google Play with TestTrack's floating camera (res/drawable/review_capture_button.xml) */
+const FCAM = `<svg width="64" height="64" viewBox="0 0 64 64"><circle cx="32" cy="33.5" r="27" fill="rgba(0,0,0,.12)"/><circle cx="32" cy="32" r="27" fill="#1D5C82"/><g transform="translate(18.2 17.6) scale(1.15)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5,4h-5L7,7H4a2,2 0,0 0,-2 2v9a2,2 0,0 0,2 2h16a2,2 0,0 0,2 -2V9a2,2 0,0 0,-2 -2h-3l-2.5,-3z"/><circle cx="12" cy="13" r="3"/></g></svg>`;
+function playPhone() {
+  const top = Math.round(720 * 0.76) - 32;
+  return `<div class="phone playph ${TH}" style="border-color:#B9C5CE">${shot('review', 360, 720)}<span class="fcam" style="top:${top}px">${FCAM}</span><span class="tap" style="right:14px;top:${top + 12}px"></span></div>`;
+}
+const tapOn = (x, y) => `<span class="tap" style="left:${x}px;top:${y}px"></span>`;
+const consent = `<div class="scrimall"></div><div class="sysdlg"><div class="di">${ic('phone', 24, 1.8)}</div><h3>Start recording or casting with TestTrack?</h3><p>TestTrack will have access to all of the information that is visible on your screen or played from your device while recording or casting.</p><div class="bt"><span class="c">Cancel</span><span class="s">Start</span></div></div>`;
+const SNACK = `<div class="snack"><span class="si">${ic('info', 18, 2.2)}</span><span>Your new screenshot replaced the one before. Hide anything personal again.</span></div>`;
+
+let TH = 'light';
+const F = (label, html, rec) => `<div class="state${rec ? ' rec-ph' : ''}"><div class="lbl">${label}</div>${html}</div>`;
+const OPT = (k, name, rec, cls = '') => `<div class="opt${rec ? ' rec' : ''}"><span class="k ${cls}">${k}</span><span class="n">${name}</span>${rec ? '<span class="pick">My pick</span>' : ''}</div>`;
+function show() {
+  let h = '';
+  h += OPT('Option A', 'Retake', true) + `<div class="row">`
+    + F('1 Empty', page(BOX.a(true)), true)
+    + F('2 Picture in', page(BOX.filled({ k: 'empty', tap: true })))
+    + F('3 Android asks', page(BOX.filled({ k: 'empty' }), { over: consent }))
+    + F('4 Play, tap camera', playPhone())
+    + F('5 Saving picture', page(BOX.saving('empty'), { send: false }))
+    + F('6 New picture in', page(BOX.filled({ k: 'review' }), { over: SNACK }))
+    + `</div>`;
+  h += OPT('Retake chip', 'Today or clearer', false) + `<div class="row">`
+    + F('Today: Retake', page(BOX.filled({ k: 'review' })))
+    + F('Retake on Play <span class="pick" style="font-size:12px;color:#fff;background:#246B59;padding:2px 9px;border-radius:99px;margin-left:6px">My pick</span>', page(BOX.filled({ k: 'review', label: 'Retake on Play', play: true })), true)
+    + `</div>`;
+  h += OPT('Now', 'Today', false, 'now') + `<div class="row">${F('Empty', page(BOX.now(true)))}${F('Picture in', page(BOX.filled()))}${F('Saving', page(BOX.saving()))}</div>`;
+  h += OPT('Option A', 'One main action', true) + `<div class="row">${F('With gallery', page(BOX.a(true)), true)}${F('Play only', page(BOX.a(false)), true)}${F('Picture in', page(BOX.filled()))}</div>`;
+  h += OPT('Option B', 'Ghost picture', false) + `<div class="row">${F('With gallery', page(BOX.b(true)))}${F('Play only', page(BOX.b(false)))}${F('Picture in', page(BOX.filled()))}</div>`;
+  h += OPT('Option C', 'Two equal tiles', false) + `<div class="row">${F('With gallery', page(BOX.c(true)))}${F('Play only', page(BOX.c(false)))}${F('Picture in', page(BOX.filled()))}</div>`;
+  h += OPT('Option D', 'Phone slot', false) + `<div class="row">${F('With gallery', page(BOX.d(true)))}${F('Play only', page(BOX.d(false)))}${F('Picture in', page(BOX.filled()))}</div>`;
+  document.getElementById('doc').innerHTML = h;
+}
+function setTheme(t) {
+  TH = t;
+  document.getElementById('bl').classList.toggle('on', t === 'light');
+  document.getElementById('bd').classList.toggle('on', t === 'dark');
+  show();
+}
+show();
+if (document.fonts) document.fonts.ready.then(show);
+</script>
+</body>
+</html>

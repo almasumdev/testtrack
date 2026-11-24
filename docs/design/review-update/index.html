@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Review update</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  @font-face { font-family: "BarlowApp"; font-weight: 400; src: url("../../../app/src/main/res/font/barlow_regular.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 500; src: url("../../../app/src/main/res/font/barlow_medium.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 600; src: url("../../../app/src/main/res/font/barlow_semibold.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 700; src: url("../../../app/src/main/res/font/barlow_bold.ttf"); }
+
+  /* OceanLight / OceanDark, ui/theme/Tokens.kt */
+  .light {
+    --bg:#F7FCFF; --text:#142F43; --text2:#203A4E; --text3:#223D50; --text4:#59758A;
+    --glass:#F2F9FD; --glass2:#DFEDF6; --glassBorder:#B7D1E2; --glassBorderStrong:#789AAF;
+    --accent:#3A5B73; --onAccent:#FFFFFF; --accentInk:#22394B;
+    --tile:#DCE6EE; --tileInk:#3A5B73;
+    --ok:#246B59; --okBg:rgba(36,107,89,.12); --warn:#8A611C; --warnBg:rgba(154,110,36,.12);
+    --bad:#9E3B2E; --badBg:rgba(158,59,46,.12);
+    --cardLine:#E1ECF3; --sheet:#FFFFFF; --ring:rgba(20,47,67,.14);
+    --primary:var(--accent); --onPrimary:var(--onAccent); --scrim:rgba(20,34,48,.46);
+    --inverse:#172F42; --onInverse:#EFF7FC; --snackWarn:#D8B774; --inverseAccent:#A9C3D6;
+    --shade:#E8EDF1; --card:#FFFFFF; --cardInk:#1F2A33; --cardInk2:#4E5A63;
+  }
+  .dark {
+    --bg:#0F1011; --text:#ECEEF0; --text2:#BCC1C6; --text3:#9DA3A9; --text4:#757C82;
+    --glass:#1C1E20; --glass2:#292C2F; --glassBorder:#383C41; --glassBorderStrong:#666D74;
+    --accent:#4A7290; --onAccent:#FFFFFF; --accentInk:#93B3CA;
+    --tile:#2A2D31; --tileInk:#A2BED2;
+    --ok:#83D8C4; --okBg:rgba(131,216,196,.12); --warn:#D8B774; --warnBg:rgba(216,183,116,.14);
+    --bad:#E4938A; --badBg:rgba(228,147,138,.15);
+    --cardLine:#2D3034; --sheet:#1C1E20; --ring:rgba(255,255,255,.16);
+    --primary:var(--accentInk); --onPrimary:var(--bg); --scrim:rgba(0,0,0,.6);
+    --inverse:#E8EBEE; --onInverse:#15181A; --snackWarn:#8A611C; --inverseAccent:#3F6681;
+    --shade:#111315; --card:#23262A; --cardInk:#E6E8EA; --cardInk2:#A9AFB5;
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #D9E0E5; font-family: "BarlowApp", "Barlow", system-ui, sans-serif; color: #1B2B36; }
+  .top { position: sticky; top: 0; z-index: 9; display: flex; align-items: center; gap: 10px; padding: 12px 28px; background: #D9E0E5; border-bottom: 1px solid #C3CDD4; }
+  .top h1 { margin: 0 14px 0 0; font-size: 20px; font-weight: 700; }
+  .top button { font: 600 15px/20px "BarlowApp", "Barlow", sans-serif; padding: 8px 18px; border-radius: 20px; border: 1px solid #B3C0C9; background: #F4F7F9; color: #2D4A5F; cursor: pointer; }
+  .top button.on { background: #2D4A5F; color: #fff; border-color: #2D4A5F; }
+  .doc { padding: 6px 28px 80px; }
+  .who-row { display: inline-block; font-size: 17px; font-weight: 700; color: #fff; background: #2D4A5F; padding: 6px 16px; border-radius: 99px; margin: 34px 0 14px 4px; }
+  .row { display: flex; gap: 22px; align-items: flex-start; overflow-x: auto; padding-bottom: 10px; }
+  .state { display: flex; flex-direction: column; gap: 8px; flex: none; }
+  .lbl { font-size: 15px; font-weight: 700; margin-left: 4px; display: flex; gap: 8px; align-items: center; white-space: nowrap; }
+  .lbl .k { display: inline-grid; place-items: center; min-width: 26px; height: 24px; padding: 0 7px; border-radius: 8px; background: #2D4A5F; color: #fff; font-size: 13px; }
+  .lbl .k.side { background: #9E3B2E; }
+  .lbl .k.sub { background: #8A949C; }
+  .sidewrap { display: flex; gap: 22px; padding-left: 22px; border-left: 2px dashed #A9B6BF; }
+
+  /* phone, 360 x 800 */
+  .phone { width: 360px; height: 800px; background: var(--bg); color: var(--text); border-radius: 26px; overflow: hidden; border: 1px solid #B9C5CE; position: relative; display: flex; flex-direction: column; }
+  .dark.phone { border-color: #3A4046; }
+  .sbar { height: 24px; flex: none; }
+  .pbar { height: 64px; flex: none; display: flex; align-items: center; }
+  .pbar .back { width: 48px; height: 48px; display: grid; place-items: center; margin-left: 4px; color: var(--text); flex: none; }
+  .pbar .ttl { margin-left: 4px; font-size: 22px; line-height: 28px; font-weight: 700; flex: 1; white-space: nowrap; }
+  .pbar .t2 { margin-left: 4px; flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .pbar .t2 .a { font-size: 20px; line-height: 24px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pbar .t2 .b { font-size: 12.5px; line-height: 16px; color: var(--text3); font-weight: 500; white-space: nowrap; }
+  .pbar .t2 .b.warn { color: var(--warn); font-weight: 600; }
+  .pbar .tixp { margin-right: 22px; height: 32px; padding: 0 13px; border-radius: 16px; background: var(--tile); color: var(--tileInk); display: inline-flex; align-items: center; font-size: 14.5px; font-weight: 700; white-space: nowrap; }
+  .scroll { flex: 1; overflow: hidden; padding: 8px 16px 12px; position: relative;
+    -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 18px), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - 18px), transparent); }
+  .foot { flex: none; padding: 8px 16px 4px; }
+  .gest { height: 22px; flex: none; display: grid; place-items: center; }
+  .gest i { width: 108px; height: 4px; border-radius: 2px; background: var(--text4); opacity: .55; }
+
+  svg.ic { display: block; flex: none; }
+  .inl { display: inline-block; vertical-align: -2px; margin-right: 6px; }
+  .ai { display: grid; place-items: center; flex: none; overflow: hidden; box-shadow: inset 0 0 0 1px var(--ring); font-weight: 700; }
+
+  .ah { display: flex; align-items: center; gap: 12px; }
+  .aic { position: relative; width: 52px; height: 52px; flex: none; }
+  .src { position: absolute; right: -5px; bottom: -5px; width: 20px; height: 20px; border-radius: 50%; background: var(--sheet); box-shadow: 0 0 0 2px var(--bg); display: grid; place-items: center; }
+  .ah .col { flex: 1; min-width: 0; }
+  .an { font-size: 16px; line-height: 19px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ad { margin-top: 2px; font-size: 12.5px; line-height: 15px; font-weight: 500; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* thread */
+  .thr { display: flex; flex-direction: column; margin-top: 6px; }
+  .day { align-self: center; font-size: 12px; font-weight: 600; color: var(--text3); margin: 14px 0 0; }
+  .m { display: flex; gap: 8px; align-items: flex-end; margin-top: 10px; }
+  .m.cont { margin-top: 4px; }
+  .m.r { justify-content: flex-end; }
+  .m .col { max-width: 80%; display: flex; flex-direction: column; align-items: flex-start; min-width: 0; }
+  .m.r .col { align-items: flex-end; }
+  .who { font-size: 12px; font-weight: 600; color: var(--text3); margin: 0 0 3px 12px; }
+  .av { width: 28px; height: 28px; border-radius: 50%; background: var(--tile); color: var(--tileInk); display: grid; place-items: center; flex: none; }
+  .m.l:has(+ .m.cont) > .av, .m.l:has(+ .m.cont) > span:first-child { visibility: hidden; }
+  .bub { background: var(--glass2); color: var(--text); border-radius: 18px; padding: 7px 12px; font-size: 15px; line-height: 20px; overflow-wrap: anywhere; }
+  .m.l:has(+ .m.cont) .bub { border-bottom-left-radius: 4px; }
+  .m.l.cont .bub { border-top-left-radius: 4px; }
+  .m.r .bub { background: var(--accent); color: var(--onAccent); }
+  .m.r:has(+ .m.cont) .bub { border-bottom-right-radius: 4px; }
+  .m.r.cont .bub { border-top-right-radius: 4px; }
+  .bub.pic { padding: 4px; }
+  .bub.pic .shw { border-radius: 14px; }
+  .tm { font: 400 11.5px/15px "BarlowApp", "Barlow", sans-serif; color: var(--text3); margin: 4px 0 0 38px; display: flex; align-items: center; gap: 4px; }
+  .tm.r { margin: 4px 2px 0 0; justify-content: flex-end; }
+  .tm .ok { color: var(--ok); }
+  .sys { align-self: center; position: relative; display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 6px 0 10px; border-radius: 13px;
+    background: var(--glass2); color: var(--text2); font-size: 12.5px; line-height: 16px; font-weight: 600; white-space: nowrap; margin: 12px 0; }
+  .sys.noi { padding-right: 11px; }
+  .sys + .m { margin-top: 0; }
+  .sys .ic { opacity: .9; }
+  .sys.warn { background: var(--warnBg); color: var(--warn); }
+  .sys .ii { width: 20px; height: 20px; color: inherit; opacity: .75; }
+  .grp { display: flex; flex-direction: column; }
+  .new { outline: 2.5px solid #E0453A; outline-offset: 5px; border-radius: 16px; margin-top: 12px; }
+  .ta .ia.new { margin-top: 0; }
+
+  /* Play screenshot */
+  .shw { position: relative; overflow: hidden; flex: none; background: #fff; }
+  .xb { position: absolute; right: 8px; top: 8px; width: 26px; height: 26px; border-radius: 50%; background: rgba(0,0,0,.5); color: #fff; display: grid; place-items: center; }
+  .ps { width: 180px; background: #fff; color: #202124; font-family: Roboto, "Segoe UI", system-ui, sans-serif; overflow: hidden; }
+  .ps .q0 { display: flex; justify-content: space-between; padding: 6px 10px 0; font-size: 7px; font-weight: 600; color: #3C4043; }
+  .ps .qa { display: flex; gap: 8px; align-items: center; padding: 11px 10px 0; }
+  .ps .qa i { width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; color: #fff; font: 700 14px system-ui; font-style: normal; flex: none; }
+  .ps .qa b { display: block; font-size: 10px; line-height: 12px; }
+  .ps .qa span { font-size: 7px; color: #01875F; font-weight: 600; }
+  .ps .qo { margin: 9px 10px 0; height: 18px; border-radius: 9px; border: 1px solid #DADCE0; display: grid; place-items: center; font-size: 7.5px; font-weight: 600; color: #01875F; }
+  .ps .qh { padding: 11px 10px 0; font-size: 8.5px; font-weight: 700; }
+  .ps .qs { padding: 3px 10px 0; color: #01875F; font-size: 12px; letter-spacing: 2px; line-height: 14px; }
+  .ps .qs.e { color: #9AA0A6; }
+  .ps .qb { margin: 5px 10px 0; border: 1px solid #01875F; border-radius: 6px; padding: 6px; font-size: 6.6px; line-height: 9px; color: #3C4043; min-height: 46px; }
+  .ps .qg { font-size: 6.5px; color: #5F6368; padding: 3px 10px 0; line-height: 9px; }
+  .ps .ql { margin: 5px 10px 0; height: 4px; border-radius: 2px; background: #E1E3E6; }
+
+  /* the picture box */
+  .pbox { position: relative; width: 100%; height: 160px; border-radius: 14px; border: 1.5px dashed var(--glassBorderStrong); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
+  .pbox .cam { width: 40px; height: 40px; border-radius: 12px; background: var(--tile); color: var(--tileInk); display: grid; place-items: center; }
+  .pbs { display: flex; gap: 8px; }
+  .cb { height: 34px; padding: 0 14px; border-radius: 17px; border: 1px solid; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-size: 13.5px; font-weight: 700; white-space: nowrap; }
+  .cb.pri { background: color-mix(in srgb, var(--accent) 20%, var(--bg)); color: var(--accentInk); border-color: color-mix(in srgb, var(--accent) 45%, var(--bg)); }
+  .dark .cb.pri { background: color-mix(in srgb, var(--accentInk) 20%, var(--bg)); border-color: color-mix(in srgb, var(--accentInk) 45%, var(--bg)); }
+  .cb.alt { background: var(--bg); color: var(--text2); border-color: var(--glassBorder); }
+  .pbox.full { border: 0; overflow: hidden; display: block; box-shadow: inset 0 0 0 1px var(--cardLine); }
+  .pbox.full .shw { border-radius: 14px; }
+  .pbox .rm { position: absolute; top: 8px; right: 8px; width: 28px; height: 28px; border-radius: 50%; background: rgba(0,0,0,.55); color: #fff; display: grid; place-items: center; }
+  .pbox .ov { position: absolute; bottom: 8px; height: 30px; padding: 0 12px; border-radius: 15px; background: rgba(0,0,0,.6); color: #fff; display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 700; }
+  .pbox .ov.hide { left: 8px; } .pbox .ov.retake { right: 8px; }
+  .pbox .dim { position: absolute; inset: 0; background: rgba(0,0,0,.18); display: grid; place-items: center; }
+  .pbox .ring { width: 48px; height: 48px; border-radius: 50%; background: rgba(0,0,0,.5); display: grid; place-items: center; color: #fff; }
+  .pbox .wpill { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,.5); color: #fff; border-radius: 99px; padding: 4px 12px; font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+
+  .ia { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 8px; font-size: 14px; font-weight: 700; color: var(--accentInk); border-radius: 16px; white-space: nowrap; }
+  .ia.bad { color: var(--bad); } .ia.off { color: var(--text4); }
+  .fld { position: relative; border: 1px solid var(--glassBorderStrong); border-radius: 10px; padding: 13px 14px; font-size: 15px; line-height: 20px; font-weight: 500; color: var(--text); background: var(--bg); }
+  .fld .lab { position: absolute; top: -9px; left: 10px; padding: 0 4px; background: var(--bg); font-size: 12px; line-height: 16px; font-weight: 600; color: var(--text3); white-space: nowrap; }
+  .fld .ph { color: var(--text4); font-weight: 400; }
+  .fcount { text-align: right; margin-top: 4px; font-size: 11.5px; color: var(--text4); font-feature-settings: "tnum"; }
+  .il { font-size: 13px; line-height: 18px; color: var(--text2); display: flex; align-items: center; }
+  .il .inl { color: var(--text3); }
+  .ii { display: inline-grid; place-items: center; width: 22px; height: 18px; color: var(--text3); }
+  .sec { font-size: 12px; font-weight: 700; color: var(--text3); margin: 18px 0 8px; display: flex; align-items: center; gap: 4px; }
+
+  .hint { text-align: center; font-size: 12.5px; line-height: 16px; font-weight: 600; color: var(--accentInk); margin-bottom: 10px; }
+  .hint.warn { color: var(--warn); } .hint.q { color: var(--text3); }
+  .hint .ii { color: inherit; opacity: .8; vertical-align: -3px; }
+  .pbtn { height: 52px; border-radius: 26px; background: var(--primary); color: var(--onPrimary); display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 15px; font-weight: 700; }
+  .pbtn.off { background: color-mix(in srgb, var(--text) 12%, transparent); color: color-mix(in srgb, var(--text) 38%, transparent); }
+  .spin { width: 18px; height: 18px; border-radius: 50%; border: 2.4px solid color-mix(in srgb, currentColor 28%, transparent); border-top-color: currentColor; animation: s .8s linear infinite; }
+  .spin.big { width: 26px; height: 26px; }
+  @keyframes s { to { transform: rotate(360deg); } }
+  .two { display: flex; justify-content: center; align-items: center; gap: 28px; min-height: 44px; }
+  .ta { display: flex; justify-content: center; align-items: center; gap: 4px; min-height: 44px; font-size: 13.5px; color: var(--text3); }
+  .ta .ia { text-decoration: underline; text-underline-offset: 3px; }
+  .ta .ia.new { outline-offset: 2px; }
+
+  /* snackbar (SnackHost) */
+  .snack { position: absolute; left: 16px; right: 16px; z-index: 8; display: flex; align-items: flex-start; gap: 10px; min-height: 48px; padding: 14px 16px 14px 14px; border-radius: 14px; background: var(--inverse); color: var(--onInverse); box-shadow: 0 6px 18px rgba(16,47,70,.28); font-size: 14px; line-height: 19px; font-weight: 500; }
+  .snack .si { color: var(--snackWarn); margin-top: 1px; }
+
+  /* picture editor */
+  .ed { background: #000; color: #fff; }
+  .edbar { height: 56px; display: flex; align-items: center; gap: 8px; padding: 0 12px; flex: none; }
+  .eb { width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,.14); display: grid; place-items: center; color: #fff; }
+  .edpic { flex: 1; display: grid; place-items: center; }
+  .edfoot { padding: 10px 20px 12px; flex: none; }
+  .ed .pbtn { background: var(--primary); color: var(--onPrimary); }
+
+  /* notification shade */
+  .shade { background: var(--shade); }
+  .clock { padding: 30px 24px 0; color: var(--text); }
+  .clock .h { font-size: 54px; line-height: 60px; font-weight: 500; letter-spacing: -1px; }
+  .clock .d { font-size: 15px; color: var(--text3); font-weight: 500; }
+  .note { margin: 28px 12px 0; background: var(--card); color: var(--cardInk); border-radius: 22px; padding: 14px 16px 16px; font-family: Roboto, "Segoe UI", system-ui, sans-serif; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+  .note .nh { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--cardInk2); }
+  .note .nh .sm { width: 20px; height: 20px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; }
+  .note .nb { display: flex; gap: 12px; margin-top: 10px; align-items: flex-start; }
+  .note .nt { font-size: 14.5px; font-weight: 600; line-height: 19px; }
+  .note .nx { font-size: 13.5px; line-height: 18px; color: var(--cardInk2); margin-top: 2px; }
+  .note.ghost { opacity: .5; }
+  .tapdot { position: absolute; width: 38px; height: 38px; border-radius: 50%; background: rgba(224,69,58,.25); border: 2px solid #E0453A; }
+</style>
+</head>
+<body>
+<div class="top"><h1>Review: send one update</h1><button id="bl" class="on" onclick="setTheme('light')">Light</button><button id="bd" onclick="setTheme('dark')">Dark</button></div>
+<div class="doc" id="doc"></div>
+<script>
+const L = {
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  checks: '<path d="M18 6 7 17l-5-5"/><path d="m22 10-7.5 7.5L13 16"/>',
+  x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+  tri: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+  clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  user: '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  eyeOff: '<path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/>',
+  scale: '<path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/>',
+  image: '<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>',
+  imageUp: '<path d="M10.3 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10l-3.1-3.1a2 2 0 0 0-2.814.014L6 21"/><path d="m14 19.5 3-3 3 3"/><path d="M17 22v-5.5"/><circle cx="9" cy="9" r="2"/>',
+  camera: '<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>',
+  expand: '<path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/>',
+  rotate: '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
+  phone: '<rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/>',
+  msq: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  hourglass: '<path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>',
+  crop: '<path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/>',
+};
+const ic = (n, s = 16, w = 2) => `<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${L[n]}</svg>`;
+const inl = (n, s = 14, w = 2.2) => `<span class="inl">${ic(n, s, w)}</span>`;
+const BACK = `<svg width="22" height="22" viewBox="0 0 24 24" style="fill:currentColor"><path d="M17.77 3.77 16 2 6 12l10 10 1.77-1.77L9.54 12z"/></svg>`;
+const PLAY = `<svg width="12" height="12" viewBox="0 0 24 24"><path d="M3.6 1.8 13.4 12 3.6 22.2c-.4-.2-.6-.6-.6-1.1V2.9c0-.5.2-.9.6-1.1Z" fill="#00A0FF"/><path d="M16.8 8.6 13.4 12 3.6 1.8c.3-.2.8-.2 1.2 0Z" fill="#00F076"/><path d="M16.8 15.4 4.8 22.2c-.4.2-.9.2-1.2 0L13.4 12Z" fill="#FF3A44"/><path d="m16.8 8.6 3.6 2a1.6 1.6 0 0 1 0 2.8l-3.6 2L13.4 12Z" fill="#FFCE00"/></svg>`;
+const sp = (h) => `<div style="height:${h}px"></div>`;
+const ii = () => `<span class="ii">${ic('info', 14)}</span>`;
+const ia = (t, cls = '', icon) => `<span class="ia ${cls}">${icon ? ic(icon, 15, 2.3) : ''}${t}</span>`;
+const pbtn = (t, cls = '') => `<div class="pbtn ${cls}">${t}</div>`;
+const busyBtn = (t) => `<div class="pbtn" style="opacity:.9"><span class="spin"></span>${t}</div>`;
+const hint = (t, tone = '', icon = 'clock', info = false) => `<div class="hint ${tone}">${inl(icon, 14)}${t}${info ? ii() : ''}</div>`;
+const il = (icon, text, more = '') => `<div class="il">${inl(icon)}${text}${more}</div>`;
+
+/* the app under review, and the reviewer (placeholders) */
+const APP = { n: 'Wave Weather', p: 'com.seedstudio.waveweather', c: '#5B6CF0', dev: 'Seed Studio' };
+const REVIEWER = 'Tania Rahman';
+const TXT = 'Clear hourly chart and the rain alert came on time. The radar is slow to load on mobile data.';
+const NOTE = 'My review shows on Play now.';
+const TIX = 35;
+function art(s) {
+  const g = Math.round(s * 0.6);
+  return `<span class="ai" style="width:${s}px;height:${s}px;border-radius:${Math.round(s * 0.3)}px;background:linear-gradient(150deg,#6A7BFF,#4B55E0)"><svg width="${g}" height="${g}" viewBox="0 0 24 24"><path d="M13 2 5 14h6l-1 8 8-12h-6z" style="fill:#fff"/></svg></span>`;
+}
+const appRow = (sub) => `<div class="ah"><span class="aic">${art(52)}<span class="src">${PLAY}</span></span><div class="col"><div class="an">${APP.n}</div><div class="ad">${sub}</div></div></div>`;
+
+/* a Play screenshot: 'empty' = taken before the review showed, 'review' = the review on Play */
+function play(p) {
+  let b = `<div class="q0"><span>${p.time}</span><span>5G 64%</span></div>
+    <div class="qa"><i style="background:${APP.c}">W</i><div><b>${APP.n}</b><span>${APP.dev}</span></div></div>
+    <div class="qo">Uninstall          Open</div>`;
+  if (p.k === 'empty') b += `<div class="qh">Rate this app</div><div class="qs e">☆☆☆☆☆</div><div class="qo">Write a review</div>`;
+  if (p.k === 'review') b += `<div class="qh">Your review</div><div class="qs">★★★★☆</div><div class="qb">${TXT}</div><div class="qg">Posted publicly. Today</div>`;
+  b += `<div class="qh">About this app</div><div class="ql"></div><div class="ql" style="width:70%"></div><div class="ql" style="width:84%"></div><div class="ql" style="width:52%"></div><div class="ql" style="width:64%"></div><div class="ql" style="width:76%"></div><div class="ql" style="width:40%"></div>`;
+  return `<div class="ps">${b}</div>`;
+}
+function shot(p, w, h, o = {}) {
+  const z = w / 180;
+  return `<div class="shw" style="width:${w}px;height:${h}px"><div style="zoom:${z};height:${h / z}px;overflow:hidden"><div style="margin-top:-${o.y || 0}px">${play(p)}</div></div>${o.x === false ? '' : `<span class="xb">${ic('expand', 14, 2.2)}</span>`}</div>`;
+}
+const FIRST = { k: 'empty', time: '09:04' };
+const SECOND = { k: 'review', time: '14:18' };
+
+/* the thread */
+const DAY = (t) => `<div class="day">${t}</div>`;
+const SYS = (t, tone = '', icon = 'info', more = false) =>
+  `<div class="sys ${tone}${more ? '' : ' noi'}">${ic(icon, 13, 2.4)}<span>${t}</span>${more ? `<span class="ii">${ic('info', 14)}</span>` : ''}</div>`;
+const FACE = `<span class="av">${ic('user', 15, 2)}</span>`;
+const DEV = `<span style="flex:none">${art(28)}</span>`;
+function M(o) {
+  const side = o.side || 'l';
+  const cls = `m ${side}${o.cont ? ' cont' : ''}`;
+  const av = side === 'r' ? '' : (o.av || FACE);
+  const who = side === 'l' && !o.cont && o.who ? `<div class="who">${o.who}</div>` : '';
+  const body = o.pic ? `<div class="bub pic">${shot(o.pic, o.pw || 150, o.ph || 200)}</div>` : `<div class="bub">${o.text}</div>`;
+  const tm = o.tm ? `<div class="tm ${side}">${o.tm}</div>` : '';
+  return `<div class="${cls}">${av}<div class="col">${who}${body}</div></div>${tm}`;
+}
+const thr = (h) => `<div class="thr">${h}</div>`;
+const grp = (h, isNew) => `<div class="grp${isNew ? ' new' : ''}">${h}</div>`;
+const sentTm = (t, w = 'Sent') => `<span class="ok">${ic('checks', 12, 2.6)}</span>${w} ${t}`;
+
+/* phone frame */
+function phone(o) {
+  const right = o.tix ? `<span class="tixp">${o.tix}</span>` : '';
+  const title = o.sub != null
+    ? `<span class="t2"><span class="a">${o.title}</span><span class="b ${o.subTone || ''}">${o.sub}</span></span>`
+    : `<span class="ttl">${o.title}</span>`;
+  return `<div class="phone ${TH}"><div class="sbar"></div><div class="pbar"><span class="back">${BACK}</span>${title}${right}</div>
+    <div class="scroll"><div style="margin-top:-${o.scrollY || 0}px">${o.body}</div></div>${o.foot ? `<div class="foot">${o.foot}</div>` : ''}<div class="gest"><i></i></div>${o.over || ''}</div>`;
+}
+const reviewPage = (body, foot, o = {}) => phone({ title: 'Review', tix: `+${TIX} tix`, body, foot, ...o });
+
+/* ===== Reviewer ===== */
+
+// 1. Waiting, with the new quiet way to send an update
+function waiting1() {
+  let t = DAY('Today');
+  t += M({ side: 'r', pic: FIRST, pw: 120, ph: 165, tm: sentTm('9:05') });
+  t += SYS('With the developer', '', 'hourglass', true);
+  const foot = hint("Keep the app installed. If they don't answer, we check after a day and pay you.", 'q', 'phone')
+    + pbtn('Done')
+    + `<div class="ta">Review not showing yet?${ia('Send an update', 'new')}</div>`;
+  return reviewPage(appRow(APP.p) + sp(4) + thr(t), foot);
+}
+
+// 2, 3, 4. The update page
+function updatePage(d) {
+  let b = appRow(APP.p);
+  b += `<div class="sec">What you sent</div>`;
+  b += thr(M({ side: 'r', pic: FIRST, pw: 76, ph: 104, tm: sentTm('9:05') }).replace('class="m r"', 'class="m r" style="margin-top:0"'));
+  b += `<div class="sec">Your new screenshot${ii()}</div>`;
+  if (!d.pic) {
+    b += `<div class="pbox"><span class="cam">${ic('camera', 20, 2)}</span><div class="pbs"><span class="cb pri">${ic('camera', 15, 2.3)}Capture on Play</span><span class="cb alt">${ic('image', 15, 2.3)}Gallery</span></div></div>`;
+  } else {
+    const over = d.busy
+      ? `<div class="dim"><span class="ring"><span class="spin big"></span></span></div><span class="wpill">Uploading picture</span>`
+      : `<span class="rm">${ic('x', 14, 2.6)}</span><span class="ov hide">${ic('eyeOff', 14, 2.4)}Hide details</span><span class="ov retake">${ic('camera', 14, 2.4)}Retake</span>`;
+    b += `<div class="pbox full">${shot(SECOND, 328, 160, { x: false, y: 58 })}${over}</div>`;
+  }
+  b += sp(16);
+  b += `<div class="fld" style="min-height:66px"><span class="lab">Note for the developer (optional)</span>${d.note ? d.note : `<span class="ph">${NOTE}</span>`}</div>`;
+  b += `<div class="fcount">${d.note ? d.note.length : 0}/280</div>`;
+  b += sp(4) + il('imageUp', 'You can send one update.', ii());
+  const foot = (d.busy ? busyBtn('Uploading picture') : pbtn('Send update', d.pic ? '' : 'off'))
+    + `<div class="ta">${ia('Keep what I sent', d.busy ? 'off' : '')}</div>`;
+  return reviewPage(b, foot, { scrollY: d.scrollY || 0 });
+}
+
+// 3a. The picture editor the capture opens in
+function editor() {
+  return `<div class="phone ${TH} ed"><div class="sbar"></div>
+    <div class="edbar"><span class="eb">${ic('x', 18, 2.2)}</span><span style="flex:1"></span><span class="eb">${ic('crop', 18, 2.2)}</span><span class="eb">${ic('eyeOff', 18, 2.2)}</span></div>
+    <div class="edpic">${shot(SECOND, 250, 520, { x: false })}</div>
+    <div class="edfoot">${pbtn('Use screenshot')}</div><div class="gest"><i></i></div></div>`;
+}
+
+// 5. Waiting again, the update in the thread, the link gone
+function waiting2() {
+  let t = DAY('Today');
+  t += M({ side: 'r', pic: FIRST, pw: 110, ph: 150, tm: 'First screenshot' });
+  t += grp(M({ side: 'r', pic: SECOND, pw: 110, ph: 150 }) + M({ side: 'r', cont: true, text: NOTE, tm: sentTm('14:20', 'Updated,') }), true);
+  t += SYS('With the developer', '', 'hourglass', true);
+  const foot = hint("Keep the app installed. If they don't answer, we check after a day and pay you.", 'q', 'phone') + pbtn('Done') + sp(6);
+  return reviewPage(appRow(APP.p) + sp(4) + thr(t), foot, { scrollY: 30 });
+}
+
+// Side: the developer answered before the update went
+function answeredFirst() {
+  let t = DAY('Today');
+  t += M({ side: 'r', pic: FIRST, pw: 120, ph: 165, tm: sentTm('9:05') });
+  t += M({ av: DEV, who: 'Developer', text: "No review on Google Play. The screenshot shows no stars." });
+  t += M({ av: DEV, cont: true, text: 'I checked the page twice.', tm: '14:17' });
+  t += SYS('Refused. 3 members decide', 'warn', 'scale', true);
+  const foot = hint('You can answer once. The members see it.', 'q', 'msq') + pbtn('Answer the developer') + sp(6);
+  const snack = `<div class="snack" style="bottom:150px"><span class="si">${ic('tri', 18, 2.2)}</span><span>The developer answered before your update went.</span></div>`;
+  return reviewPage(appRow(APP.p) + sp(4) + thr(t), foot, { scrollY: 30, over: snack });
+}
+
+/* ===== Developer ===== */
+
+// 6. Push
+function push() {
+  const tt = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">${L.check}</svg>`;
+  return `<div class="phone ${TH} shade"><div class="sbar"></div>
+    <div class="clock"><div class="h">14:21</div><div class="d">Mon, 24 Nov</div></div>
+    <div class="note" style="position:relative"><div class="nh"><span class="sm">${tt}</span><span>TestTrack</span><span>now</span></div>
+      <div class="nb"><div style="flex:1"><div class="nt">Updated screenshot for ${APP.n}</div><div class="nx">${REVIEWER} sent a new one. Check it before it accepts itself.</div></div>${art(38)}</div>
+</div>
+    <div class="note ghost" style="margin-top:8px"><div class="nh"><span class="sm" style="background:#7A8691">${tt}</span><span>Messages</span><span>1h</span></div><div class="nb"><div><div class="nt" style="font-weight:500">2 new messages</div></div></div></div>
+  </div>`;
+}
+
+// 7. The developer's review page
+function ownerPage() {
+  let t = DAY('Today');
+  t += M({ who: REVIEWER, pic: FIRST, pw: 110, ph: 150, tm: 'First screenshot, 9:05' });
+  t += grp(M({ who: REVIEWER, pic: SECOND, pw: 150, ph: 200 }) + M({ cont: true, text: NOTE, tm: 'Updated, 14:20' }), true);
+  const foot = hint('Accepts itself if you do nothing.', 'warn', 'clock', true)
+    + pbtn(`Accept and pay ${TIX} tix`)
+    + `<div class="two">${ia('Ask for a new one', '', 'rotate')}${ia('Refuse', 'bad', 'x')}</div>`;
+  return phone({ title: `${REVIEWER}'s review`, sub: `7h left, pays ${TIX} tix`, subTone: 'warn', body: appRow('Live app') + thr(t), foot, scrollY: 70 });
+}
+
+/* ===== page ===== */
+let TH = 'light';
+const F = (k, label, html, cls = '') => `<div class="state"><div class="lbl"><span class="k ${cls}">${k}</span>${label}</div>${html}</div>`;
+function show() {
+  let h = `<div class="who-row">Reviewer</div><div class="row">`;
+  h += F('1', 'Waiting', waiting1());
+  h += F('2', 'Send an update', updatePage({}));
+  h += F('3a', 'Editor', editor(), 'sub');
+  h += F('3', 'Picture in', updatePage({ pic: true, note: NOTE }));
+  h += F('4', 'Sending', updatePage({ pic: true, note: NOTE, busy: true }));
+  h += F('5', 'Updated', waiting2());
+  h += `<div class="sidewrap">${F('!', 'Developer answered first', answeredFirst(), 'side')}</div>`;
+  h += `</div><div class="who-row">Developer</div><div class="row">`;
+  h += F('6', 'Push', push());
+  h += F('7', 'Review page', ownerPage());
+  h += `</div>`;
+  document.getElementById('doc').innerHTML = h;
+}
+function setTheme(t) {
+  TH = t;
+  document.getElementById('bl').classList.toggle('on', t === 'light');
+  document.getElementById('bd').classList.toggle('on', t === 'dark');
+  show();
+}
+show();
+if (document.fonts) document.fonts.ready.then(show);
+</script>
+</body>
+</html>
