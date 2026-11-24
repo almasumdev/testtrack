@@ -14,7 +14,7 @@ import com.eazyverse.testtrack.net.SeatIn
 import com.eazyverse.testtrack.ui.CrewPhase
 import com.eazyverse.testtrack.ui.CrewViewModel
 import com.eazyverse.testtrack.ui.MyAppsChanged
-import com.eazyverse.testtrack.ui.SnackTone
+import com.eazyverse.testtrack.ui.Snacks
 import kotlinx.coroutines.launch
 import java.util.TimeZone
 
@@ -49,23 +49,18 @@ fun CrewViewModel.takeSeat(
     seatError = null
     viewModelScope.launch {
         try {
-            val seat =
-                Api.takeSeat(
-                    SeatIn(
-                        appName = appName,
-                        packageName = packageName,
-                        notes = notes,
-                        deviceFp = fingerprint,
-                        timezone = TimeZone.getDefault().id,
-                        appId = appId,
-                        confirmBoxes = true,
-                    ),
-                )
-            if (seat.state == "confirmed") {
-                say("${seat.appName} is in. Play shows it to the testers group.", SnackTone.DONE)
-            } else {
-                say("${seat.appName} is waiting. We couldn't reach Play just now and will check again shortly.")
-            }
+            Api.takeSeat(
+                SeatIn(
+                    appName = appName,
+                    packageName = packageName,
+                    notes = notes,
+                    deviceFp = fingerprint,
+                    timezone = TimeZone.getDefault().id,
+                    appId = appId,
+                    confirmBoxes = true,
+                ),
+            )
+            // The lobby row shows In or Checking, so nothing is said here.
             showTab(CrewPhase.LOBBY)
             onDone()
             load(context)
@@ -73,7 +68,7 @@ fun CrewViewModel.takeSeat(
         } catch (e: ApiError) {
             seatError = e.message.also { onRefused(e) }
         } catch (_: Exception) {
-            seatError = "We could not reach TestTrack. Check your connection."
+            seatError = Snacks.OFFLINE_LINE
         } finally {
             seating = false
         }

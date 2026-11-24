@@ -262,7 +262,6 @@ class CrewViewModel : ViewModel() {
             } catch (e: ApiError) {
                 // An older load's failure says nothing about the newer one's answer.
                 if (mine != loads) return@launch
-                Snacks.error(e.message)
                 offline = true
             } catch (e: Exception) {
                 if (mine != loads) return@launch
@@ -406,10 +405,8 @@ class CrewViewModel : ViewModel() {
         holdTillRead: Boolean = false,
         block: suspend () -> T,
     ) {
-        if (acting != null) {
-            Snacks.info("Still sending. Try again in a moment.")
-            return
-        }
+        // The row shows it busy, so a second tap is dropped without a word.
+        if (acting != null) return
         acting = seat
         viewModelScope.launch {
             var handed = false
@@ -428,7 +425,7 @@ class CrewViewModel : ViewModel() {
             } catch (e: ApiError) {
                 Snacks.error(e.message)
             } catch (_: Exception) {
-                Snacks.error("Couldn't reach TestTrack. Check your connection.") { call(context, seat, onDone, holdTillRead, block) }
+                Snacks.offline { call(context, seat, onDone, holdTillRead, block) }
             } finally {
                 if (!handed) acting = null
             }

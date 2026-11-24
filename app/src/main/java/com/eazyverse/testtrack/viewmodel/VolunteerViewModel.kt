@@ -17,7 +17,6 @@ import com.eazyverse.testtrack.net.volunteerSpots
 import com.eazyverse.testtrack.ui.Crew
 import com.eazyverse.testtrack.ui.CrewRules
 import com.eazyverse.testtrack.ui.CrewViewModel
-import com.eazyverse.testtrack.ui.SnackTone
 import com.eazyverse.testtrack.ui.Snacks
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
@@ -180,7 +179,6 @@ class VolunteerViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val crew = Api.volunteer(VolunteerIn(spot.crewId, fingerprint, TimeZone.getDefault().id))
-                Snacks.done("You're in ${crew.name}. Your first night starts at midnight.")
                 onDone(crew.id)
                 load()
             } catch (e: CancellationException) {
@@ -194,7 +192,7 @@ class VolunteerViewModel : ViewModel() {
                 }
                 load()
             } catch (_: Exception) {
-                Snacks.error("Couldn't reach TestTrack. Check your connection.") { join(app, spot, onDone) }
+                Snacks.offline { join(app, spot, onDone) }
             } finally {
                 joining = false
             }
@@ -204,7 +202,7 @@ class VolunteerViewModel : ViewModel() {
 
 /**
  * Leave a volunteer spot for good, and go straight on: the crew leaves the list at once, so its
- * page closes with no "left" screen in between, a snack says it is done, and the spot is in the
+ * page closes with no "left" screen in between, nothing is said, and the spot is in the
  * Record tab's volunteering list. The crews are read again quietly behind it.
  */
 fun CrewViewModel.leaveVolunteer(crew: Crew) {
@@ -214,8 +212,6 @@ fun CrewViewModel.leaveVolunteer(crew: Crew) {
         onDone = { _: Unit ->
             forget(crew.id)
             records.load(signedOut = false)
-            val kept = if (spot.tixEarned > 0) " You keep the ${spot.tixEarned} tix you earned." else ""
-            say("You left ${crew.name}.$kept", SnackTone.DONE)
         },
     ) { Api.leaveVolunteer(spot.id) }
 }

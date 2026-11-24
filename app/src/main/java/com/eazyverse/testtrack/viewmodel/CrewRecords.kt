@@ -157,8 +157,10 @@ class CrewRecords(
                     Snacks.error(e.message)
                     load(signedOut = false)
                     if (crewId in opened) loadOne(crewId)
+                } else if (e is ApiError) {
+                    Snacks.error(e.message)
                 } else {
-                    Snacks.error(COULD_NOT_SEND) { act(crewId, what, block) }
+                    Snacks.offline { act(crewId, what, block) }
                 }
             } finally {
                 busy = busy - crewId
@@ -178,10 +180,6 @@ class CrewRecords(
         busy = emptyMap()
         opened = emptyMap()
         openFailed = emptySet()
-    }
-
-    private companion object {
-        const val COULD_NOT_SEND = "Couldn't send."
     }
 }
 

@@ -25,13 +25,7 @@ fun CrewViewModel.vote(
 ) = call(
     context = context,
     seat = seat.id,
-    onDone = { answer ->
-        when (answer.state) {
-            "confirmed" -> say("${seat.appName} is in.", SnackTone.DONE)
-            "rejected" -> say("${seat.appName} went back to its owner to fix.")
-            else -> say("Thanks. One more answer decides it.", SnackTone.DONE)
-        }
-    },
+    holdTillRead = true,
 ) { Api.vote(seat.id, installed, reason) }
 
 /**
@@ -45,18 +39,12 @@ fun CrewViewModel.vote(
 fun CrewViewModel.report(
     context: Context,
     seatId: String,
-    appName: String,
     reason: String,
 ) {
     call(
         context = context,
         seat = seatId,
-        onDone = { seat ->
-            when {
-                seat.state == "rejected" -> say("$appName went back to its owner to fix.")
-                else -> say("Reported. ${seat.ownerName} has been told.", SnackTone.DONE)
-            }
-        },
+        holdTillRead = true,
     ) { Api.report(seatId, reason) }
 }
 
@@ -76,7 +64,7 @@ fun CrewViewModel.withdrawReport(
     holdTillRead = true,
     onDone = { answer: ReportWithdrawal ->
         when (answer) {
-            is ReportWithdrawal.Done -> say("Report withdrawn.", SnackTone.DONE)
+            is ReportWithdrawal.Done -> Unit
             is ReportWithdrawal.Refused -> say(answer.line)
             ReportWithdrawal.Unavailable -> say("Withdrawing a report isn't available yet.")
         }
@@ -95,11 +83,13 @@ fun CrewViewModel.leave(
 ) = call(
     context = context,
     seat = seat.id,
+    holdTillRead = true,
     onDone = {
+        // The row goes by itself, so only what it cannot show is said: tix coming back.
         when {
-            seat.charged == 0 -> say("Taken out. It was placed free, so nothing comes back.")
-            seat.charged > 0 -> say("Taken out. Its ${seat.charged} tix are back.", SnackTone.DONE)
-            else -> say("Taken out. Its ${CrewRules.SEAT_COST} tix are back.", SnackTone.DONE)
+            seat.charged == 0 -> Unit
+            seat.charged > 0 -> say("${seat.appName} taken out. Your ${seat.charged} tix are back.", SnackTone.DONE)
+            else -> say("${seat.appName} taken out. Your ${CrewRules.SEAT_COST} tix are back.", SnackTone.DONE)
         }
         MyAppsChanged.tell()
     },

@@ -101,7 +101,7 @@ class PrivateTestsViewModel : ViewModel() {
             } catch (e: ApiError) {
                 if (!quiet) faults[seatId] = ResultsFault(e.message, offline = false)
             } catch (_: Exception) {
-                if (!quiet) faults[seatId] = ResultsFault(OFFLINE, offline = true)
+                if (!quiet) faults[seatId] = ResultsFault(Snacks.OFFLINE_LINE, offline = true)
             }
         }
     }
@@ -114,7 +114,7 @@ class PrivateTestsViewModel : ViewModel() {
     fun accept(
         test: PrivateTest,
         onDone: () -> Unit,
-    ) = answer(test, "You're testing ${test.appName} for ${test.ownerName}.", onDone) {
+    ) = answer(test, onDone) {
         Api.acceptPrivate(test.id, PrivateAcceptIn(TimeZone.getDefault().id))
     }
 
@@ -122,17 +122,16 @@ class PrivateTestsViewModel : ViewModel() {
     fun decline(
         test: PrivateTest,
         onDone: () -> Unit,
-    ) = answer(test, "You said no to ${test.appName}.", onDone) { Api.declinePrivate(test.id) }
+    ) = answer(test, onDone) { Api.declinePrivate(test.id) }
 
     /** Stop testing it. Its owner keeps the nights opened. */
     fun leave(
         test: PrivateTest,
         onDone: () -> Unit,
-    ) = answer(test, "You stopped testing ${test.appName}.", onDone) { Api.leavePrivate(test.id) }
+    ) = answer(test, onDone) { Api.leavePrivate(test.id) }
 
     private fun answer(
         test: PrivateTest,
-        said: String,
         onDone: () -> Unit,
         call: suspend () -> ApiMyPrivateTest,
     ) {
@@ -142,7 +141,6 @@ class PrivateTestsViewModel : ViewModel() {
             try {
                 val got = call().toTest()
                 mine = mine.orEmpty().mapNotNull { if (it.id == test.id) got.takeIf { got.state.open } else it }
-                Snacks.done(said)
                 onDone()
             } catch (e: CancellationException) {
                 throw e
@@ -150,7 +148,7 @@ class PrivateTestsViewModel : ViewModel() {
                 Snacks.error(e.message)
                 loadMine()
             } catch (_: Exception) {
-                Snacks.error(OFFLINE) { answer(test, said, onDone, call) }
+                Snacks.offline { answer(test, onDone, call) }
             } finally {
                 busy = null
             }
@@ -179,13 +177,12 @@ class PrivateTestsViewModel : ViewModel() {
             try {
                 val got = Api.privateInvite(PrivateInviteIn(seatId, address)).toTester()
                 val known = before.firstOrNull { it.id == got.id }
-                Snacks.done(
-                    when {
-                        known == null -> "Invite sent to ${got.name}"
-                        got.state == PrivateState.ACCEPTED -> "${got.name} already tests it"
-                        else -> "${got.name} is invited already"
-                    },
-                )
+                // A new invite shows in the list; only "nothing new happened" needs saying.
+                when {
+                    known == null -> Unit
+                    got.state == PrivateState.ACCEPTED -> Snacks.info("${got.name} already tests it.")
+                    else -> Snacks.info("${got.name} is invited already.")
+                }
                 onSent()
                 loadResults(seatId)
             } catch (e: CancellationException) {
@@ -193,7 +190,7 @@ class PrivateTestsViewModel : ViewModel() {
             } catch (e: ApiError) {
                 if (e.code in InviteRefusal.INLINE) refusal = InviteRefusal(address, e.code, e.message) else Snacks.error(e.message)
             } catch (_: Exception) {
-                Snacks.error("Couldn't send the invite. Check your connection.") { invite(seatId, address, onSent) }
+                Snacks.offline { invite(seatId, address, onSent) }
             } finally {
                 inviting = false
             }
@@ -210,7 +207,6 @@ class PrivateTestsViewModel : ViewModel() {
                 results[tester.seatId]?.let { list ->
                     results[tester.seatId] = list.copy(testers = list.testers.map { if (it.id == got.id) got else it })
                 }
-                Snacks.done(if (tester.state == PrivateState.INVITED) "Invite to ${tester.name} cancelled" else "${tester.name} removed")
                 loadResults(tester.seatId)
             } catch (e: CancellationException) {
                 throw e
@@ -218,14 +214,10 @@ class PrivateTestsViewModel : ViewModel() {
                 Snacks.error(e.message)
                 loadResults(tester.seatId)
             } catch (_: Exception) {
-                Snacks.error(OFFLINE) { remove(tester) }
+                Snacks.offline { remove(tester) }
             } finally {
                 busy = null
             }
         }
-    }
-
-    private companion object {
-        const val OFFLINE = "Couldn't reach TestTrack. Check your connection."
     }
 }

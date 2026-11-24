@@ -349,7 +349,7 @@ internal fun CrewDialogsHost(
             running = vm.crews.any { crew -> crew.phase == CrewPhase.RUN && crew.seats.any { it.id == seat.id } },
             onReport = { reason ->
                 dialogs.reporting = null
-                vm.report(context, seat.id, seat.appName, reason)
+                vm.report(context, seat.id, reason)
             },
             onDismiss = { dialogs.reporting = null },
         )
@@ -384,7 +384,12 @@ internal fun CrewDialogsHost(
     dialogs.leaving?.let { seat ->
         Ask(
             title = "Take ${seat.appName} out?",
-            body = "Your ${CrewRules.SEAT_COST} tix come back. You can put it in a crew again any time.",
+            body =
+                when {
+                    seat.charged == 0 -> "It was placed free, so no tix come back. You can put it in a crew again any time."
+                    seat.charged > 0 -> "Your ${seat.charged} tix come back. You can put it in a crew again any time."
+                    else -> "Your ${CrewRules.SEAT_COST} tix come back. You can put it in a crew again any time."
+                },
             confirm = "Take it out",
             dismiss = "Keep it in",
             destructive = true,
