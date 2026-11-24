@@ -30,11 +30,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.composables.icons.lucide.CircleAlert
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.TriangleAlert
 import com.eazyverse.testtrack.findActivity
@@ -116,6 +118,7 @@ fun ReviewScreen(
         onAllowUsage = { if (vm.requirePlayInstall(context)) vm.openUsageSettings(context) },
         offline = vm.offline,
         failure = vm.failure,
+        notice = vm.notice,
         onRetry = { vm.start(context, post) },
         onClose = onClose,
         // Closed tests need group membership; publicly available apps do not.
@@ -199,6 +202,8 @@ fun ReviewBody(
     onAllowUsage: () -> Unit = {},
     offline: Boolean = false,
     failure: String? = null,
+    /** A refusal met while refreshing the page, shown under the app row. */
+    notice: String? = null,
     onRetry: () -> Unit = {},
     onClose: () -> Unit,
     onLeave: (ReviewStep) -> Unit,
@@ -329,6 +334,7 @@ fun ReviewBody(
             ) {
                 // Anonymous: whose app it is is not shown to the reviewer.
                 ReviewAppRow(post.appName, post.packageName, post.isLive, if (post.mine) post.ownerName else "", offline, icon = post.icon)
+                notice?.let { TintedNote(AnnotatedString(it), Modifier.padding(top = 12.dp), icon = Lucide.CircleAlert) }
                 // Which page this is, rather than the job itself: keyed on the job, every answer
                 // from the server faded the whole page out and back in. Now only a real change of
                 // page does: loading to the step, the step to sent.

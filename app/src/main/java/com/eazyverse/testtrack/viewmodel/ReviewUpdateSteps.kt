@@ -70,7 +70,7 @@ internal fun ReviewViewModel.leaveUpdateIfDone(next: ReviewJob) {
     if (next.review.proofUpdatedAt == null) Snacks.info(ANSWERED_FIRST)
 }
 
-private const val ANSWERED_FIRST = "The developer answered before your update went."
+private const val ANSWERED_FIRST = "The developer answered first, so your update wasn't sent."
 
 /**
  * Send the new screenshot kept at this moment, with the note. The picture is the one kept inside
@@ -104,14 +104,13 @@ fun ReviewViewModel.sendUpdate(
             }
         if (sent == null) {
             proof = null
-            Snacks.error("Add your screenshot again.")
+            Snacks.error(ReviewViewModel.MISSING_SCREENSHOT)
             return@run
         }
         // Sent: keep() closes the page and clears the draft.
         keep(open.copy(review = sent))
         Snacks.dismiss(ReviewViewModel.OFFLINE)
         offline = false
-        Snacks.done("Update sent. The developer sees your new screenshot.")
     }
 }
 

@@ -15,9 +15,8 @@ fun ReviewViewModel.reply(
     picture: Uri?,
 ) {
     val current = job ?: return
-    run(waits = true) {
+    run(waits = true, onOffline = { Snacks.offline { reply(activity, text, picture) } }) {
         keep(current.copy(review = replyWithPicture(activity, current, text, picture)))
-        Snacks.done("Sent. The developer and the members will see your answer.")
     }
 }
 
@@ -28,10 +27,9 @@ fun ReviewViewModel.report(
     onDone: () -> Unit,
 ) {
     val current = job ?: return
-    run(waits = true) {
+    run(waits = true, onOffline = { Snacks.offline { report(reason, note, onDone) } }) {
         keep(current.copy(review = Api.reportPost(current.review.postId, reason, note)))
         dropProof(current.review.id)
-        Snacks.done("Thanks. The developer is told why. Nothing counts against you.")
         onDone()
     }
 }
@@ -39,7 +37,7 @@ fun ReviewViewModel.report(
 /** Give the slot back so somebody else can take it. Whatever was kept for it goes too. */
 fun ReviewViewModel.abandon(onDone: () -> Unit) {
     val current = job ?: return
-    run(waits = true) {
+    run(waits = true, onOffline = { Snacks.offline { abandon(onDone) } }) {
         keep(current.copy(review = Api.abandon(current.review.id)))
         dropProof(current.review.id)
         onDone()

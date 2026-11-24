@@ -61,6 +61,10 @@ class ReviewViewModel : ViewModel() {
     var failure by mutableStateOf<String?>(null)
         private set
 
+    /** A refusal met while quietly refreshing: said on the page, never over it as a snack. */
+    var notice by mutableStateOf<String?>(null)
+        internal set
+
     /**
      * Whether TestTrack may read usage time. Asked for here, at the step that needs it, rather than
      * at sign-up, and read again on every return so switching it on moves the page straight on.
@@ -127,8 +131,7 @@ class ReviewViewModel : ViewModel() {
     }
 
     /**
-     * Move a capture from the cache into the review's keeping. One that replaces a picture kept
-     * before (one with details hidden, say) is said, so nobody sends it thinking it is the old one.
+     * Move a capture from the cache into the review's keeping. The page shows the picture kept.
      */
     private suspend fun adoptPending() {
         val file = pending ?: return
@@ -140,11 +143,7 @@ class ReviewViewModel : ViewModel() {
             file.delete()
             return
         }
-        gate.replace({ showProof(context, id) }) {
-            val before = ProofStore.proof(context, id)
-            val kept = withContext(Dispatchers.IO) { ProofStore.adopt(context, id, file) }
-            if (kept != null && before != null) Snacks.info("Your new screenshot replaced the one before. Hide anything personal again.")
-        }
+        gate.replace({ showProof(context, id) }) { withContext(Dispatchers.IO) { ProofStore.adopt(context, id, file) } }
     }
 
     /**
@@ -206,6 +205,7 @@ class ReviewViewModel : ViewModel() {
     ) {
         app = context.applicationContext
         failure = null
+        notice = null
         // The last saved answer, drawn at once. The fetch below then brings it up to date, or
         // leaves it standing, marked offline, when there is no connection. One that was given up or
         // ran out, which the feed no longer counts as this account's, is not: only opened, it is
@@ -217,7 +217,7 @@ class ReviewViewModel : ViewModel() {
             requirePlayInstall(context)
             restore(context, saved.id)
         }
-        run(onOffline = { if (job == null) failure = "TestTrack could not be reached. Check your connection." }) {
+        run(onOffline = { if (job == null) failure = Snacks.OFFLINE_LINE }) {
             val existing = post.myReviewId ?: job?.review?.takeUnless { left && it.state in ENDED }?.id ?: saved?.id
             val mine = if (existing == null) null else Api.myReviews().firstOrNull { it.id == existing }
             offline = false
@@ -244,7 +244,7 @@ class ReviewViewModel : ViewModel() {
                 try {
                     look(context, first, settle = false)
                 } catch (e: ApiError) {
-                    Snacks.error(e.message)
+                    notice = e.message
                     first
                 }
             keep(looked)
@@ -266,7 +266,7 @@ class ReviewViewModel : ViewModel() {
             then()
             return
         }
-        run(waits = true) {
+        run(waits = true, onOffline = { Snacks.offline { take(context, then) } }) {
             val fingerprint = Device.fingerprint(context)
             if (fingerprint == null) {
                 failure = "This phone will not identify itself, so a review from it cannot count."
@@ -354,11 +354,12 @@ class ReviewViewModel : ViewModel() {
         waits: Boolean = false,
     ) {
         if (job?.settled != false) return
-        run(waits = waits) {
+        run(waits = waits, quiet = true) {
             val current = job?.takeUnless { it.settled } ?: return@run
             val next = look(context, current, settle = true)
             // A screenshot may have landed while this was looking; keep what it said.
             keep(next.copy(leftReview = next.leftReview || job?.leftReview == true))
+            notice = null
         }
     }
 
@@ -403,7 +404,7 @@ class ReviewViewModel : ViewModel() {
                 }
             if (sent == null) {
                 proof = null
-                Snacks.error("Add your screenshot again.")
+                Snacks.error(MISSING_SCREENSHOT)
                 return@run
             }
             keep(current.copy(review = sent))
@@ -429,6 +430,8 @@ class ReviewViewModel : ViewModel() {
     internal fun run(
         /** Something the reviewer asked for, which waits for a refresh under way rather than being dropped. */
         waits: Boolean = false,
+        /** A background look: a refusal goes to [notice], a failure on this side only to the log. */
+        quiet: Boolean = false,
         onOffline: () -> Unit = {},
         block: suspend () -> Unit,
     ) {
@@ -441,7 +444,11 @@ class ReviewViewModel : ViewModel() {
             } catch (e: CancellationException) {
                 throw e
             } catch (e: ApiError) {
-                if (job == null) failure = e.message else Snacks.error(e.message)
+                when {
+                    job == null -> failure = e.message
+                    quiet -> notice = e.message
+                    else -> Snacks.error(e.message)
+                }
             } catch (_: IOException) {
                 // Not an error to show: the page carries on from what it saved, marked offline.
                 offline = true
@@ -450,7 +457,10 @@ class ReviewViewModel : ViewModel() {
                 // Reached us, but something on this side could not be read: not a lost connection.
                 Log.w("Review", "step failed", e)
                 val said = "Something went wrong. Try again in a moment."
-                if (job == null) failure = said else Snacks.error(said)
+                when {
+                    job == null -> failure = said
+                    !quiet -> Snacks.error(said)
+                }
             } finally {
                 busy = false
             }
@@ -466,6 +476,9 @@ class ReviewViewModel : ViewModel() {
     internal companion object {
         /** The offline snack's key, taken away once a send goes or the page closes. */
         const val OFFLINE = "review-offline"
+
+        /** The kept screenshot was gone when it came to send. */
+        const val MISSING_SCREENSHOT = "Your screenshot is missing. Add it again."
 
         /** Given up or run out: over, whatever the phone kept of it. */
         private val ENDED = setOf("abandoned", "expired")
