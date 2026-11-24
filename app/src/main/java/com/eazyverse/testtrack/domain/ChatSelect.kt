@@ -4,7 +4,7 @@ package com.eazyverse.testtrack.domain
  * What the chat's selection bar offers for the messages held down, from the lines themselves.
  * [reply] is only for one message; [copy] and [delete] work on many. [removeOnly] is when every
  * picked message never sent, so "Delete" reads "Remove". [ask] is when a delete reaches the
- * server and so wants a confirm first.
+ * server and so wants a confirm first. [report] is for one message of someone else's.
  */
 data class ChatPicks(
     val ids: Set<String> = emptySet(),
@@ -13,6 +13,7 @@ data class ChatPicks(
     val delete: Boolean = false,
     val removeOnly: Boolean = false,
     val ask: Boolean = false,
+    val report: Boolean = false,
 ) {
     val count: Int get() = ids.size
     val active: Boolean get() = ids.isNotEmpty()
@@ -26,9 +27,16 @@ object ChatSelect {
     fun canReply(
         line: ChatLine,
         writable: Boolean,
-    ): Boolean = writable && !line.deleted && line.send == SendState.SENT
+    ): Boolean = writable && !line.deleted && !line.blocked && !line.held && line.send == SendState.SENT
 
     fun canCopy(line: ChatLine): Boolean = !line.deleted && line.text.isNotBlank()
+
+    /**
+     * Someone else's message that reached the server: not a bot or team line, not deleted, not one
+     * from a member the reader blocked. Reading is enough, so a closed chat can report too.
+     */
+    fun canReport(line: ChatLine): Boolean =
+        !line.mine && line.kind == ChatKind.USER && !line.deleted && !line.blocked && line.send == SendState.SENT
 
     /** Your own, not still on its way: a message that is sending can't be called back yet. */
     fun canDelete(line: ChatLine): Boolean = line.mine && !line.deleted && line.send != SendState.SENDING
@@ -37,7 +45,10 @@ object ChatSelect {
     fun canPick(
         line: ChatLine,
         writable: Boolean,
-    ): Boolean = !line.deleted && line.send != SendState.SENDING && (canReply(line, writable) || canCopy(line) || canDelete(line))
+    ): Boolean =
+        !line.deleted &&
+            line.send != SendState.SENDING &&
+            (canReply(line, writable) || canCopy(line) || canDelete(line) || canReport(line))
 
     /** [id] added to the picked, or taken out when it already is. Keeps the order picked. */
     fun toggle(
@@ -68,6 +79,7 @@ object ChatSelect {
             delete = delete,
             removeOnly = delete && picked.all { it.send == SendState.FAILED },
             ask = delete && picked.any { it.send == SendState.SENT },
+            report = picked.size == 1 && canReport(picked[0]),
         )
     }
 

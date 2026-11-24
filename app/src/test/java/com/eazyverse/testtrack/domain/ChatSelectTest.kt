@@ -33,9 +33,12 @@ class ChatSelectTest {
         assertTrue(one.reply)
         assertFalse(one.copy)
         assertFalse(one.delete)
-        // With the chat closed to the reader it has nothing left to offer.
-        assertFalse(ChatSelect.canPick(picture, writable = false))
-        assertTrue(picks("p", writable = false).ids.isEmpty())
+        // With the chat closed to the reader only Report is left to offer.
+        assertTrue(ChatSelect.canPick(picture, writable = false))
+        assertFalse(picks("p", writable = false).reply)
+        assertTrue(picks("p", writable = false).report)
+        // Their own words are all there is to offer once the thing said is theirs and deleted.
+        assertFalse(ChatSelect.canPick(picture.copy(mine = true, deleted = true), writable = false))
     }
 
     @Test
@@ -103,5 +106,39 @@ class ChatSelectTest {
         val picked = ChatSelect.lines(setOf("m", "p", "t"), thread, writable = true)
         assertEquals(listOf("t", "m", "p"), picked.map { it.id })
         assertEquals("Did yours open?\nYes, fine.", ChatSelect.copyText(picked) { it })
+    }
+
+    @Test
+    fun `only someone else's sent member message can be reported`() {
+        assertTrue(ChatSelect.canReport(theirs))
+        assertFalse(ChatSelect.canReport(mine))
+        assertFalse(ChatSelect.canReport(gone))
+        assertFalse(ChatSelect.canReport(theirs.copy(send = SendState.SENDING)))
+        assertFalse(ChatSelect.canReport(theirs.copy(kind = ChatKind.BOT)))
+        assertFalse(ChatSelect.canReport(theirs.copy(kind = ChatKind.TEAM)))
+        assertFalse(ChatSelect.canReport(theirs.copy(blocked = true)))
+        // A held stub is still someone's message the team may want to hear about.
+        assertTrue(ChatSelect.canReport(theirs.copy(held = true)))
+    }
+
+    @Test
+    fun `report is offered for one message, and a closed chat can still report`() {
+        assertTrue(picks("t").report)
+        assertFalse(picks("m").report)
+        assertFalse(picks("t", "p").report)
+        val closed = picks("t", writable = false)
+        assertTrue(closed.report)
+        assertFalse(closed.reply)
+        assertEquals(setOf("t"), closed.ids)
+    }
+
+    @Test
+    fun `a blocked or held stub offers no reply and no copy`() {
+        val blocked = theirs.copy(id = "b", text = "", blocked = true)
+        val held = theirs.copy(id = "h", text = "", held = true)
+        assertFalse(ChatSelect.canReply(blocked, writable = true))
+        assertFalse(ChatSelect.canReply(held, writable = true))
+        assertFalse(ChatSelect.canPick(blocked, writable = true))
+        assertTrue(ChatSelect.canPick(held, writable = true))
     }
 }

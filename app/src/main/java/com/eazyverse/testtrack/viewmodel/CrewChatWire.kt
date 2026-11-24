@@ -20,6 +20,7 @@ import com.eazyverse.testtrack.net.ApiChatPerson
 internal fun ApiChatPerson.toPerson() =
     ChatPerson(
         seatId = seatId,
+        userId = userId,
         name = ownerName,
         photo = ownerPhoto,
         email = ownerEmail,
@@ -56,6 +57,7 @@ internal fun ApiChatMessage.toLine(pictureHours: Int): ChatLine {
                 event.isBlank() && !deleted -> ChatKind.TEAM
                 else -> ChatKind.BOT
             },
+        authorId = authorId,
         authorSeatId = authorSeatId,
         mine = mine,
         text = text,
@@ -76,6 +78,8 @@ internal fun ApiChatMessage.toLine(pictureHours: Int): ChatLine {
                 )
             },
         deleted = deleted,
+        blocked = blocked,
+        held = held,
         at = at,
     )
 }

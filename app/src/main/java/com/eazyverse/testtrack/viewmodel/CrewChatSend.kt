@@ -38,6 +38,11 @@ internal data class ChatPending(
 /** The words written, sent: shown at once as sending, then as the server keeps them. */
 fun CrewChatViewModel.send() {
     if (!ChatAllowance.canSend(draft, problem, messagesLeft, canPost)) return
+    if (rulesNeeded) {
+        // Agree to the rules first; the words stay in the field until then.
+        askRules(then = { send() })
+        return
+    }
     val id = ServerUpload.newId()
     val text = draft.toWire()
     val line = local(id, text)
@@ -148,7 +153,7 @@ fun CrewChatViewModel.delete(line: ChatLine) {
     }
 }
 
-private fun CrewChatViewModel.post(
+internal fun CrewChatViewModel.post(
     id: String,
     context: Context? = null,
 ) {
@@ -184,7 +189,7 @@ private fun CrewChatViewModel.post(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            failed(id, e)
+            failed(id, e, context)
         }
     }
 }
@@ -193,8 +198,13 @@ private fun CrewChatViewModel.post(
 private fun CrewChatViewModel.failed(
     id: String,
     e: Exception,
+    context: Context?,
 ) {
     val error = e as? ApiError
+    if (error?.code == "chat_rules_needed") {
+        rulesRefused(id, error, context)
+        return
+    }
     val why =
         when (error?.code) {
             "chat_limit" -> {
@@ -212,4 +222,23 @@ private fun CrewChatViewModel.failed(
             else -> error.message
         }
     lines = lines.map { if (it.id == id) it.copy(send = SendState.FAILED, error = why) else it }
+}
+
+/**
+ * The server wants the rules agreed to first. The line stays as sending while they are asked, goes
+ * once they agree, and is marked not sent if they say not now.
+ */
+private fun CrewChatViewModel.rulesRefused(
+    id: String,
+    error: ApiError,
+    context: Context?,
+) {
+    error.details["rules_version"]?.toIntOrNull()?.let { rulesVersion = it }
+    rulesNeeded = true
+    askRules(
+        then = { post(id, context) },
+        declined = {
+            lines = lines.map { if (it.id == id) it.copy(send = SendState.FAILED, error = RULES_DECLINED_LINE) else it }
+        },
+    )
 }

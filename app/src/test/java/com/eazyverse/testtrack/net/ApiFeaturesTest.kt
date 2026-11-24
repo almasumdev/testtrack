@@ -39,12 +39,12 @@ class ApiFeaturesTest {
     }
 
     @Test fun valueIsTheCommaSeparatedList() {
-        assertEquals("multi-crew", ApiFeatures.VALUE)
+        assertEquals("multi-crew,chat", ApiFeatures.VALUE)
         assertEquals(ApiFeatures.LIST.joinToString(","), ApiFeatures.VALUE)
     }
 
     @Test fun requestToOurApiCarriesTheHeader() {
-        assertEquals("multi-crew", sent(BuildConfig.API_BASE + "/volunteers/spots").header("X-TT-Features"))
+        assertEquals("multi-crew,chat", sent(BuildConfig.API_BASE + "/volunteers/spots").header("X-TT-Features"))
     }
 
     @Test fun otherHostsAreNotTold() {

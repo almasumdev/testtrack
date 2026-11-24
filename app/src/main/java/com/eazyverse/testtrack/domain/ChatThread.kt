@@ -47,6 +47,8 @@ data class ChatPerson(
     val mine: Boolean = false,
     /** A volunteer: in the crew with no app of their own, and [seatId] is their volunteer id. */
     val volunteer: Boolean = false,
+    /** Their account, to report or block them. */
+    val userId: String = "",
 )
 
 enum class ChatKind {
@@ -94,6 +96,8 @@ data class ChatLine(
     val seq: Long = 0,
     val rev: Long = 0,
     val kind: ChatKind = ChatKind.USER,
+    /** The author's account, to report or block them; null for the bot and the team. */
+    val authorId: String? = null,
     val authorSeatId: String? = null,
     val mine: Boolean = false,
     /** Mention tokens kept inline: `@[seat:<id>]` and `@[app:<id>]`. */
@@ -103,6 +107,10 @@ data class ChatLine(
     val quote: ChatQuote? = null,
     val picture: ChatPicture? = null,
     val deleted: Boolean = false,
+    /** From a member the reader blocked: a stub with no words. */
+    val blocked: Boolean = false,
+    /** Held for the team to check: a stub with no words (its author still reads it as sent). */
+    val held: Boolean = false,
     val at: Instant? = null,
     val send: SendState = SendState.SENT,
     /** Why it was not sent, for a failed line. */

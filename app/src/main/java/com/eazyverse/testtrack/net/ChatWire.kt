@@ -31,6 +31,10 @@ data class ApiChatPage(
     /** Every seat in the crew, sent with messages; empty on a poll that brought nothing. */
     val people: List<ApiChatPerson> = emptyList(),
     val messages: List<ApiChatMessage> = emptyList(),
+    /** The reader has not agreed to the current chat rules yet: ask, then send. */
+    @SerialName("rules_needed") val rulesNeeded: Boolean = false,
+    /** The version of the rules the server asks for; 0 where it does not say. */
+    @SerialName("rules_version") val rulesVersion: Int = 0,
 )
 
 /** What is left of today's allowance; -1 where the server does not say. */
@@ -101,6 +105,10 @@ data class ApiChatMessage(
     @SerialName("reply_to") val replyTo: ApiChatReply? = null,
     val picture: ApiChatPicture? = null,
     val deleted: Boolean = false,
+    /** A member the reader blocked: a stub with no words. */
+    val blocked: Boolean = false,
+    /** Held back for the team to check after reports: a stub with no words, for everyone but its author. */
+    val held: Boolean = false,
     @SerialName("created_at") val createdAt: String = "",
 )
 
@@ -170,4 +178,44 @@ data class ChatReadIn(
 data class ApiChatRead(
     @SerialName("read_rev") val readRev: Long = 0,
     val limits: ApiChatLimits = ApiChatLimits(),
+)
+
+/** A report on a message or a person: a reason code, and a note (required for `other`, 10 to 280 characters). */
+@Serializable
+data class ChatReportIn(
+    val reason: String,
+    val note: String,
+)
+
+/** The answer to a report, `201` when new and `200` when the same member reported it before. */
+@Serializable
+data class ApiChatReport(
+    val id: String = "",
+    /** message or person. */
+    val target: String = "message",
+    val reason: String = "",
+    /** The message is held back now. */
+    val held: Boolean = false,
+)
+
+@Serializable
+data class ChatRulesIn(
+    val version: Int,
+)
+
+/** Where the reader stands with the chat rules. */
+@Serializable
+data class ApiChatRules(
+    @SerialName("rules_version") val rulesVersion: Int = 0,
+    @SerialName("accepted_version") val acceptedVersion: Int = 0,
+    @SerialName("rules_needed") val rulesNeeded: Boolean = false,
+)
+
+/** A member the reader blocked. [photo] is blank with none. */
+@Serializable
+data class ApiBlocked(
+    @SerialName("user_id") val userId: String = "",
+    val name: String = "",
+    val photo: String = "",
+    @SerialName("blocked_at") val blockedAt: String = "",
 )

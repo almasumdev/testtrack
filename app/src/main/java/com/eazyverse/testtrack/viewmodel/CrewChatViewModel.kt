@@ -110,6 +110,25 @@ class CrewChatViewModel : ViewModel() {
     var newToRev by mutableStateOf(Long.MAX_VALUE)
         private set
 
+    /** The user ids of the members this reader blocked, loaded when the chat opens. */
+    var blocked by mutableStateOf<Set<String>>(emptySet())
+        internal set
+
+    /** The reader has not agreed to the chat rules yet. A send then asks first. */
+    var rulesNeeded by mutableStateOf(false)
+        internal set
+
+    /** The rules version the server asks for; 0 until it says. */
+    internal var rulesVersion = 0
+
+    /** The rules dialog should be showing: [acceptRules] or [declineRules] answers it. */
+    var rulesAsk by mutableStateOf(false)
+        internal set
+
+    /** What goes ahead once the rules are agreed, and what happens to a send they were asked for if not. */
+    internal var afterRules: (() -> Unit)? = null
+    internal var rulesDeclined: (() -> Unit)? = null
+
     var draft by mutableStateOf(ChatDraft())
         private set
 
@@ -147,6 +166,10 @@ class CrewChatViewModel : ViewModel() {
         people = emptyMap()
         draft = ChatDraft()
         replyTo = null
+        blocked = emptySet()
+        rulesAsk = false
+        afterRules = null
+        rulesDeclined = null
         cursor = 0
         loaded = false
         newFromRev = null
@@ -207,6 +230,7 @@ class CrewChatViewModel : ViewModel() {
             loading = false
             failed = false
             markRead(page)
+            loadBlocked()
             true
         } catch (e: CancellationException) {
             throw e
@@ -238,7 +262,7 @@ class CrewChatViewModel : ViewModel() {
         }
     }
 
-    private fun apply(
+    internal fun apply(
         page: ApiChatPage,
         fresh: Boolean,
     ) {
@@ -251,6 +275,9 @@ class CrewChatViewModel : ViewModel() {
         // A poll that leaves the allowance out keeps what is held rather than resetting it.
         if (fresh || page.left.messages >= 0) left(page.left)
         botName = page.bot.name.ifBlank { botName }
+        // A short poll may leave the rules out: it can ask for them, never take the ask back.
+        if (fresh || page.rulesNeeded) rulesNeeded = page.rulesNeeded
+        if (page.rulesVersion > 0) rulesVersion = page.rulesVersion
         val incoming = page.messages.map { it.toLine(limits.pictureHours) }
         lines = ChatThread.merge(lines, incoming, reset = fresh)
         if (page.rev > 0) cursor = page.rev

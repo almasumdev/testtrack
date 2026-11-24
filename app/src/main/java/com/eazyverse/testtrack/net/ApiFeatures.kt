@@ -14,8 +14,11 @@ import okhttp3.Interceptor
 object ApiFeatures {
     const val HEADER = "X-TT-Features"
 
-    /** `multi-crew`: volunteering in several crews at once, and spots that are over left off the list. */
-    val LIST = listOf("multi-crew")
+    /**
+     * `multi-crew`: volunteering in several crews at once, and spots that are over left off the list.
+     * `chat`: the crew chat with its reports, blocks and rules; the server shows no chat without it.
+     */
+    val LIST = listOf("multi-crew", "chat")
 
     val VALUE: String = LIST.joinToString(",")
 
