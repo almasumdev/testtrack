@@ -11,6 +11,7 @@ import com.eazyverse.testtrack.net.ApiError
 import com.eazyverse.testtrack.net.ApiReview
 import com.eazyverse.testtrack.net.recheck
 import com.eazyverse.testtrack.net.reply
+import com.eazyverse.testtrack.net.updateProof
 import com.eazyverse.testtrack.ui.ReviewJob
 
 /**
@@ -36,6 +37,24 @@ internal suspend fun sendProof(
     } else {
         Api.submit(id, ref, note, noBox = job.noBox)
     }
+}
+
+/**
+ * The reviewer's one new screenshot for a review already sent: uploaded once like the first (its id
+ * is kept), then swapped in. No Play install check: the review is sent, only its picture changes.
+ */
+internal suspend fun updateProof(
+    context: Context,
+    job: ReviewJob,
+    proof: Uri,
+    note: String,
+): ApiReview {
+    val app = context.applicationContext
+    val id = job.review.id
+    val ref =
+        ProofStore.uploaded(app, id)
+            ?: ProofUpload.send(app, id, proof).also { ProofStore.markUploaded(app, id, it) }
+    return Api.updateProof(id, ref, note)
 }
 
 /** Refuse a review, with the owner's picture when they added one. */

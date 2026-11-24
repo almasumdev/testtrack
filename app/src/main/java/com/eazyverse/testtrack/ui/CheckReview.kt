@@ -82,7 +82,8 @@ fun ReviewCheck(
                         horizontalArrangement = Arrangement.spacedBy(28.dp, Alignment.CenterHorizontally),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        if (!review.noBox && !review.checked) {
+                        // Not once the reviewer has sent an update: they already swapped it.
+                        if (!review.noBox && !review.checked && review.firstProofRef.isBlank()) {
                             InlineAction("Ask for a new one", leading = Lucide.RotateCcw, enabled = !busy, onClick = onAskAgain)
                         }
                         InlineAction("Refuse", leading = Lucide.X, enabled = !busy, color = Tt.colors.bad, onClick = onReject)

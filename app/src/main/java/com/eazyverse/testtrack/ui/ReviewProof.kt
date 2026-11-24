@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Clock
 import com.composables.icons.lucide.Coins
 import com.composables.icons.lucide.EyeOff
+import com.composables.icons.lucide.ImageUp
 import com.composables.icons.lucide.Layers
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Text
@@ -141,12 +142,23 @@ internal fun SendProof(
     onEdit: (Uri) -> Unit,
     /** What is happening to the picture right now, if anything. */
     working: String? = null,
+    /** The picture is going to TestTrack: [working] only dims it, the Send button shows the progress. */
+    sending: Boolean = false,
 ) {
     val rechecking = job.rechecking
-    val half = job.noBox && !rechecking
+    val updating = job.updating
+    val half = job.noBox && !rechecking && !updating
     val developer = ThreadApp(job.post.packageName, job.post.appName, job.post.icon)
     Column(Modifier.fillMaxWidth()) {
-        if (rechecking || half) {
+        if (updating) {
+            Thread {
+                ThreadGroup(
+                    listOf(ThreadPart.Picture(job.review.proofRef, width = 110.dp, height = 150.dp)),
+                    side = ThreadSide.RIGHT,
+                    time = "What you sent",
+                )
+            }
+        } else if (rechecking || half) {
             Thread {
                 if (rechecking) RecheckAsked(job, developer)
                 if (half) {
@@ -165,7 +177,7 @@ internal fun SendProof(
                 }
             }
         }
-        SmallHeading(if (rechecking) "Your new screenshot" else "Your review", info = proofInfo(job))
+        SmallHeading(if (rechecking || updating) "Your new screenshot" else "Your review", info = proofInfo(job))
         ProofBox(
             picture = shown,
             onCapture = onCapture,
@@ -175,26 +187,38 @@ internal fun SendProof(
             onRetake = onCapture,
             onOpen = shown?.let { picture -> { onEdit(picture) } },
             working = working,
+            dimOnly = sending,
         )
         if (!rechecking) {
             Spacer(Modifier.height(20.dp))
             SendNote(job, note, onNote)
         }
         Spacer(Modifier.height(10.dp))
-        InfoLine(
-            "The developer sees this picture. Hide anything personal.",
-            icon = Lucide.EyeOff,
-            info = "If they dispute it, ${FeedRules.JURORS.words()} members and the TestTrack team see it too.",
-            infoTitle = "Who sees it",
-            infoLook = InfoDotLook.ACCENT,
-        )
-        if (!rechecking && !job.noBox) ProveAsks(job, developer)
+        if (updating) {
+            InfoLine(
+                "You can send one update.",
+                icon = Lucide.ImageUp,
+                info = "The developer sees both screenshots. If they refuse it, you can still answer once.",
+                infoTitle = "One update",
+                infoLook = InfoDotLook.ACCENT,
+            )
+        } else {
+            InfoLine(
+                "The developer sees this picture. Hide anything personal.",
+                icon = Lucide.EyeOff,
+                info = "If they dispute it, ${FeedRules.JURORS.words()} members and the TestTrack team see it too.",
+                infoTitle = "Who sees it",
+                infoLook = InfoDotLook.ACCENT,
+            )
+        }
+        if (!rechecking && !updating && !job.noBox) ProveAsks(job, developer)
     }
 }
 
 /** What the picture has to show, behind the heading's (i). */
 private fun proofInfo(job: ReviewJob): String =
     when {
+        job.updating && job.live && !job.noBox -> "Take it once your review shows on Google Play."
         job.rechecking -> "Take it now, on Google Play. A picture from the gallery won't do."
         job.noBox -> "A screenshot of the app's page on Google Play, with no review box on it."
         job.live -> "A screenshot of your rating and review on Google Play."
@@ -236,7 +260,7 @@ private fun SendNote(
                 else -> t.text3
             },
     )
-    val ready = readyReview(job)
+    val ready = if (job.updating) null else readyReview(job)
     if (ready != null && note.trim() != ready.trim()) {
         Spacer(Modifier.height(2.dp))
         Box(Modifier.offset(x = (-8).dp)) {
@@ -256,6 +280,7 @@ private fun proofLabel(job: ReviewJob): String =
 /** What goes in the box, said inside it once it has focus. */
 private fun proofHint(job: ReviewJob): String? =
     when {
+        job.updating -> if (job.live && !job.noBox) "My review shows on Play now." else "This one shows it."
         job.needsChars <= 0 -> null
         job.noBox -> "What worked and what to improve"
         job.live -> "The same words you posted on Play"

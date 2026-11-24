@@ -23,6 +23,7 @@ import com.eazyverse.testtrack.net.claimTimed
 import com.eazyverse.testtrack.viewmodel.LiveReload
 import com.eazyverse.testtrack.viewmodel.ProofGate
 import com.eazyverse.testtrack.viewmodel.keepEdited
+import com.eazyverse.testtrack.viewmodel.leaveUpdateIfDone
 import com.eazyverse.testtrack.viewmodel.look
 import com.eazyverse.testtrack.viewmodel.replyWithPicture
 import com.eazyverse.testtrack.viewmodel.requirePlayInstall
@@ -73,11 +74,11 @@ class ReviewViewModel : ViewModel() {
      * [ProofStore]: leaving the page and coming back finds it, and the note, where they were.
      */
     var proof by mutableStateOf<Uri?>(null)
-        private set
+        internal set
 
     /** The optional note that goes with the proof, kept as it is typed. */
     var note by mutableStateOf("")
-        private set
+        internal set
 
     /** The application, for keeping files from a collector that has no screen to ask. */
     private var app: Context? = null
@@ -86,7 +87,7 @@ class ReviewViewModel : ViewModel() {
     private var pending: File? by mutableStateOf(null)
 
     /** Writing and sending the kept screenshot take turns here. See [ProofGate]. */
-    private val gate = ProofGate()
+    internal val gate = ProofGate()
 
     /** A new version of the screenshot is being kept, or one is waiting to be: Send waits for it. */
     val replacing: Boolean get() = gate.replacing || (pending != null && app != null && job?.review?.id?.isNotEmpty() == true)
@@ -100,13 +101,18 @@ class ReviewViewModel : ViewModel() {
     val pageJob: ReviewJob?
         get() {
             val current = job ?: return null
+            if (updateOpen && current.canUpdate) return current.copy(updating = true)
             val keeping = replacing && !current.leftReview && !current.settled && ReviewStep.of(current.review) == ReviewStep.LEAVE
             return if (keeping) current.copy(leftReview = true) else current
         }
 
     /** The screenshot is going to TestTrack with the review: the page says so over the picture. */
     var sending by mutableStateOf(false)
-        private set
+        internal set
+
+    /** The reviewer is sending a new screenshot for a review already sent (see ReviewUpdateSteps). */
+    var updateOpen by mutableStateOf(false)
+        internal set
 
     init {
         viewModelScope.launch {
@@ -162,7 +168,7 @@ class ReviewViewModel : ViewModel() {
     ) {
         val id = job?.review?.id ?: error("No review to keep it for")
         val appContext = context.applicationContext
-        val open = { job?.review?.id == id && job?.settled == false }
+        val open = { job?.review?.id == id && (job?.settled == false || (updateOpen && job?.canUpdate == true)) }
         viewModelScope.async { gate.keepEdited(appContext, id, uri, open) { showProof(appContext, id) } }.await()
     }
 
@@ -274,6 +280,7 @@ class ReviewViewModel : ViewModel() {
     ) {
         proof = ProofStore.proof(context, id)?.let(Uri::fromFile)
         note = ProofStore.note(context, id)
+        if (job?.canUpdate == true && proof != null) updateOpen = true
         job = job?.let { it.copy(noBox = it.noBox || ProofStore.noBox(context, id)) }
     }
 
@@ -315,6 +322,7 @@ class ReviewViewModel : ViewModel() {
         val marked = next.copy(noBox = next.noBox || next.review.noBox || app?.let { ProofStore.noBox(it, next.review.id) } == true)
         job = app?.let { marked.copy(firstUsedHere = ReviewClock.firstUse(it, next.review.id)) } ?: marked
         app?.let { ReviewKeep.put(it, next.post.id, next.review) }
+        leaveUpdateIfDone(next)
     }
 
     /**
@@ -428,7 +436,7 @@ class ReviewViewModel : ViewModel() {
     }
 
     /** The review is sent or over: its kept screenshot and note go. */
-    private fun dropProof(id: String) {
+    internal fun dropProof(id: String) {
         app?.let { ProofStore.forget(it, id) }
         proof = null
         note = ""
@@ -440,7 +448,7 @@ class ReviewViewModel : ViewModel() {
      * The API's message is written for a person and is shown as it arrives. Nothing here reads it;
      * where a particular refusal needs particular handling, it matches on the code instead.
      */
-    private fun run(
+    internal fun run(
         /** Something the reviewer asked for, which waits for a refresh under way rather than being dropped. */
         waits: Boolean = false,
         onOffline: () -> Unit = {},
@@ -477,11 +485,11 @@ class ReviewViewModel : ViewModel() {
         super.onCleared()
     }
 
-    private companion object {
+    internal companion object {
         /** The offline snack's key, taken away once a send goes or the page closes. */
         const val OFFLINE = "review-offline"
 
         /** Given up or run out: over, whatever the phone kept of it. */
-        val ENDED = setOf("abandoned", "expired")
+        private val ENDED = setOf("abandoned", "expired")
     }
 }

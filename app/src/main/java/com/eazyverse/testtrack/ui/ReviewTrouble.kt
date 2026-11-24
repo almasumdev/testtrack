@@ -24,9 +24,14 @@ internal fun ReviewRecoveryHelp(
     busy: Boolean,
     onReport: (() -> Unit)?,
     onGiveUp: (() -> Unit)?,
+    onUpdate: (() -> Unit)? = null,
+    onCancelUpdate: (() -> Unit)? = null,
 ) {
     val (prompt, label, action) =
         when {
+            job.updating && onCancelUpdate != null -> Triple("Changed your mind?", "Keep what I sent", onCancelUpdate)
+            job.canUpdate && onUpdate != null ->
+                Triple(if (job.live && !job.noBox) "Review not showing yet?" else "Wrong screenshot?", "Send an update", onUpdate)
             job.canReportInstall && onReport != null -> Triple("Can't install?", "Report a problem", onReport)
             job.canGiveUp && onGiveUp != null -> Triple("Can't finish?", "Give up review", onGiveUp)
             else -> return

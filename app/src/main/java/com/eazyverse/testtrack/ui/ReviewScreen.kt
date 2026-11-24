@@ -1,6 +1,7 @@
 package com.eazyverse.testtrack.ui
 
 import android.net.Uri
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -39,9 +40,12 @@ import com.composables.icons.lucide.TriangleAlert
 import com.eazyverse.testtrack.findActivity
 import com.eazyverse.testtrack.net.ApiPost
 import com.eazyverse.testtrack.ui.theme.Tt
+import com.eazyverse.testtrack.viewmodel.cancelUpdate
 import com.eazyverse.testtrack.viewmodel.dropStrayButton
+import com.eazyverse.testtrack.viewmodel.openUpdate
 import com.eazyverse.testtrack.viewmodel.openUsageSettings
 import com.eazyverse.testtrack.viewmodel.requirePlayInstall
+import com.eazyverse.testtrack.viewmodel.sendUpdate
 import kotlinx.coroutines.delay
 
 /**
@@ -141,6 +145,9 @@ fun ReviewScreen(
             }
         },
         onReply = { text, picture -> vm.reply(activity, text, picture) },
+        onOpenUpdate = vm::openUpdate,
+        onCancelUpdate = { vm.cancelUpdate(context) },
+        onSendUpdate = { vm.sendUpdate(activity, it) },
         // What is sent is the screenshot kept at that moment (see ReviewViewModel.submit), not the address shown.
         onSend = { _, note ->
             requireMembership {
@@ -208,12 +215,17 @@ fun ReviewBody(
     onReport: (() -> Unit)? = null,
     onNoBox: () -> Unit = {},
     onReply: (String, Uri?) -> Unit = { _, _ -> },
+    /** "Send an update": the reviewer's one swapped screenshot for a review already sent. */
+    onOpenUpdate: () -> Unit = {},
+    onCancelUpdate: () -> Unit = {},
+    onSendUpdate: (String) -> Unit = {},
 ) {
     var rulesAccepted by rememberSaveable(post.id, post.feedback, post.needsChars, post.ask) { mutableStateOf(false) }
     val needsAgreement = job?.step == ReviewStep.INSTALL && job.review.id.isEmpty()
     val now by rememberReviewNow(job)
     val scroll = rememberScrollState()
-    LaunchedEffect(post.id, job?.step) { scroll.scrollTo(0) }
+    LaunchedEffect(post.id, job?.step, job?.updating) { scroll.scrollTo(0) }
+    BackHandler(job?.updating == true) { onCancelUpdate() }
     var editingProof by remember { mutableStateOf<Uri?>(null) }
     var answering by remember { mutableStateOf(false) }
     val galleryPick = rememberImagePicker { uri -> if (uri != null) editingProof = uri }
@@ -227,7 +239,7 @@ fun ReviewBody(
 
     // The Send and Waiting pages sit their foot 8dp under the page, as the thread pages do, and
     // their thread fades out above it.
-    val threadFoot = job != null && (job.settled || job.step == ReviewStep.PROVE)
+    val threadFoot = job != null && (job.settled || job.updating || job.step == ReviewStep.PROVE)
     Scaffold(
         containerColor = Color.Transparent,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -248,6 +260,14 @@ fun ReviewBody(
                     Primary("Try again", busy = spinning, onClick = onRetry)
                 } else if (job == null) {
                     Spacer(Modifier.height(52.dp))
+                } else if (job.updating) {
+                    Primary(
+                        if (sending) "Uploading picture" else "Send update",
+                        busy = spinning || sending,
+                        enabled = shown != null && !replacing,
+                    ) {
+                        if (shown != null) onSendUpdate(note.trim())
+                    }
                 } else if (job.settled) {
                     WaitFoot(job, busy = spinning, onDone = onClose, onAnswer = { answering = true })
                 } else {
@@ -291,7 +311,7 @@ fun ReviewBody(
                         }
                     }
                 }
-                if (job != null) ReviewRecoveryHelp(job, busy, onReport, onGiveUp)
+                if (job != null) ReviewRecoveryHelp(job, busy, onReport, onGiveUp, onOpenUpdate, onCancelUpdate)
             }
         },
     ) { padding ->
@@ -313,6 +333,7 @@ fun ReviewBody(
                     when {
                         job == null && failure != null -> ReviewPage.FAILED
                         job == null -> ReviewPage.LOADING
+                        job.updating -> ReviewPage.UPDATE
                         job.settled -> ReviewPage.DONE
                         else -> ReviewPage.STEP
                     }
@@ -323,7 +344,7 @@ fun ReviewBody(
                     Modifier.height(
                         when {
                             page == ReviewPage.DONE && !robot -> 10.dp
-                            page == ReviewPage.STEP && job?.step == ReviewStep.PROVE -> 18.dp
+                            page == ReviewPage.UPDATE || (page == ReviewPage.STEP && job?.step == ReviewStep.PROVE) -> 18.dp
                             else -> ReviewSectionGap
                         },
                     ),
@@ -341,14 +362,17 @@ fun ReviewBody(
                         ReviewDone(job, room)
                         return@Crossfade
                     }
-                    if (job.step == ReviewStep.PROVE) {
+                    if (shownPage == ReviewPage.UPDATE || job.step == ReviewStep.PROVE) {
                         Column(Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
-                            ReviewStepGuide(job, usageAccess, now)
-                            if (sideloaded) {
-                                Spacer(Modifier.height(ReviewSectionGap))
-                                SideloadNotice()
+                            // An update starts at the thread of what was sent: the route is behind it.
+                            if (shownPage != ReviewPage.UPDATE) {
+                                ReviewStepGuide(job, usageAccess, now)
+                                if (sideloaded) {
+                                    Spacer(Modifier.height(ReviewSectionGap))
+                                    SideloadNotice()
+                                }
+                                Spacer(Modifier.height(10.dp))
                             }
-                            Spacer(Modifier.height(10.dp))
                             SendProof(
                                 job = job,
                                 shown = shown,
@@ -365,6 +389,7 @@ fun ReviewBody(
                                         replacing -> "Saving picture"
                                         else -> null
                                     },
+                                sending = sending,
                             )
                         }
                         return@Crossfade
@@ -419,6 +444,6 @@ private fun SideloadNotice() {
     }
 }
 
-private enum class ReviewPage { LOADING, FAILED, STEP, DONE }
+private enum class ReviewPage { LOADING, FAILED, STEP, UPDATE, DONE }
 
 private const val SPIN_AFTER_MS = 250L

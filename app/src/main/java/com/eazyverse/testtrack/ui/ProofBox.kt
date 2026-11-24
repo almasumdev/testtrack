@@ -67,13 +67,15 @@ internal fun ProofBox(
     onOpen: (() -> Unit)? = null,
     /** Which part of a tall screenshot the box shows. */
     alignment: Alignment = Alignment.TopCenter,
-    /** What is happening to the picture ("Uploading picture"): it is shown with a loader over it. */
+    /** What is happening to the picture ("Saving picture"): it is shown with a loader over it. */
     working: String? = null,
+    /** [working] is the send: the picture is only dimmed, as the Send button already shows the progress. */
+    dimOnly: Boolean = false,
 ) {
     if (picture == null && working == null) {
         EmptyProofBox(onCapture, onGallery, modifier)
     } else {
-        FilledProofBox(picture, onRemove, onHideDetails, onRetake, onOpen, alignment, working, modifier)
+        FilledProofBox(picture, onRemove, onHideDetails, onRetake, onOpen, alignment, working, dimOnly, modifier)
     }
 }
 
@@ -130,6 +132,7 @@ private fun FilledProofBox(
     onOpen: (() -> Unit)?,
     alignment: Alignment,
     working: String?,
+    dimOnly: Boolean,
     modifier: Modifier,
 ) {
     val t = Tt.colors
@@ -181,13 +184,19 @@ private fun FilledProofBox(
                 onClick = onRetake,
             )
         }
-        if (working != null) WorkingOver(working)
+        if (working != null) WorkingOver(working, dimOnly)
     }
 }
 
-/** The loader over the picture while it is kept or sent, and the words for it. Takes the taps beneath. */
+/**
+ * The loader over the picture while it is kept, and the words for it; while it is sent ([dimOnly])
+ * only a grey dim, no loader and no words. Takes the taps beneath either way.
+ */
 @Composable
-private fun WorkingOver(words: String) {
+private fun WorkingOver(
+    words: String,
+    dimOnly: Boolean,
+) {
     val t = Tt.colors
     Box(
         Modifier
@@ -195,20 +204,24 @@ private fun WorkingOver(words: String) {
             .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {}
             .semantics { contentDescription = words },
     ) {
-        OverMark {
-            CircularProgressIndicator(Modifier.size(26.dp), color = t.onPhoto, strokeWidth = 2.5.dp, trackColor = Color.Transparent)
+        if (dimOnly) {
+            Box(Modifier.fillMaxSize().background(t.photoScrim.copy(alpha = 0.32f)))
+        } else {
+            OverMark {
+                CircularProgressIndicator(Modifier.size(26.dp), color = t.onPhoto, strokeWidth = 2.5.dp, trackColor = Color.Transparent)
+            }
+            Text(
+                words,
+                style = MaterialTheme.typography.labelMedium,
+                color = t.onPhoto,
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 10.dp)
+                        .clip(CircleShape)
+                        .background(t.photoScrim)
+                        .padding(horizontal = 12.dp, vertical = 4.dp),
+            )
         }
-        Text(
-            words,
-            style = MaterialTheme.typography.labelMedium,
-            color = t.onPhoto,
-            modifier =
-                Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 10.dp)
-                    .clip(CircleShape)
-                    .background(t.photoScrim)
-                    .padding(horizontal = 12.dp, vertical = 4.dp),
-        )
     }
 }
