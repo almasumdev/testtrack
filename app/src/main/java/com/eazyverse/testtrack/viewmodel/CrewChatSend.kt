@@ -158,6 +158,7 @@ internal fun CrewChatViewModel.post(
     context: Context? = null,
 ) {
     val job = pending[id] ?: return
+    if (!posting.add(id)) return
     // Not the view model's own scope: leaving the chat must not cancel a send under way. The id is
     // reused on a retry, so it finishing on its own is safe. The state it writes goes to this view
     // model, which nobody reads once it is cleared; its poll wake-up is a plain channel send.
@@ -190,8 +191,24 @@ internal fun CrewChatViewModel.post(
             throw e
         } catch (e: Exception) {
             failed(id, e, context)
+        } finally {
+            posting.remove(id)
         }
     }
+}
+
+/**
+ * The rules are agreed to: the line that was waiting goes, moved back to sending. A line that was
+ * removed, already sent or already on its way is left alone, so nothing is posted twice or back.
+ */
+private fun CrewChatViewModel.resumeAfterRules(
+    id: String,
+    context: Context?,
+) {
+    if (pending[id] == null || id in posting) return
+    if (lines.none { it.id == id && it.send != SendState.SENT }) return
+    lines = lines.map { if (it.id == id) it.copy(send = SendState.SENDING, error = "") else it }
+    post(id, context)
 }
 
 /** The line stays, marked not sent, with what the server said when it is worth saying. */
@@ -236,7 +253,7 @@ private fun CrewChatViewModel.rulesRefused(
     error.details["rules_version"]?.toIntOrNull()?.let { rulesVersion = it }
     rulesNeeded = true
     askRules(
-        then = { post(id, context) },
+        then = { resumeAfterRules(id, context) },
         declined = {
             lines = lines.map { if (it.id == id) it.copy(send = SendState.FAILED, error = RULES_DECLINED_LINE) else it }
         },

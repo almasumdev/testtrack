@@ -205,7 +205,6 @@ class ReviewViewModel : ViewModel() {
     ) {
         app = context.applicationContext
         failure = null
-        notice = null
         // The last saved answer, drawn at once. The fetch below then brings it up to date, or
         // leaves it standing, marked offline, when there is no connection. One that was given up or
         // ran out, which the feed no longer counts as this account's, is not: only opened, it is
@@ -232,6 +231,7 @@ class ReviewViewModel : ViewModel() {
             if (mine == null) {
                 val here = InstalledApps.info(context, post.packageName)
                 job = ReviewJob(post, previewOf(post), onPhone = here.fromPlay)
+                notice = null
                 return@run
             }
             val review = mine
@@ -242,7 +242,7 @@ class ReviewViewModel : ViewModel() {
             val first = ReviewJob(post, review, leftReview = leftFor(context, review.id))
             val looked =
                 try {
-                    look(context, first, settle = false)
+                    look(context, first, settle = false).also { notice = null }
                 } catch (e: ApiError) {
                     notice = e.message
                     first

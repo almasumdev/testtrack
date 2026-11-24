@@ -117,6 +117,9 @@ class CrewChatViewModel : ViewModel() {
     /** Counts block and unblock made here, so an older read of the list does not overwrite a newer change. */
     internal var blockedChanges = 0
 
+    /** Counts reads of the blocked list, so only the latest one is applied. */
+    internal var blockedReads = 0
+
     /** The reader has not agreed to the chat rules yet. A send then asks first. */
     var rulesNeeded by mutableStateOf(false)
         internal set
@@ -150,6 +153,9 @@ class CrewChatViewModel : ViewModel() {
 
     /** What a line still unsent needs to be tried again, by its id. */
     internal val pending = mutableMapOf<String, ChatPending>()
+
+    /** Ids with a send in flight, so one line never has two posts at once. */
+    internal val posting = mutableSetOf<String>()
 
     private var cursor = 0L
     private var loaded = false
@@ -191,7 +197,7 @@ class CrewChatViewModel : ViewModel() {
         ChatNotifications.cancel(context.applicationContext, crewId)
         if (poller?.isActive == true) return
         // Back on screen: Settings may have unblocked someone since. The first read does its own.
-        if (loaded) loadBlocked()
+        if (loaded) loadBlocked(rereadIfChanged = true)
         poller = viewModelScope.launch { loop() }
     }
 

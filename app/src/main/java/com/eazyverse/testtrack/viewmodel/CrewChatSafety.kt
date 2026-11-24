@@ -31,14 +31,22 @@ private const val REPORTED_NOT_BLOCKED = "We got your report. Blocking them didn
 /** What a line waiting for the rules says if they are not agreed to. */
 internal const val RULES_DECLINED_LINE = "Agree to the chat rules to send."
 
-/** Who this reader blocked, read when the chat opens and each time it comes back on screen. Quiet: the stubs themselves come with the chat. */
-internal fun CrewChatViewModel.loadBlocked() {
+/**
+ * Who this reader blocked, read when the chat opens and each time it comes back on screen. Quiet:
+ * the stubs themselves come with the chat. With [rereadIfChanged] a list that differs from what was
+ * held reads the chat again, since an unblocked member's old messages are stubs until then.
+ */
+internal fun CrewChatViewModel.loadBlocked(rereadIfChanged: Boolean = false) {
     val seen = blockedChanges
+    val mine = ++blockedReads
     viewModelScope.launch {
         try {
             val list = Api.blocks().mapTo(LinkedHashSet()) { it.userId }
-            // A block or unblock made meanwhile is newer than this list: it stands.
-            if (seen == blockedChanges) blocked = list
+            // A block or unblock made meanwhile is newer than this list, and so is a later read: they stand.
+            if (seen != blockedChanges || mine != blockedReads) return@launch
+            val differs = list != blocked
+            blocked = list
+            if (differs && rereadIfChanged) reloaded(changed = false)
         } catch (e: CancellationException) {
             throw e
         } catch (_: Exception) {
@@ -205,7 +213,7 @@ fun CrewChatViewModel.acceptRules(then: (() -> Unit)? = null) {
                 declineRules()
             } else {
                 // The line that was waiting is marked not sent, so it never hangs as sending. The
-                // snack's retry still takes the ask on from here; so does a retry of the line.
+                // snack's retry only asks the server again; once it agrees, the line goes (once).
                 rulesDeclined?.invoke()
                 Snacks.offline { acceptRules(then) }
             }
