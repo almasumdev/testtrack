@@ -57,10 +57,10 @@ private val DebugSnacks =
     listOf(
         Snack("Refused. Three members will decide it."),
         Snack("Accepted. Tania has been paid.", SnackTone.DONE),
-        Snack("Couldn't add it. Check your connection.", SnackTone.ERROR, SnackAction(Snacks.TRY_AGAIN) {}),
+        Snack(Snacks.OFFLINE_LINE, SnackTone.ERROR, SnackAction(Snacks.TRY_AGAIN) {}),
         Snack("You're offline. The chat catches up once you're back.", SnackTone.OFFLINE, sticky = true, key = "debug-offline"),
         Snack("Back online.", SnackTone.DONE, key = "debug-offline", icon = Lucide.Wifi),
-        Snack("Your new screenshot replaced the one before. Hide anything personal again."),
+        Snack("Asked for a new screenshot. They have 24 hours."),
     )
 
 @Composable

@@ -222,10 +222,12 @@ class FeedViewModel : ViewModel() {
                 part { requests = Api.myPosts().map(::requestOf) }
                 offline = false
             } catch (e: ApiError) {
-                Snacks.error(e.message)
+                // Only a pull to refresh answers back; a reload on open, resume or live update stays quiet.
+                if (fromPull) Snacks.error(e.message)
                 if (e.isAuth) signedOut = true else offline = true
             } catch (e: Exception) {
                 offline = true
+                if (fromPull) Snacks.offline()
                 // No connection on the very first fetch: the kept copy stands in. Not for a server fault.
                 if (e is java.io.IOException && !answered) seedFromPhone(afterFailure = true)
             } finally {
@@ -306,17 +308,14 @@ class FeedViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val closed = Api.closePost(id)
-                if (closed.refunded > 0) {
-                    Snacks.done("Closed. ${closed.refunded} tix came back to you.")
-                } else {
-                    Snacks.info("Closed. Reviews already under way can still finish.")
-                }
+                // The tix coming back is the one thing the screen does not show.
+                if (closed.refunded > 0) Snacks.done("Closed. Your ${closed.refunded} tix are back.")
                 load(context)
                 MyAppsChanged.tell()
             } catch (e: ApiError) {
                 Snacks.error(e.message)
             } catch (_: Exception) {
-                unreached { closeRequest(context, id) }
+                Snacks.offline { closeRequest(context, id) }
             } finally {
                 busy = false
             }
@@ -333,12 +332,11 @@ class FeedViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 Api.relistPost(id)
-                Snacks.done("Back in the feed. Testers can take it again.")
                 load(context)
             } catch (e: ApiError) {
                 Snacks.error(e.message)
             } catch (_: Exception) {
-                unreached { relistRequest(context, id) }
+                Snacks.offline { relistRequest(context, id) }
             } finally {
                 busy = false
             }
@@ -435,7 +433,7 @@ class FeedViewModel : ViewModel() {
     fun askAgain(
         context: Context,
         review: Waiting,
-    ) = decide(context, review.id, Snack("Asked. They have ${FeedRules.RECHECK_HOURS} hours to send a new screenshot.")) {
+    ) = decide(context, review.id, Snack("Asked for a new screenshot. They have ${FeedRules.RECHECK_HOURS} hours.")) {
         Api.check(review.id)
     }
 
@@ -443,14 +441,15 @@ class FeedViewModel : ViewModel() {
     fun acceptLater(
         context: Context,
         reviewId: String,
-    ) = decide(context, reviewId, Snack("Accepted. The reviewer has been paid.", SnackTone.DONE)) { Api.acceptLater(reviewId) }
+        name: String = "The reviewer",
+    ) = decide(context, reviewId, Snack("Accepted. $name has been paid.", SnackTone.DONE)) { Api.acceptLater(reviewId) }
 
     /** Come down on one side of a case between two other people. */
     fun vote(
         context: Context,
         dispute: Case,
         forReviewer: Boolean,
-    ) = decide(context, dispute.id, Snack("Counted. Thank you.", SnackTone.DONE)) { Api.vote(dispute.id, forReviewer) }
+    ) = decide(context, dispute.id, null) { Api.vote(dispute.id, forReviewer) }
 
     /**
      * One decision, one reload, one place failure is handled.
@@ -461,7 +460,7 @@ class FeedViewModel : ViewModel() {
     private fun decide(
         context: Context,
         id: String,
-        done: Snack,
+        done: Snack?,
         block: suspend () -> Unit,
     ) {
         if (busy) return
@@ -469,7 +468,7 @@ class FeedViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 block()
-                Snacks.show(done)
+                done?.let(Snacks::show)
                 // Decided, so its page has nothing left to ask; it closes on this.
                 decided = id
                 load(context)
@@ -477,16 +476,13 @@ class FeedViewModel : ViewModel() {
             } catch (e: ApiError) {
                 Snacks.error(e.message)
             } catch (_: Exception) {
-                unreached { decide(context, id, done, block) }
+                Snacks.offline { decide(context, id, done, block) }
             } finally {
                 busy = false
             }
         }
     }
 }
-
-/** No connection: said once, with the same call again on Try again. */
-private fun unreached(retry: () -> Unit) = Snacks.error("Couldn't reach TestTrack. Check your connection.", retry)
 
 /** How long an owner has to answer, as the server's rule; only used when it did not say. */
 private const val ONE_DAY = 24 * 3_600_000L

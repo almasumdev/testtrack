@@ -139,7 +139,14 @@ class AskViewModel : ViewModel() {
     fun signedIn() {
         needsSignIn = false
         if (!ApiSession.signedIn) {
-            say("Sign-in didn't finish. Your request is still here.", ::requestSignIn)
+            Snacks.show(
+                Snack(
+                    "Sign-in didn't finish. Your request is still here.",
+                    SnackTone.ERROR,
+                    SnackAction("Sign in", ::requestSignIn),
+                    key = SNACK,
+                ),
+            )
             return
         }
         refreshBalance()

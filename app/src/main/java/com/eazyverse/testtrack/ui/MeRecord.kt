@@ -75,7 +75,7 @@ internal fun RecordGrid(
                 if (ranked) "#$place" else "New",
                 if (ranked) "Rank" else "Not ranked yet",
                 tint = t.gold,
-                onClick = { Snacks.info("Ranks will be back soon with a proper update.") },
+                onClick = { Snacks.info("Ranks are coming back in a later update.") },
                 chevron = false,
             )
             StatCard(Lucide.Star, "$points", "Points")

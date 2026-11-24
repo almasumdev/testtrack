@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.eazyverse.testtrack.domain.Case
 import com.eazyverse.testtrack.domain.Waiting
+import com.eazyverse.testtrack.domain.firstName
 
 /*
  * The To check tab's rows, and the page each one opens: a review of your app to accept or refuse,
@@ -132,7 +133,10 @@ fun CheckScreen(
                     onClose = { feed.closeRequest(context, request.id) },
                     onRelist = { feed.relistRequest(context, request.id) },
                     onOpenWaiting = onOpen,
-                    onAcceptLater = { reviewId -> feed.acceptLater(context, reviewId) },
+                    onAcceptLater = { reviewId ->
+                        val name = request.reviews.firstOrNull { it.id == reviewId }?.let { settledCheck(request, it)?.first?.firstName }
+                        feed.acceptLater(context, reviewId, name ?: "The reviewer")
+                    },
                 )
             case != null ->
                 CaseCheck(
@@ -184,7 +188,7 @@ fun CheckScreen(
             confirm = "Accept and pay",
             onConfirm = {
                 acceptingLater = false
-                feed.acceptLater(context, later.id)
+                feed.acceptLater(context, later.id, later.firstName)
             },
             onDismiss = { acceptingLater = false },
         )

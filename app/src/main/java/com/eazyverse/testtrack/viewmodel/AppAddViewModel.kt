@@ -284,7 +284,7 @@ class AppAddViewModel : ViewModel() {
             viewModelScope.launch {
                 val icon = withContext(Dispatchers.Default) { runCatching(read).getOrNull() }
                 if (icon == null) {
-                    say("Couldn't use that picture. Try another.")
+                    say(Snacks.PICTURE_UNREADABLE)
                 } else {
                     pickedIcon = icon
                 }
@@ -333,7 +333,7 @@ class AppAddViewModel : ViewModel() {
             } catch (e: ApiError) {
                 say(e.message)
             } catch (_: Exception) {
-                say("Couldn't add it. Check your connection.") { add(onAdded) }
+                say(Snacks.OFFLINE_LINE) { add(onAdded) }
             } finally {
                 adding = false
             }

@@ -193,7 +193,7 @@ fun MainShell(
     BackHandler(enabled = tab == MainTab.CIRCLE && !leaving) { leaving = true }
     LaunchedEffect(leaving) {
         if (!leaving) return@LaunchedEffect
-        Snacks.show(Snack("Press back again to leave TestTrack", key = LEAVE_KEY, millis = LEAVE_WINDOW_MS))
+        Snacks.show(Snack("Press back again to leave TestTrack.", key = LEAVE_KEY, millis = LEAVE_WINDOW_MS))
         try {
             delay(LEAVE_WINDOW_MS)
             leaving = false
