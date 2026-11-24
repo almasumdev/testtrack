@@ -40,10 +40,13 @@ import com.composables.icons.lucide.TriangleAlert
 import com.eazyverse.testtrack.findActivity
 import com.eazyverse.testtrack.net.ApiPost
 import com.eazyverse.testtrack.ui.theme.Tt
+import com.eazyverse.testtrack.viewmodel.abandon
 import com.eazyverse.testtrack.viewmodel.cancelUpdate
 import com.eazyverse.testtrack.viewmodel.dropStrayButton
 import com.eazyverse.testtrack.viewmodel.openUpdate
 import com.eazyverse.testtrack.viewmodel.openUsageSettings
+import com.eazyverse.testtrack.viewmodel.reply
+import com.eazyverse.testtrack.viewmodel.report
 import com.eazyverse.testtrack.viewmodel.requirePlayInstall
 import com.eazyverse.testtrack.viewmodel.sendUpdate
 import kotlinx.coroutines.delay

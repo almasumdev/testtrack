@@ -146,6 +146,25 @@ object ProofStore {
             .apply()
     }
 
+    /** The kept draft is a reviewer's update for a review already sent, not the first submission. */
+    fun updating(
+        context: Context,
+        reviewId: String,
+    ): Boolean = prefs(context).getBoolean("update_$reviewId", false)
+
+    /**
+     * Start an update's draft. Whatever was kept before belongs to the first submission, which may
+     * have been sent without the phone hearing it, so it goes, with the id it was uploaded under.
+     */
+    fun beginUpdate(
+        context: Context,
+        reviewId: String,
+    ) {
+        if (updating(context, reviewId)) return
+        forget(context, reviewId)
+        prefs(context).edit().putBoolean("update_$reviewId", true).apply()
+    }
+
     /** Sent: none of it is needed any more. */
     fun forget(
         context: Context,
@@ -159,6 +178,7 @@ object ProofStore {
             .remove("note_$reviewId")
             .remove("left_$reviewId")
             .remove("no_box_$reviewId")
+            .remove("update_$reviewId")
             .remove("ref_$reviewId")
             .remove("upload_id_$reviewId")
             .apply()

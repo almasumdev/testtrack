@@ -25,7 +25,6 @@ import com.eazyverse.testtrack.viewmodel.ProofGate
 import com.eazyverse.testtrack.viewmodel.keepEdited
 import com.eazyverse.testtrack.viewmodel.leaveUpdateIfDone
 import com.eazyverse.testtrack.viewmodel.look
-import com.eazyverse.testtrack.viewmodel.replyWithPicture
 import com.eazyverse.testtrack.viewmodel.requirePlayInstall
 import com.eazyverse.testtrack.viewmodel.sendProof
 import kotlinx.coroutines.CancellationException
@@ -81,7 +80,8 @@ class ReviewViewModel : ViewModel() {
         internal set
 
     /** The application, for keeping files from a collector that has no screen to ask. */
-    private var app: Context? = null
+    internal var app: Context? = null
+        private set
 
     /** A capture that landed before the review was known; kept once it is. */
     private var pending: File? by mutableStateOf(null)
@@ -135,6 +135,11 @@ class ReviewViewModel : ViewModel() {
         val context = app ?: return
         val id = job?.review?.id ?: return
         pending = null
+        // A capture that lands after the update page closed (or the review was sent) has nowhere to go.
+        if (!draftOpen(id)) {
+            file.delete()
+            return
+        }
         gate.replace({ showProof(context, id) }) {
             val before = ProofStore.proof(context, id)
             val kept = withContext(Dispatchers.IO) { ProofStore.adopt(context, id, file) }
@@ -168,9 +173,12 @@ class ReviewViewModel : ViewModel() {
     ) {
         val id = job?.review?.id ?: error("No review to keep it for")
         val appContext = context.applicationContext
-        val open = { job?.review?.id == id && (job?.settled == false || (updateOpen && job?.canUpdate == true)) }
+        val open = { draftOpen(id) }
         viewModelScope.async { gate.keepEdited(appContext, id, uri, open) { showProof(appContext, id) } }.await()
     }
+
+    /** The review is still taking a screenshot: not yet sent, or its update page is open. */
+    internal fun draftOpen(id: String) = job?.review?.id == id && (job?.settled == false || (updateOpen && job?.canUpdate == true))
 
     /** The × on the picture: the screenshot goes, the note and the step stay. */
     fun removeProof() {
@@ -280,7 +288,15 @@ class ReviewViewModel : ViewModel() {
     ) {
         proof = ProofStore.proof(context, id)?.let(Uri::fromFile)
         note = ProofStore.note(context, id)
-        if (job?.canUpdate == true && proof != null) updateOpen = true
+        // Sent already: a kept draft is an update's only if it was started as one. Otherwise it is the
+        // first submission's, left behind when the phone missed the answer, and must not be sent again.
+        if (job?.canUpdate == true) {
+            if (!ProofStore.updating(context, id)) {
+                dropProof(id)
+            } else if (proof != null) {
+                updateOpen = true
+            }
+        }
         job = job?.let { it.copy(noBox = it.noBox || ProofStore.noBox(context, id)) }
     }
 
@@ -394,44 +410,6 @@ class ReviewViewModel : ViewModel() {
             Snacks.dismiss(OFFLINE)
             offline = false
             dropProof(id)
-        }
-    }
-
-    /** The reviewer's one answer to a refusal: words, a picture, or both. */
-    fun reply(
-        activity: Activity,
-        text: String,
-        picture: Uri?,
-    ) {
-        val current = job ?: return
-        run(waits = true) {
-            keep(current.copy(review = replyWithPicture(activity, current, text, picture)))
-            Snacks.done("Sent. The developer and the members will see your answer.")
-        }
-    }
-
-    /** It would not install: the developer is told why, the slot goes back, nothing counts against you. */
-    fun report(
-        reason: String,
-        note: String,
-        onDone: () -> Unit,
-    ) {
-        val current = job ?: return
-        run(waits = true) {
-            keep(current.copy(review = Api.reportPost(current.review.postId, reason, note)))
-            dropProof(current.review.id)
-            Snacks.done("Thanks. The developer is told why. Nothing counts against you.")
-            onDone()
-        }
-    }
-
-    /** Give the slot back so somebody else can take it. Whatever was kept for it goes too. */
-    fun abandon(onDone: () -> Unit) {
-        val current = job ?: return
-        run(waits = true) {
-            keep(current.copy(review = Api.abandon(current.review.id)))
-            dropProof(current.review.id)
-            onDone()
         }
     }
 
