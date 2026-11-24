@@ -30,6 +30,7 @@ import com.composables.icons.lucide.MessageSquare
 import com.composables.icons.lucide.Pencil
 import com.composables.icons.lucide.Star
 import com.composables.icons.lucide.Trash2
+import com.composables.icons.lucide.UserX
 import com.composables.icons.lucide.Users
 import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.viewmodel.ReviewMoment
@@ -53,6 +54,7 @@ internal fun MeSettings(
     onGroup: () -> Unit,
     notifications: Boolean,
     onAbout: () -> Unit,
+    onBlocked: () -> Unit,
 ) {
     val context = LocalContext.current
     val links = LocalUriHandler.current
@@ -97,9 +99,17 @@ internal fun MeSettings(
         SupportGroup(onAbout)
 
         SectionHeading("Account", top = MeHeadingTop, bottom = MeHeadingBottom)
-        TileGroup(count = 2) { index ->
+        TileGroup(count = 3) { index ->
             if (index == 0) {
                 TileRow(Lucide.Pencil, "Edit profile", subtitle = "Your name and picture", end = RowEnd.PAGE, onClick = onEdit)
+            } else if (index == 1) {
+                TileRow(
+                    Lucide.UserX,
+                    "Blocked members",
+                    subtitle = "Members you hid in crew chats",
+                    end = RowEnd.PAGE,
+                    onClick = onBlocked,
+                )
             } else {
                 TileRow(
                     Lucide.Trash2,

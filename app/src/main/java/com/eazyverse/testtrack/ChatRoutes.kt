@@ -11,6 +11,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.eazyverse.testtrack.data.Session
+import com.eazyverse.testtrack.ui.BlockedMembersScreen
 import com.eazyverse.testtrack.ui.CrewChatScreen
 import com.eazyverse.testtrack.ui.CrewViewModel
 import com.eazyverse.testtrack.viewmodel.CrewChatViewModel
@@ -35,6 +36,10 @@ internal fun NavGraphBuilder.chatRoutes(nav: NavHostController) {
                 onMembers = { nav.push(Routes.crewMembers(id)) },
             )
         }
+    }
+
+    composable(Routes.BLOCKED) {
+        Inset { BlockedMembersScreen(onBack = { nav.popBackStack() }) }
     }
 }
 

@@ -60,6 +60,7 @@ fun MeScreen(
     /** Whether notifications are allowed, read live by the shell; shown on the Notifications row. */
     notifications: Boolean = false,
     onAbout: () -> Unit = {},
+    onBlocked: () -> Unit = {},
     vm: MeViewModel = viewModel(),
 ) {
     val context = LocalContext.current
@@ -87,6 +88,7 @@ fun MeScreen(
         onSignIn = onSignIn,
         notifications = notifications,
         onAbout = onAbout,
+        onBlocked = onBlocked,
         onRetry = { vm.load(context) },
         group = membership.member,
         // Joined, it opens the group itself; otherwise the check, and the way to join.
@@ -142,6 +144,7 @@ fun MeBody(
     onSignIn: () -> Unit = {},
     notifications: Boolean = false,
     onAbout: () -> Unit = {},
+    onBlocked: () -> Unit = {},
     group: Boolean = false,
     onGroup: () -> Unit = {},
     onRetry: () -> Unit = {},
@@ -211,6 +214,7 @@ fun MeBody(
                 onGroup = onGroup,
                 notifications = notifications,
                 onAbout = onAbout,
+                onBlocked = onBlocked,
             )
         }
         item { debug() }

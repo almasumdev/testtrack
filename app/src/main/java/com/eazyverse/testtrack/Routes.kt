@@ -35,6 +35,9 @@ object Routes {
 
     fun crewChat(id: String) = "crew/${Uri.encode(id)}/chat"
 
+    /** The members you blocked, from Settings. */
+    const val BLOCKED = "blocked-members"
+
     /** Asking for feedback on an app from My apps. */
     const val ASK_APP = "ask/{app}"
 

@@ -337,6 +337,7 @@ fun AppNav(
                 onReview = { nav.push(Routes.review(it)) },
                 onCheck = { nav.push(Routes.check(it)) },
                 onOpenAbout = { nav.push(Routes.ABOUT) },
+                onOpenBlocked = { nav.push(Routes.BLOCKED) },
                 onOpenCrew = { nav.push(Routes.crew(it)) },
                 onOpenChat = { nav.push(Routes.crewChat(it)) },
                 onOpenPrivate = { nav.push(PrivateRoutes.test(it)) },

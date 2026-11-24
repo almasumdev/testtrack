@@ -89,6 +89,7 @@ fun MainShell(
     onSignOut: () -> Unit,
     onCheck: (String) -> Unit = {},
     onOpenAbout: () -> Unit = {},
+    onOpenBlocked: () -> Unit = {},
     /** A crew's own page, its chat from the chat mark on its tile, and a private test's page. */
     onOpenCrew: (String) -> Unit = {},
     onOpenChat: (String) -> Unit = {},
@@ -372,6 +373,7 @@ fun MainShell(
                                             onSignOut = onSignOut,
                                             notifications = Session.notificationsGranted,
                                             onAbout = onOpenAbout,
+                                            onBlocked = onOpenBlocked,
                                             onSignIn = {
                                                 asking =
                                                     SignInReason(
