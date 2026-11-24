@@ -5,6 +5,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -64,8 +65,23 @@ import com.eazyverse.testtrack.viewmodel.AppNights
  * owner's run is short on. What each square means is behind the (i), in [SquaresKey].
  */
 
-/** The face column: a 24 face and a little air before the squares. */
-private val FaceColumn = 26.dp
+/** The face column: the face and at least 6 of air before the first square. */
+private val FaceColumn = 28.dp
+
+/** The air between squares, across and down: half of it on each side of every square. */
+private val CellGap = 3.dp
+
+/** The face never grows past this, however wide the card. */
+private val FaceMax = 22.dp
+
+/**
+ * The face's size: as wide as a square, so a row is a square and its gap tall and the faces get the
+ * same air between them as the squares do. [width] is the grid's own width.
+ */
+private fun faceOf(
+    width: Dp,
+    nights: Int,
+): Dp = ((width - FaceColumn) / nights.coerceAtLeast(1) - CellGap).coerceIn(12.dp, FaceMax)
 
 @Composable
 internal fun TrackingGrid(
@@ -110,50 +126,58 @@ internal fun TrackingGrid(
                 }
             }
         }
-        NightNumbers(nights, today, lit)
-        testers.forEach { tester ->
-            // Rows are 24 apart, too tight for a 40 target on the face alone, so the whole row
-            // (face and squares) opens who it is.
-            GridRow(
-                modifier =
-                    Modifier
-                        .clip(RoundedCornerShape(6.dp))
-                        .clickable(onClickLabel = "See who this is") { onFace(tester) },
-                lead = {
-                    Box {
-                        Box(
+        BoxWithConstraints(Modifier.fillMaxWidth()) {
+            val face = faceOf(maxWidth, nights)
+            Column {
+                NightNumbers(nights, today, lit)
+                testers.forEach { tester ->
+                    // Rows are about 21 apart, too tight for a 40 target on the face alone, so the
+                    // whole row (face and squares) opens who it is.
+                    GridRow(
+                        modifier =
                             Modifier
-                                .size(24.dp)
-                                .clip(CircleShape)
-                                .semantics { contentDescription = if (tester.volunteer) "${tester.name}, volunteer" else tester.name }
-                                .then(if (tester.out) Modifier.alpha(0.45f) else Modifier),
-                        ) {
-                            Avatar(
-                                tester.photo,
-                                initialOf(tester.name),
-                                size = 24.dp,
-                                letterStyle = MaterialTheme.typography.labelSmall,
-                            )
-                        }
-                        // A volunteer's hand, on the face's lower corner.
-                        if (tester.volunteer) VolunteerBadge(13.dp, Modifier.align(Alignment.BottomEnd).offset(x = 3.dp, y = 2.dp))
-                    }
-                },
-            ) {
-                tester.squares.forEachIndexed { i, square ->
-                    Box(
-                        Modifier
-                            .weight(1f)
-                            .then(if (i + 1 == today) Modifier.background(lit) else Modifier)
-                            .padding(horizontal = 0.5.dp, vertical = 1.dp),
+                                .clip(RoundedCornerShape(6.dp))
+                                .clickable(onClickLabel = "See who this is") { onFace(tester) },
+                        lead = {
+                            Box {
+                                Box(
+                                    Modifier
+                                        .size(face)
+                                        .clip(CircleShape)
+                                        .semantics {
+                                            contentDescription = if (tester.volunteer) "${tester.name}, volunteer" else tester.name
+                                        }.then(if (tester.out) Modifier.alpha(0.45f) else Modifier),
+                                ) {
+                                    Avatar(
+                                        tester.photo,
+                                        initialOf(tester.name),
+                                        size = face,
+                                        letterStyle = MaterialTheme.typography.labelSmall,
+                                    )
+                                }
+                                // A volunteer's hand, on the face's lower corner.
+                                if (tester.volunteer) {
+                                    VolunteerBadge(12.dp, Modifier.align(Alignment.BottomEnd).offset(x = 3.dp, y = 2.dp))
+                                }
+                            }
+                        },
                     ) {
-                        Cell(square, Modifier.fillMaxWidth(), "${tester.name}, night ${i + 1}")
+                        tester.squares.forEachIndexed { i, square ->
+                            Box(
+                                Modifier
+                                    .weight(1f)
+                                    .then(if (i + 1 == today) Modifier.background(lit) else Modifier)
+                                    .padding(CellGap / 2),
+                            ) {
+                                Cell(square, Modifier.fillMaxWidth(), "${tester.name}, night ${i + 1}")
+                            }
+                        }
                     }
                 }
+                if (showCounts) {
+                    CountsRow(counts, short, today, lit)
+                }
             }
-        }
-        if (showCounts) {
-            CountsRow(counts, short, today, lit)
         }
         QuietNote(note, Modifier.padding(top = 8.dp))
     }
@@ -173,19 +197,24 @@ internal fun TrackingGridSkeleton(
     val t = Tt.colors
     CrewCard(padding = PaddingValues(horizontal = 6.dp, vertical = 12.dp)) {
         Box(Modifier.padding(start = 4.dp, bottom = 10.dp)) { Skeleton(width = 110.dp, height = 24.dp, corner = 12.dp) }
-        if (days) NightNumbers(CrewRules.RUN_DAYS, today = 0, lit = Color.Transparent)
-        repeat(rows) {
-            GridRow(lead = { Skeleton(width = 24.dp, height = 24.dp, corner = 12.dp) }) {
-                repeat(CrewRules.RUN_DAYS) {
-                    Box(Modifier.weight(1f).padding(horizontal = 0.5.dp, vertical = 1.dp)) {
-                        Box(
-                            Modifier
-                                .fillMaxWidth()
-                                .aspectRatio(1f)
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(Status.upcoming)
-                                .background(t.accentInk.copy(alpha = 0.07f)),
-                        )
+        BoxWithConstraints(Modifier.fillMaxWidth()) {
+            val face = faceOf(maxWidth, CrewRules.RUN_DAYS)
+            Column {
+                if (days) NightNumbers(CrewRules.RUN_DAYS, today = 0, lit = Color.Transparent)
+                repeat(rows) {
+                    GridRow(lead = { Skeleton(width = face, height = face, corner = face / 2) }) {
+                        repeat(CrewRules.RUN_DAYS) {
+                            Box(Modifier.weight(1f).padding(CellGap / 2)) {
+                                Box(
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .aspectRatio(1f)
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .background(Status.upcoming)
+                                        .background(t.accentInk.copy(alpha = 0.07f)),
+                                )
+                            }
+                        }
                     }
                 }
             }
