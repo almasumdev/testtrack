@@ -177,8 +177,6 @@ internal fun CrewExtrasAsks(vm: CrewViewModel) {
             picture,
             onKeep = { edited -> extras.sendEdited(context.applicationContext, edited) },
             onClose = { extras.closeEditor() },
-            title = "Check your picture",
-            copy = "Only the TestTrack team sees it. Hide anything personal first.",
             primaryLabel = "Send",
             failText = "The edited picture could not be saved. Try again.",
         )
