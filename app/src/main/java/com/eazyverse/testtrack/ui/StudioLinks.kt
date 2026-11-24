@@ -24,6 +24,16 @@ internal const val SOURCE_REPO = "https://github.com/almasumdev/testtrack"
 /** The members' WhatsApp group: WhatsApp opens it where it is installed, the browser elsewhere. */
 internal const val WHATSAPP_GROUP = "https://chat.whatsapp.com/LsRjKR99BJRJBII3Oaz0OS"
 
+/*
+ * The community links the About page shows. A blank one is left out of the grid, so each stays ""
+ * until its address exists.
+ */
+internal const val WHATSAPP_CHANNEL = ""
+internal const val TELEGRAM_GROUP = ""
+internal const val APP_SITE = ""
+internal const val YOUTUBE = ""
+internal const val FACEBOOK_GROUP = ""
+
 /** Google Play, as Android names it. */
 internal const val PLAY_STORE = "com.android.vending"
 

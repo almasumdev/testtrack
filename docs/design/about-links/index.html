@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>TestTrack: About page links</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  @font-face { font-family: "BarlowApp"; font-weight: 400; src: url("../../../app/src/main/res/font/barlow_regular.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 500; src: url("../../../app/src/main/res/font/barlow_medium.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 600; src: url("../../../app/src/main/res/font/barlow_semibold.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 700; src: url("../../../app/src/main/res/font/barlow_bold.ttf"); }
+
+  .lt {
+    --bg:#F7FCFF; --text:#142F43; --text2:#203A4E; --text3:#223D50; --text4:#59758A;
+    --glass:#F2F9FD; --accent:#3A5B73; --accentInk:#22394B; --primary:#3A5B73; --onPrimary:#fff;
+    --tile:#DCE6EE; --tileInk:#3A5B73; --cardLine:#E1ECF3; --gold:#9A7B1F; --scrim:rgba(20,34,48,.46);
+    --brandTile:#FFFFFF; --ghInk:#181717;
+  }
+  .dk {
+    --bg:#0F1011; --text:#ECEEF0; --text2:#BCC1C6; --text3:#9DA3A9; --text4:#757C82;
+    --glass:#1C1E20; --accent:#4A7290; --accentInk:#93B3CA; --primary:#93B3CA; --onPrimary:#0F1011;
+    --tile:#2A2D31; --tileInk:#A2BED2; --cardLine:#2D3034; --gold:#E3A93C; --scrim:rgba(0,0,0,.6);
+    --brandTile:#1C1E20; --ghInk:#FFFFFF;
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #D9E0E5; font-family: "BarlowApp","Barlow",system-ui,sans-serif; color: #142F43; }
+  body.night { background: #2A2F33; color: #E6EBEF; }
+  header.top { padding: 22px 32px 0; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+  header.top h1 { margin: 0; font-size: 26px; }
+  h2.sec { margin: 0; padding: 26px 32px 0; font-size: 20px; display: flex; align-items: center; gap: 14px; }
+  .tog { display: inline-flex; background: #fff; border-radius: 999px; padding: 3px; box-shadow: 0 0 0 1px #B8C5CE; }
+  .tog button { font: 700 14px "BarlowApp","Barlow"; border: 0; background: none; padding: 7px 16px; border-radius: 999px; cursor: pointer; color: #3A5B73; }
+  .tog button.on { background: #3A5B73; color: #fff; }
+  main { padding: 14px 32px 30px; display: flex; gap: 28px; align-items: flex-start; flex-wrap: wrap; }
+  .col { display: flex; flex-direction: column; gap: 10px; }
+  .lab { display: flex; gap: 8px; align-items: center; font-size: 18px; font-weight: 700; height: 30px; }
+  .lab .k { width: 30px; height: 30px; border-radius: 9px; background: #3A5B73; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 16px; }
+  .rec { font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; padding: 3px 10px; border-radius: 999px; background: #DCEFE4; color: #24684A; }
+
+  /* phone */
+  .ph { width: 393px; position: relative; overflow: hidden; border-radius: 30px; background: var(--bg); color: var(--text);
+        box-shadow: 0 0 0 1px #B8C5CE, 0 10px 24px rgba(16,47,70,.14); }
+  .ph.best { box-shadow: 0 0 0 3px #5FAE85, 0 10px 24px rgba(16,47,70,.14); }
+  .sb { height: 30px; display: flex; align-items: center; padding: 4px 24px 0; font-size: 14px; font-weight: 600; }
+  .sb .bat { margin-left: auto; width: 26px; height: 13px; border-radius: 7px; background: var(--text); opacity: .85; }
+  .bar { height: 64px; display: flex; align-items: center; position: relative; }
+  .bar .back { position: absolute; left: 16px; width: 24px; height: 24px; color: var(--text); }
+  .bar .ttl { position: absolute; left: 68px; font-size: 22px; line-height: 28px; font-weight: 700; }
+  .ct { padding: 8px 16px 28px; }
+
+  svg.ic { display: block; flex: none; }
+
+  .mark { width: 84px; height: 84px; margin: 0 auto; position: relative; }
+  .mark img { position: absolute; width: 165px; height: 165px; left: 50%; top: 50%; transform: translate(-50%,-50%); }
+  .name { text-align: center; font-size: 24px; line-height: 28px; font-weight: 700; margin-top: 14px; }
+  .ver { text-align: center; font-size: 12px; line-height: 16px; font-weight: 500; color: var(--text3); margin-top: 4px; letter-spacing: .5px; }
+  .lead { text-align: center; font-size: 14.5px; line-height: 21px; color: var(--text2); margin-top: 14px; padding: 0 4px; letter-spacing: .25px; }
+
+  .gap34 { height: 34px; } .gap26 { height: 26px; } .gap16 { height: 16px; } .gap10 { height: 10px; } .gap14 { height: 14px; }
+  .h { font-size: 16px; line-height: 19px; font-weight: 700; padding-bottom: 10px; }
+  .line { font-size: 14px; line-height: 20px; color: var(--text2); letter-spacing: .25px; }
+
+  .stars { display: flex; justify-content: center; gap: 4px; color: var(--gold); }
+  .stars span { width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; }
+
+  .pill { min-height: 52px; border-radius: 999px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14.5px; font-weight: 700; padding: 0 16px; }
+  .pill.out { border: 1.5px solid var(--accentInk); color: var(--accentInk); }
+  .pill.fill { background: var(--primary); color: var(--onPrimary); font-size: 15px; gap: 10px; }
+  .stack > * + * { margin-top: 10px; }
+
+  .maker { display: flex; align-items: center; min-height: 48px; padding: 6px 0; }
+  .maker img { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; }
+  .maker .w { flex: 1; margin-left: 14px; }
+  .maker b { display: block; font-size: 16px; line-height: 20px; font-weight: 600; }
+  .maker span { font-size: 12.5px; line-height: 16px; color: var(--text3); }
+  .chev { color: var(--text4); }
+
+  .legal { display: flex; justify-content: center; }
+  .legal span { height: 48px; padding: 0 10px; display: flex; align-items: center; font-size: 14px; font-weight: 600; color: var(--accentInk); }
+  .copy { text-align: center; font-size: 12px; line-height: 16px; font-weight: 500; color: var(--text4); margin-top: 6px; }
+
+  /* TileRow */
+  .tg { display: flex; flex-direction: column; gap: 8px; }
+  .tr { display: flex; align-items: center; min-height: 60px; padding: 12px 14px; background: var(--bg); border: 1px solid var(--cardLine); border-radius: 14px; }
+  .tr .tl { width: 36px; height: 36px; border-radius: 11px; background: var(--tile); color: var(--tileInk); display: flex; align-items: center; justify-content: center; flex: none; }
+  .tr .w { flex: 1; min-width: 0; margin-left: 14px; }
+  .tr .t { font-size: 15px; line-height: 19px; font-weight: 600; }
+  .tr .s { font-size: 12.5px; line-height: 17px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tr .end { margin-left: 10px; color: var(--text4); }
+  .later { opacity: .5; border-style: dashed; border-color: var(--text4); }
+  .latertag { margin-left: 10px; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; background: #FCE4EE; color: #C2185B; }
+
+  /* old B: outline grid */
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px 8px; }
+  .cell { display: flex; flex-direction: column; align-items: center; padding: 8px 2px 6px; border-radius: 14px; }
+  .cell .tl { width: 52px; height: 52px; border-radius: 16px; background: var(--tile); color: var(--tileInk); display: flex; align-items: center; justify-content: center; }
+  .cell .t { margin-top: 8px; font-size: 13px; line-height: 16px; font-weight: 600; color: var(--text2); text-align: center; }
+  .cell.later { opacity: .5; border: 1px dashed var(--text4); }
+
+  /* picked B: brand logos, 4 across, a short last row centred */
+  .bgrid { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 8px; }
+  .bcell { width: calc((100% - 24px) / 4); display: flex; flex-direction: column; align-items: center; padding: 6px 0 4px; border-radius: 14px; }
+  .bcell .bt { width: 56px; height: 56px; border-radius: 16px; background: var(--brandTile); border: 1px solid var(--cardLine); display: flex; align-items: center; justify-content: center; }
+  .bcell .t { margin-top: 8px; font-size: 12.5px; line-height: 16px; font-weight: 600; color: var(--text2); text-align: center; }
+
+  /* sheet (C) */
+  .scrim { position: absolute; inset: 0; background: var(--scrim); }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--glass); border-radius: 22px 22px 0 0; padding: 10px 16px 30px; }
+  .handle { width: 38px; height: 4px; border-radius: 2px; background: var(--text4); opacity: .5; margin: 0 auto 14px; }
+  .sheet .st { font-size: 17px; line-height: 22px; font-weight: 700; }
+  .sheet .ss { font-size: 12px; line-height: 16px; color: var(--text3); margin-top: 4px; letter-spacing: .4px; }
+  .sheet .tg { margin-top: 14px; }
+  .homebar { position: absolute; bottom: 8px; left: 50%; width: 120px; margin-left: -60px; height: 4px; border-radius: 2px; background: var(--text4); opacity: .6; }
+</style>
+</head>
+<body>
+<header class="top"><h1>About page links</h1></header>
+<h2 class="sec">Picked: B, real logos</h2>
+<main id="picked"></main>
+<h2 class="sec">Earlier options <div class="tog"><button id="bL" class="on">Light</button><button id="bD">Dark</button></div></h2>
+<main id="m"></main>
+
+<script>
+const S = (w, inner, sw = 2) => `<svg class="ic" width="${w}" height="${w}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
+const I = {
+  back: w => `<svg class="ic" width="${w}" height="${w}" viewBox="0 0 24 24"><path fill="currentColor" d="M17.77 3.77 16 2 6 12l10 10 1.77-1.77L9.54 12z"/></svg>`,
+  chev: w => S(w, '<path d="m9 18 6-6-6-6"/>'),
+  out: w => S(w, '<path d="M7 7h10v10"/><path d="M7 17 17 7"/>'),
+  mail: w => S(w, '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>'),
+  globe: w => S(w, '<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>'),
+  github: w => S(w, '<path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/>'),
+  msg: w => S(w, '<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>'),
+  wa: w => S(w, '<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/><g transform="translate(7.4 7.4) scale(.385)" stroke-width="4.2"><path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384"/></g>'),
+  wach: w => S(w, '<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/><circle cx="12" cy="12" r="1.2"/><path d="M9.2 9.2a4 4 0 0 0 0 5.6"/><path d="M14.8 9.2a4 4 0 0 1 0 5.6"/>'),
+  tg: w => S(w, '<path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/>'),
+  yt: w => S(w, '<path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/><path d="m10 15 5-3-5-3z"/>'),
+  users: w => S(w, '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'),
+  star: w => `<svg class="ic" width="${w}" height="${w}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><path d="M12 2.5 14.57 8.46 21.04 9.06 16.16 13.35 17.58 19.69 12 16.37 6.42 19.69 7.84 13.35 2.96 9.06 9.43 8.46z"/></svg>`,
+  play: w => `<svg class="ic" width="${w*466/512}" height="${w}" viewBox="0 0 466 511.98"><path fill="#EA4335" d="M199.9 237.8 1.4 470.17c7.22 24.57 30.16 41.81 55.8 41.81 11.16 0 20.93-2.79 29.3-8.37l244.16-139.46-130.76-126.35z"/><path fill="#FBBC04" d="m433.91 205.1-104.65-60-111.61 110.22 113.01 108.83 104.64-58.6c18.14-9.77 30.7-29.3 30.7-50.23-1.4-20.93-13.95-40.46-32.09-50.22z"/><path fill="#34A853" d="M199.42 273.45 329.27 145.1 87.9 8.37C79.53 2.79 68.36 0 57.2 0 30.7 0 6.98 18.14 1.4 41.86l198.02 231.59z"/><path fill="#4285F4" d="M1.39 41.86C0 46.04 0 51.63 0 57.2v397.64c0 5.57 0 9.76 1.4 15.34L217.67 255.32 1.39 41.86z"/></svg>`,
+};
+
+// Real brand logos (simple-icons paths, 24 grid), each in its own colours.
+const BV = (w, inner) => `<svg class="ic" width="${w}" height="${w}" viewBox="0 0 24 24">${inner}</svg>`;
+const WA_PATH = 'M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z';
+const B = {
+  wa: w => BV(w, `<path fill="#25D366" d="${WA_PATH}"/>`),
+  // WhatsApp's mark with a channel badge on its lower corner: a green disc with broadcast arcs,
+  // ringed in the tile's colour so it stands clear of the mark.
+  wach: w => BV(w, `<path fill="#25D366" d="${WA_PATH}"/>
+     <circle cx="18.8" cy="18.8" r="5.4" fill="#25D366" stroke="var(--brandTile)" stroke-width="1.6"/>
+     <circle cx="18.8" cy="18.8" r="1.05" fill="#fff"/>
+     <path d="M16.7 16.7a3 3 0 0 0 0 4.2M20.9 16.7a3 3 0 0 1 0 4.2" fill="none" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/>`),
+  tg: w => BV(w, `<circle cx="12" cy="12" r="11.4" fill="#fff"/><path fill="#26A5E4" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>`),
+  gh: w => BV(w, `<path fill="var(--ghInk)" d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>`),
+  yt: w => BV(w, `<path fill="#fff" d="M9.3 8.2h6.6v7.6H9.3z"/><path fill="#FF0000" d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.070 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.930 24 12 24 12s0-3.930-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>`),
+  fb: w => BV(w, `<circle cx="12" cy="12" r="11.5" fill="#fff"/><path fill="#0866FF" d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z"/>`),
+  // Our own site: the globe in the app's accent ink, the one mark here that is ours.
+  web: w => `<span style="color:var(--accentInk)">${S(w, '<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>', 1.9)}</span>`,
+};
+
+const topBar = `<div class="sb">9:41<span class="bat"></span></div>
+<div class="bar"><span class="back">${I.back(24)}</span><span class="ttl">About</span></div>`;
+
+const plate = `<div class="mark"><img src="../../../branding/foreground.png" alt=""></div>
+<div class="name">TestTrack</div>
+<div class="ver">v2.7.10</div>
+<div class="lead">Open each other's apps for fourteen days to get through Play's closed testing, and trade real feedback for tix.</div>
+<div class="gap34"></div>`;
+
+const star = '<span>' + I.star(30) + '</span>';
+const rating = `<div class="h">Enjoying TestTrack?</div>
+<div class="line">Rate it on Google Play and support our work.</div>
+<div class="gap10"></div>
+<div class="stars">${star.repeat(5)}</div>`;
+
+const out = (icon, label) => `<div class="pill out">${icon}<span>${label}</span></div>`;
+
+const maker = `<div class="h">Meet the developer</div>
+<div class="maker"><img src="../../../app/src/main/res/drawable-nodpi/dev_masum.jpg" alt="">
+  <div class="w"><b>Nurullah Al-Masum</b><span>Mobile app developer at EazyVerse Studio</span></div><span class="chev">${I.chev(18)}</span></div>
+<div class="gap14"></div>
+<div class="line">We design and build mobile apps, for Android and iOS. TestTrack is one of ours, and there are more on Google Play. If you have one in mind, tell us about it.</div>
+<div class="gap16"></div>
+<div class="stack"><div class="pill fill">${I.mail(18)}<span>Start a project</span></div>${out(I.globe(17), 'eazyverse.com')}</div>`;
+
+const more = `<div class="h">More from EazyVerse</div>
+<div class="line">Everything the studio has on the store, in one place.</div>
+<div class="gap16"></div>
+${out(I.play(18), 'Google Play')}`;
+
+const footer = `<div class="gap34"></div>
+<div class="legal"><span>Privacy</span><span>Terms</span></div>
+<div class="copy">© 2026 EazyVerse Studio</div>`;
+
+const row = (icon, title, opts = {}) => `<div class="tr${opts.later ? ' later' : ''}"><span class="tl">${icon(19)}</span>
+  <div class="w"><div class="t">${title}</div>${opts.sub ? `<div class="s">${opts.sub}</div>` : ''}</div>
+  ${opts.later ? '<span class="latertag">later</span>' : `<span class="end">${(opts.page ? I.chev : I.out)(18)}</span>`}</div>`;
+
+const cell = (icon, title, later) => `<div class="cell${later ? ' later' : ''}"><span class="tl">${icon(24)}</span><span class="t">${title}</span></div>`;
+const bcell = (logo, title) => `<div class="bcell"><span class="bt">${logo(28)}</span><span class="t">${title}</span></div>`;
+
+const page = body => `${topBar}<div class="ct">${plate}${body}${footer}</div>`;
+const G = '<div class="gap26"></div>';
+
+// Picked B: real logos on neutral tiles, four across, a short last row centred.
+const SIX = [[B.wa, 'WhatsApp group'], [B.wach, 'WhatsApp channel'], [B.tg, 'Telegram'], [B.web, 'Website'], [B.gh, 'GitHub'], [B.yt, 'YouTube']];
+const SEVEN = [...SIX, [B.fb, 'Facebook group']];
+const brandPage = links => page(`${rating}${G}
+<div class="h">Join the community</div>
+<div class="line">Ask in the groups, get news from the channel, or read the code.</div>
+<div class="gap14"></div>
+<div class="bgrid">${links.map(([l, t]) => bcell(l, t)).join('')}</div>${G}
+${maker}${G}${more}`);
+
+const picked = [
+  ['B', 'Light', brandPage(SIX), 'lt', true],
+  ['B', 'Dark', brandPage(SIX), 'dk', true],
+  ['B', '7 links', brandPage(SEVEN), 'lt', false],
+  ['B', '7 links, dark', brandPage(SEVEN), 'dk', false],
+];
+document.getElementById('picked').innerHTML = picked.map(([k, name, html, th, best]) => `<div class="col">
+  <div class="lab"><span class="k">${k}</span>${name}${best && th === 'lt' ? '<span class="rec">Picked</span>' : ''}</div>
+  <div class="ph ${th}${best ? ' best' : ''}">${html}</div></div>`).join('');
+
+// Earlier options, kept for comparison.
+const now = page(`${rating}${G}
+<div class="h">Have a question?</div>
+<div class="line">Ask in our WhatsApp group. Members and the team answer there.</div>
+<div class="gap16"></div>${out(I.msg(17), 'Join the WhatsApp group')}${G}
+${maker}${G}${more}${G}
+<div class="h">Open source</div>
+<div class="line">The app's code is public on GitHub under the MIT licence. Read it, report a problem, or send a fix.</div>
+<div class="gap16"></div>${out(I.github(17), 'View on GitHub')}`);
+
+const a = page(`${rating}${G}
+<div class="h">Join the community</div>
+<div class="line">Ask in the groups. News comes to the channel.</div>
+<div class="gap16"></div>
+<div class="tg">${row(I.wa, 'WhatsApp group')}${row(I.wach, 'WhatsApp channel')}${row(I.tg, 'Telegram group')}</div>${G}
+${maker}${G}${more}${G}
+<div class="h">TestTrack on the web</div>
+<div class="line">Our own site, and the app's code under the MIT licence.</div>
+<div class="gap16"></div>
+<div class="tg">${row(I.globe, 'TestTrack website')}${row(I.github, 'GitHub')}${row(I.yt, 'YouTube', { later: true })}</div>`);
+
+const b = page(`${rating}${G}
+<div class="h">Join the community</div>
+<div class="line">Ask in the groups, get news from the channel, or read the code.</div>
+<div class="gap14"></div>
+<div class="grid">${cell(I.wa, 'WhatsApp group')}${cell(I.wach, 'WhatsApp channel')}${cell(I.tg, 'Telegram')}${cell(I.globe, 'Website')}${cell(I.github, 'GitHub')}${cell(I.yt, 'YouTube', true)}</div>${G}
+${maker}${G}${more}`);
+
+const cBody = `${rating}${G}
+<div class="h">Join the community</div>
+<div class="line">Questions, news and other testers.</div>
+<div class="gap16"></div>
+<div class="tg">${row(I.users, 'Community', { sub: 'WhatsApp, Telegram, website and more', page: true })}</div>${G}
+${maker}${G}${more}`;
+
+const sheet = `<div style="height:851px;position:relative;overflow:hidden">${page(cBody)}
+<div class="scrim"></div>
+<div class="sheet"><div class="handle"></div>
+  <div class="st">Join the community</div>
+  <div class="ss">Ask in the groups. News comes to the channel.</div>
+  <div class="tg">${row(I.wa, 'WhatsApp group')}${row(I.wach, 'WhatsApp channel')}${row(I.tg, 'Telegram group')}${row(I.globe, 'TestTrack website')}${row(I.github, 'GitHub')}${row(I.yt, 'YouTube', { later: true })}</div>
+  <div class="homebar"></div>
+</div></div>`;
+
+const frames = [
+  ['', 'Now', now],
+  ['A', 'Rows in groups', a],
+  ['B', 'Outline grid', b],
+  ['C', 'One row', page(cBody)],
+  ['C', 'Its sheet', sheet],
+];
+document.getElementById('m').innerHTML = frames.map(([k, name, html]) => `<div class="col">
+  <div class="lab">${k ? `<span class="k">${k}</span>` : ''}${name}</div>
+  <div class="ph lt old">${html}</div></div>`).join('');
+
+const set = dark => {
+  document.querySelectorAll('.ph.old').forEach(p => { p.classList.toggle('dk', dark); p.classList.toggle('lt', !dark); });
+  document.getElementById('bD').classList.toggle('on', dark);
+  document.getElementById('bL').classList.toggle('on', !dark);
+};
+document.getElementById('bL').onclick = () => set(false);
+document.getElementById('bD').onclick = () => set(true);
+</script>
+</body>
+</html>

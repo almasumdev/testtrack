@@ -1,9 +1,13 @@
 package com.eazyverse.testtrack.ui
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -34,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -44,11 +49,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.ChevronRight
-import com.composables.icons.lucide.Github
 import com.composables.icons.lucide.Globe
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Mail
-import com.composables.icons.lucide.MessageCircle
 import com.eazyverse.testtrack.BuildConfig
 import com.eazyverse.testtrack.R
 import com.eazyverse.testtrack.ui.theme.Tt
@@ -96,13 +99,13 @@ fun AboutScreen(onBack: () -> Unit) {
                 },
             )
             Spacer(Modifier.height(BANK_GAP))
-            QuestionsBank()
-            Spacer(Modifier.height(BANK_GAP))
+            if (COMMUNITY.isNotEmpty()) {
+                CommunityBank()
+                Spacer(Modifier.height(BANK_GAP))
+            }
             MakerBank()
             Spacer(Modifier.height(BANK_GAP))
             MoreAppsBank()
-            Spacer(Modifier.height(BANK_GAP))
-            SourceBank()
             Spacer(Modifier.height(PLATE_GAP))
             LegalBank()
             Spacer(Modifier.height(28.dp))
@@ -175,18 +178,78 @@ private fun ColumnScope.RatingBank(onRate: (Int) -> Unit) {
     RatingStars(Modifier.align(Alignment.CenterHorizontally), onRate = onRate)
 }
 
-/** Where a question goes: the members' group, where other members and the team answer. */
+/** Where to talk to people and see the code: the groups, the channel, the site and the source. */
 @Composable
-private fun ColumnScope.QuestionsBank() {
+private fun ColumnScope.CommunityBank() {
+    SectionHeading("Join the community")
+    BankLine("Ask in the groups, get news from the channel, or read the code.")
+    Spacer(Modifier.height(14.dp))
+    CommunityGrid(COMMUNITY)
+}
+
+/**
+ * The community links, four across, a short last row centred. Each cell is one tap target: a tile of
+ * the neutral surface with the brand's mark on it, and its name underneath. The marks keep their own
+ * colours, so they are drawn with an [Image]; only the one-colour [CommunityLink.tintWithInk] mark
+ * takes the page's text ink. Every link leaves the app and fails in silence.
+ */
+@Composable
+private fun CommunityGrid(links: List<CommunityLink>) {
     val context = LocalContext.current
-    SectionHeading("Have a question?")
-    BankLine("Ask in our WhatsApp group. Members and the team answer there.")
-    Spacer(Modifier.height(16.dp))
-    Outlined(
-        "Join the WhatsApp group",
-        Modifier.fillMaxWidth(),
-        icon = { Icon(Lucide.MessageCircle, null, Modifier.size(17.dp)) },
-    ) { openUrl(context, WHATSAPP_GROUP) }
+    val t = Tt.colors
+    val tile = RoundedCornerShape(16.dp)
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        val cellWidth = (maxWidth - 24.dp) / 4
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            links.chunked(4).forEach { rowLinks ->
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+                ) {
+                    rowLinks.forEach { link ->
+                        Column(
+                            Modifier
+                                .width(cellWidth)
+                                .clip(RoundedCornerShape(14.dp))
+                                .clickable(role = Role.Button) { openUrl(context, link.url) }
+                                .heightIn(min = TOUCH_MIN)
+                                .padding(top = 6.dp, bottom = 4.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            Box(
+                                Modifier
+                                    .size(56.dp)
+                                    .background(t.sheet, tile)
+                                    .border(1.dp, t.cardLine, tile),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                val mark = Modifier.size(28.dp)
+                                if (link.logo != null) {
+                                    Image(
+                                        painterResource(link.logo),
+                                        null,
+                                        mark,
+                                        colorFilter = if (link.tintWithInk) ColorFilter.tint(t.text) else null,
+                                    )
+                                } else if (link.vector != null) {
+                                    Icon(link.vector, null, mark, tint = t.accentInk)
+                                }
+                            }
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                link.label,
+                                style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.5.sp, lineHeight = 16.sp),
+                                fontWeight = FontWeight.SemiBold,
+                                color = t.text2,
+                                textAlign = TextAlign.Center,
+                                maxLines = 2,
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 /** Who made it, then the studio's ask and its two ways of answering it. */
@@ -257,20 +320,6 @@ private fun ColumnScope.MoreAppsBank() {
         // Never tinted: it is a trademark, and one colour would flatten all four of its own.
         icon = { Image(painterResource(R.drawable.ic_google_play), null, Modifier.size(18.dp)) },
     ) { openDeveloperPage(context) }
-}
-
-/** TestTrack is open source: where the code is, and the two things a reader there can do. */
-@Composable
-private fun ColumnScope.SourceBank() {
-    val context = LocalContext.current
-    SectionHeading("Open source")
-    BankLine("The app's code is public on GitHub under the MIT licence. Read it, report a problem, or send a fix.")
-    Spacer(Modifier.height(16.dp))
-    Outlined(
-        "View on GitHub",
-        Modifier.fillMaxWidth(),
-        icon = { Icon(Lucide.Github, null, Modifier.size(17.dp)) },
-    ) { openUrl(context, SOURCE_REPO) }
 }
 
 /**
